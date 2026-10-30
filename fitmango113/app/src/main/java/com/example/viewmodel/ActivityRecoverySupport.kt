@@ -1,0 +1,107 @@
+package com.example.viewmodel
+
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.text.Normalizer
+import java.util.Locale
+
+/** Nullable reads remain unknown. Sleep belongs to its wake date, not its start date. */
+data class ActivityDay(val date: String, val steps: Long? = null, val sleepMinutes: Long? = null,
+    val sleepEstimated: Boolean = false, val sources: String = "Health Connect", val readAt: Long = 0)
+data class RecoveryCheck(val date: String, val energy: Int, val fatigue: Int)
+data class ActivitySummary(val minutes: Long, val activeDays: Int, val walks: Int, val sessions: Int)
+
+object ActivityRecoverySupport {
+    fun manualSession(date: String, time: String, minutes: Int, title: String, type: Int, now: Instant,
+        zone: ZoneId = ZoneId.systemDefault()): SportSession {
+        val day = LocalDate.parse(date)
+        require(day <= now.atZone(zone).toLocalDate()) { "Wybierz dzisiejszą lub wcześniejszą datę." }
+        require(minutes in 1..1440 && title in setOf("Spacer", "Bieganie", "Rower", "Pływanie", "Joga", "Inna aktywność")) { "Podaj czas od 1 do 1440 minut." }
+        val local = day.atTime(java.time.LocalTime.parse(time))
+        require(zone.rules.getValidOffsets(local).isNotEmpty()) { "Ta godzina nie istnieje w dniu zmiany czasu. Wybierz inną godzinę." }
+        val start = local.atZone(zone).toInstant(); val end = start.plusSeconds(minutes * 60L)
+        require(end <= now) { "Aktywność musi być już zakończona. Sprawdź godzinę i czas trwania." }
+        return SportSession("manual|" + java.util.UUID.randomUUID(), title, start.toString(), end.toString(), "Wpis ręczny", activityType = type)
+    }
+    fun manual(session: SportSession) = session.id.startsWith("manual|")
+    private fun title(raw: String) = Normalizer.normalize(raw.lowercase(Locale.ROOT), Normalizer.Form.NFD)
+        .replace(Regex("\\p{M}+"), "").replace(Regex("\\s+"), " ").trim()
+    /** Conservative duplicate matching. Imported original records are retained for inspection. */
+    fun duplicate(a: SportSession, b: SportSession): Boolean {
+        if (a.id == b.id) return true
+        val sameKind = if (a.activityType != null && b.activityType != null) a.activityType == b.activityType else title(a.title) == title(b.title)
+        val aStart = Instant.parse(a.start); val aEnd = Instant.parse(a.end)
+        val bStart = Instant.parse(b.start); val bEnd = Instant.parse(b.end)
+        val overlap = Duration.between(maxOf(aStart, bStart), minOf(aEnd, bEnd)).seconds.coerceAtLeast(0)
+        val length = maxOf(Duration.between(aStart, aEnd).seconds, Duration.between(bStart, bEnd).seconds)
+        return length > 0 && overlap.toDouble() / length >= 0.8 && sameKind && kotlin.math.abs(Duration.between(Instant.parse(a.start), Instant.parse(b.start)).seconds) <= 120 &&
+            kotlin.math.abs(Duration.between(Instant.parse(a.end), Instant.parse(b.end)).seconds) <= 120
+    }
+    fun unique(sessions: List<SportSession>): List<SportSession> {
+        val result = mutableListOf<SportSession>()
+        val buckets = mutableMapOf<Long, MutableList<SportSession>>()
+        val ids = mutableSetOf<String>()
+        // Watch data wins over a manually entered copy; only nearby start buckets need comparing.
+        sessions.sortedWith(compareBy<SportSession> { manual(it) }.thenBy { it.start }.thenBy { it.id }).forEach { s ->
+            val bucket = Math.floorDiv(Instant.parse(s.start).epochSecond, 120L)
+            val exists = (bucket - 1..bucket + 1).any { key -> buckets[key].orEmpty().any { duplicate(it, s) } }
+            if (ids.add(s.id) && !exists) { result.add(s); buckets.getOrPut(bucket) { mutableListOf() }.add(s) }
+        }
+        return result
+    }
+    fun mergeImported(current: SportsData, imported: List<SportSession>?, days: List<ActivityDay>?, readAt: Long, note: String): SportsData = current.copy(
+        history = if (imported == null) current.history else (current.history.filter { manual(it) } + imported).distinctBy { it.id },
+        updated = if (imported == null) current.updated else readAt,
+        daily = if (days == null) current.daily else (current.daily.filter { old -> days.none { it.date == old.date } } + days)
+            .sortedByDescending { it.date }.take(400),
+        healthUpdated = if (days == null) current.healthUpdated else readAt,
+        readNote = note.take(2000))
+    fun duplicateCount(sessions: List<SportSession>) = sessions.size - unique(sessions).size
+    fun summary(data: SportsData, from: LocalDate, until: LocalDate, now: Instant,
+        zone: ZoneId = ZoneId.systemDefault()): ActivitySummary {
+        val lo = from.atStartOfDay(zone).toInstant()
+        val hi = minOf(until.plusDays(1).atStartOfDay(zone).toInstant(), now)
+        if (hi <= lo) return ActivitySummary(0, 0, 0, 0)
+        val selected = unique(data.history).filter { Instant.parse(it.start) < hi && Instant.parse(it.end) > lo && Instant.parse(it.end) <= now }
+        // Union all intervals, including partially overlapping recordings, instead of adding durations.
+        val intervals = selected.map { maxOf(Instant.parse(it.start), lo) to minOf(Instant.parse(it.end), hi) }.sortedBy { it.first }
+        val merged = mutableListOf<Pair<Instant, Instant>>()
+        intervals.forEach { row -> val last = merged.lastOrNull()
+            if (last != null && row.first <= last.second) merged[merged.lastIndex] = last.first to maxOf(last.second, row.second)
+            else merged.add(row)
+        }
+        val dates = mutableSetOf<LocalDate>()
+        merged.forEach { (a, b) ->
+            var d = a.atZone(zone).toLocalDate()
+            val endDate = b.minusNanos(1).atZone(zone).toLocalDate()
+            while (d <= endDate) { dates.add(d); d = d.plusDays(1) }
+        }
+        val walks = selected.count { it.start.let(Instant::parse).atZone(zone).toLocalDate() in from..until &&
+            (it.activityType == androidx.health.connect.client.records.ExerciseSessionRecord.EXERCISE_TYPE_WALKING || title(it.title) in setOf("spacer", "walking", "walk")) }
+        return ActivitySummary(merged.sumOf { Duration.between(it.first, it.second).seconds } / 60, dates.size, walks, selected.size)
+    }
+    fun week(data: SportsData, date: LocalDate, now: Instant, zone: ZoneId = ZoneId.systemDefault()) =
+        summary(data, SportsSupport.week(date), SportsSupport.week(date).plusDays(6), now, zone)
+    fun progress(data: SportsData, summary: ActivitySummary): Pair<Int, Int> = when (data.goalMode) {
+        "minutes" -> summary.minutes.toInt() to data.minuteGoal
+        "walks" -> summary.walks to data.walkGoal
+        else -> summary.activeDays to data.goal
+    }
+    fun unit(data: SportsData) = when (data.goalMode) { "minutes" -> "min"; "walks" -> "spacery"; else -> "dni" }
+    fun recovery(data: SportsData, today: LocalDate): String {
+        val from = today.minusDays(6).toString(); val end = today.toString()
+        val notes = data.recovery.filter { it.date in from..end }
+        val sleep = data.daily.filter { it.date in from..end }.mapNotNull { it.sleepMinutes }
+        val previous = data.daily.filter { it.date in today.minusDays(13).toString()..today.minusDays(7).toString() }.mapNotNull { it.sleepMinutes }
+        val message = when {
+            notes.size >= 3 && notes.count { it.energy <= 2 || it.fatigue >= 4 } >= 3 -> "W co najmniej 3 wpisach zgłaszasz mało energii lub duże zmęczenie. Rozważ spokojniejszy ruch i odpoczynek."
+            sleep.size >= 3 && previous.size >= 3 && sleep.average() + 30 < previous.average() -> "W dostępnych nocach śpisz krócej niż w poprzednich 7 dniach. Zwróć uwagę na odpoczynek przed zwiększeniem aktywności."
+            notes.size >= 3 -> "Obserwuj energię i zmęczenie razem z aktywnością. Dostosuj intensywność do samopoczucia."
+            else -> "Dodaj samopoczucie z co najmniej 3 dni, by zobaczyć wskazówkę opartą na kilku wpisach."
+        }
+        val hours = if (sleep.isEmpty()) "Sen: brak odczytanych nocy." else "Sen: średnio ${String.format(Locale.getDefault(), "%.1f", sleep.average() / 60)} h z ${sleep.size} odczytanych nocy."
+        return "$hours\n$message"
+    }
+}

@@ -1,0 +1,253 @@
+{
+  "generation": "Built-in imagegen",
+  "style": "Single rounded sculpted clay 3D UI icon; emerald #2E7D32, mango #FFA726, warm ivory, upper-left studio light, gentle highlights and dimensional shading, front three-quarter view; true transparent background; no text or watermark; one centered icon per generated image.",
+  "mobile_export": {
+    "format": "WebP lossless encoding",
+    "size": 256,
+    "original_generated_images": "Preserved without overwriting originals"
+  },
+  "subjects": {
+    "mango": "single ripe mango fruit with one green leaf",
+    "home": "a tiny rounded emerald green cottage house, warm ivory walls, mango orange chimney, clearly visible front door",
+    "calendar": "a thick rounded ivory calendar clipboard with green top binding and one orange date dot, no printed text or numbers",
+    "document": "a thick rounded warm ivory document folder with orange tab and green paper sheets, no text or letters",
+    "ai": "a friendly compact rounded robot assistant head, emerald green and mango orange, two simple eyes, no letters",
+    "recipes": "a puffy ivory chef hat with orange rolled brim and small green leaf accent",
+    "shopping": "a miniature rounded green shopping trolley with orange basket handle and two wheels",
+    "profile": "a friendly generic person bust with rounded ivory face, green shirt, orange circle accent, no facial identity",
+    "water": "one plump sapphire blue water droplet with a broad glossy highlight",
+    "vegetable": "a tiny broccoli crown and red apple side by side as ONE compact produce icon",
+    "protein": "a small appetizing golden cooked chicken drumstick",
+    "carbs": "two curved golden wheat ears",
+    "fat": "one half avocado with a large brown pit and dimensional green flesh",
+    "weight": "a rounded ivory bathroom scale with emerald green rim and orange indicator, no numbers or text",
+    "creatine": "a small rounded ivory supplement jar with green lid and a mango orange leaf emblem, no letters",
+    "health": "a plump warm red heart with a tiny ivory pulse accent",
+    "drink": "a tiny transparent glass filled with pale blue water, green base accent",
+    "dairy": "a rounded ivory milk bottle with green cap and mango orange accent, no text",
+    "breakfast": "a tiny ivory bowl of orange porridge with two red berries",
+    "meal": "a rounded ivory plate with orange salmon, green broccoli and pale rice",
+    "dinner": "a miniature ivory bowl with a leafy green colorful salad",
+    "snack": "a plump red apple and a tiny orange mandarin as one compact icon",
+    "fire": "a plump orange and golden yellow flame",
+    "mass": "a chunky green dumbbell with orange center handle",
+    "measure": "a curled ivory measuring tape with green and orange short tick marks, no numbers",
+    "goal": "a thick concentric emerald and ivory target with an orange arrow",
+    "balance": "a balanced green weighing scale with two ivory trays and orange support",
+    "reduction": "a tiny green downward arrow and orange measuring tape, positive neutral symbol",
+    "fasting": "a chunky ivory clock with green border and orange moon crescent, no numbers",
+    "progress": "three dimensional rounded green bar chart columns of increasing heights with an orange upward curve",
+    "add": "a single thick emerald green plus sign with rounded edges",
+    "bell": "a rounded golden orange notification bell with ivory clapper",
+    "camera": "a compact emerald green and ivory camera with a mango orange lens rim",
+    "check": "a single thick emerald green checkmark with rounded edges",
+    "clock": "a chunky ivory clock with emerald rim and orange clock hands, no numbers",
+    "close": "a single thick warm red X cross with rounded edges",
+    "delete": "a small ivory rubbish bin with green lid and green handle",
+    "edit": "a chunky mango orange pencil with ivory tip and emerald green eraser",
+    "favorite": "a single plump warm red heart",
+    "favorite_outline": "a thick open-center warm red heart frame, ivory highlights",
+    "globe": "a small emerald and blue earth globe with ivory stand, no text",
+    "link": "two rounded green and mango orange chain links joined diagonally",
+    "pdf": "a thick ivory document with folded orange corner and a chunky green paperclip, no letters or text",
+    "swap": "two thick rounded emerald and orange opposing horizontal arrows",
+    "warning": "a rounded mango orange warning triangle with thick ivory exclamation mark",
+    "walk": "a tiny pair of rounded emerald green sneakers with ivory soles and mango orange laces",
+    "sleep": "a thick rounded golden crescent moon with one tiny emerald star",
+    "medal": "a plump golden orange achievement medal with embossed ivory star and two emerald green ribbons"
+  },
+  "resources": [
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_add.webp",
+      "sha256": "487d4c49e8b0c0c6de20038d7caee5a51bf8fbafd6410d0c43d87444a42f17d9"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_ai.webp",
+      "sha256": "b7bd2f8471d34ff97bdca72bb7f6c9312e9f0c048789b91ea4feb5d31ce7ef17"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_balance.webp",
+      "sha256": "2f5860dc5af717c689a26ea9bd2fc09bf3e2f51b503a87447bf4a7b5ee0dac06"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_bell.webp",
+      "sha256": "ddfa5892df504c0a2dba5becc9e6682d19481df492694aba1a6d795b0075cccd"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_breakfast.webp",
+      "sha256": "976cd2788d17cb2610e996ebe51e95a3b2650af665d8e82cb74e37312f84ca40"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_calendar.webp",
+      "sha256": "89209620ac9306fef08445d3314298eefe3627b2842adc77ddf63845b9ba33c8"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_camera.webp",
+      "sha256": "0fb5075301aeb769e9a3bdb2056512dd54db5789bed062f316bd0481cc6774f3"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_carbs.webp",
+      "sha256": "5cddc9cafe3247821a0f09153f900b09c7dd7c8cc6803d8ed357d7c523850d3f"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_check.webp",
+      "sha256": "390e5aad70786e27b7a5755a7cd05b66deeb003af5bebecbdc56d88e201e7e1f"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_clock.webp",
+      "sha256": "969c892d9de90b4425a103032c587771ecda587e3302d088ffd4d94d0542c9db"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_close.webp",
+      "sha256": "2b29bdad56f73003ec165a6d2e62333eacc599a2d0d671539524033137c3132d"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_creatine.webp",
+      "sha256": "288f11c53a1f76e607e998c23259f3586fdb62335f9e0cd4de1ccb88e063addb"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_dairy.webp",
+      "sha256": "d1e76e8578ddfbf82c623f150ebf821ffe1326a674d3f8db8ba67c22b97f660a"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_delete.webp",
+      "sha256": "012cc6b86d9682a9fc39864e4c2b1436a0b042a143e0b8240a32f5b7401e7df1"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_dinner.webp",
+      "sha256": "6719923760d7dc866f7597c9eb2bab5bd6e2ed099f1b098792674281cebc7158"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_document.webp",
+      "sha256": "045699c6966d16d19add6dc7d0a3f42786da2477e8b89d33b78fbde7f374efdf"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_drink.webp",
+      "sha256": "c79e819f27a6dd912e187f4054294184351c710ccc2d6a5906bcff93d2aeab3a"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_edit.webp",
+      "sha256": "b532640299e8e6bc9808c1b598b9e1b0866bbacac4c11a062863c56e227d40ab"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_fasting.webp",
+      "sha256": "0de1f88eb99e74a5a5454f23c957d9f9fd86fd235f4767f0e2785711f0844464"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_fat.webp",
+      "sha256": "3b7ffbf10e8ee9d26b20ebfed7974816e7216c60df2b887cd258f748038e297d"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_favorite.webp",
+      "sha256": "ac8a55c4525222e9f27c87830762d84ebab0e3981b0decf84996c0f4c79c0e68"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_favorite_outline.webp",
+      "sha256": "11775957dc0e66265520288a695e6577aec13301268e420ff0f8126634dad57d"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_fire.webp",
+      "sha256": "8941e4e4b1180ecbba79f841200a0881cad7536ed134f7bf58be42c88c527807"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_globe.webp",
+      "sha256": "4147003801a9d4a7bb2ab039ec66714e3dcf3fd463109e89b7433338d57f4cda"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_goal.webp",
+      "sha256": "d7c24e2b23204856b9418262e589e7c75dc56375eb9152a00a583de49e5a9e2f"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_health.webp",
+      "sha256": "b4088894d398a5d4e05b78cdcabb924e97461047800455ed4f16c2cbacb16931"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_home.webp",
+      "sha256": "bff291cd3422292824d7dc981f4270d611d5d47e2070dc0bf95dda62c9a8f54b"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_link.webp",
+      "sha256": "e152ccb9c39e65ff0a30592649d5ff0d05f6452709de16cea929d219a39ec676"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_mango.webp",
+      "sha256": "f445b5c95b8811e52130548042f3deaa6ec06d349020de9d894c4d899b418533"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_mass.webp",
+      "sha256": "f0f5bdac99d65b1bfcf3d160c25cab0913293ab59b6017b085e944887362632a"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_meal.webp",
+      "sha256": "75292dce6d3fe7c5532134f93133a87e9fa3f6a795724f863e2919fd2c807152"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_measure.webp",
+      "sha256": "5780d51ce62a150fc35235329b5ddfc37d2e913a92136cd2807682c1a12d628f"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_medal.webp",
+      "sha256": "722c74428346b8b58fc945272a956786f1b0a9f5dd0ea03beeff293342400cff"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_pdf.webp",
+      "sha256": "93cbba359a46e9d864c16f04318fa82e476bfbffc9895d1c95066ee8f1488d42"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_profile.webp",
+      "sha256": "8bdf73bbb57c42522e433ea66464393932660dc37e1a14e5ff1cc758994b387f"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_progress.webp",
+      "sha256": "191cb8a8dee8fa861638eaf5b98308a4122cb968724bdc4f9f6061288ede2cd3"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_protein.webp",
+      "sha256": "6a2abbdd0aa6ef258dc3e0466a6487fecc7ad3d60051ef97dd0d5ff7f923341c"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_recipes.webp",
+      "sha256": "b1e1a5931c2aea8d9bc2b8c8f058e58f989ce8ed842b8a4b093453fb1ea583a6"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_reduction.webp",
+      "sha256": "fd210ee1d0d4032010fa30564dd342d2bd23ea5501b6217a2a824386c5be34b5"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_shopping.webp",
+      "sha256": "18278ee2e67e5b01baa48439285b95b5fa7fa8f1b4a01b68db1f495bdeb2aa06"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_sleep.webp",
+      "sha256": "aa0b26b940efae52181a8be7ad9ad9c43deddc6c9a8036fa123e6574197d4819"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_snack.webp",
+      "sha256": "cef93db4d02615cfac3f9baeb3fe1ff7239323303e842658c972a0bb7af93079"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_swap.webp",
+      "sha256": "62bec137dcc6f748014d0e08b430eb8bad4e6825abb89685b947b30cd2e9588d"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_vegetable.webp",
+      "sha256": "f194f03e28975055fdbc67a4a9d8dceb0b14c51e38801867962f8bfb8029957f"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_walk.webp",
+      "sha256": "d669e1e0efa20912a8e738eba1fa4f99254b03ed4a6092ad9326a7cebff88ade"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_warning.webp",
+      "sha256": "5287ea79d4dedeec6dcf55bfe22c3826f77d1b0a4d5950f2c1c9df49930181a4"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_water.webp",
+      "sha256": "787682b69f6236db0fa568687939adfb177bdb7c2c79d9cd63e95c0dc3a3aa89"
+    },
+    {
+      "file": "app/src/main/res/drawable-nodpi/fit_clay_weight.webp",
+      "sha256": "592546af6220b7d68c4cf0b0c26d01806a6d9965ef0a46622657ed571dd48ce9"
+    }
+  ]
+}
