@@ -113,16 +113,34 @@ object HealthConnectSupport {
      * Determines whether a Health Connect weight entry is already present in existing measurements.
      * Checks record identifier first, then timestamp (within 60s), then exact date match with HEALTH_CONNECT source.
      */
-    fun isDuplicateMeasurement(
-        existingMeasurements: List<BodyMeasurementEntity>,
-        recordId: String,
-        dateString: String,
-        timestampMillis: Long
-    ): Boolean {
-        return existingMeasurements.any { m ->
-            (!m.healthRecordId.isNullOrBlank() && m.healthRecordId == recordId) ||
-                (m.timestamp > 0 && timestampMillis > 0 && kotlin.math.abs(m.timestamp - timestampMillis) < 60_000) ||
-                (m.date == dateString && m.source == "HEALTH_CONNECT")
+   /**
+ * Rozpoznaje duplikaty pomiarów wagi.
+ * Najpierw sprawdza identyfikator rekordu, a następnie
+ * porównuje czas i wartość wyłącznie dla Health Connect.
+ */
+fun isDuplicateMeasurement(
+    existingMeasurements: List<BodyMeasurementEntity>,
+    recordId: String,
+    dateString: String,
+    timestampMillis: Long,
+    weightKg: Float
+): Boolean {
+    return existingMeasurements.any { measurement ->
+        val sameRecordId =
+            recordId.isNotBlank() &&
+                !measurement.healthRecordId.isNullOrBlank() &&
+                measurement.healthRecordId == recordId
+
+        val sameHealthConnectMeasurement =
+            measurement.source == "HEALTH_CONNECT" &&
+                measurement.timestamp > 0 &&
+                timestampMillis > 0 &&
+                kotlin.math.abs(measurement.timestamp - timestampMillis) < 60_000 &&
+                kotlin.math.abs(measurement.weightKg - weightKg) < 0.01f
+
+        sameRecordId || sameHealthConnectMeasurement
+    }
+}
         }
     }
 }
