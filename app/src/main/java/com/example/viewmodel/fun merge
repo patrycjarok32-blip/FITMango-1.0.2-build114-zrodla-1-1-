@@ -51,13 +51,41 @@ object ActivityRecoverySupport {
         }
         return result
     }
-    fun mergeImported(current: SportsData, imported: List<SportSession>?, days: List<ActivityDay>?, readAt: Long, note: String): SportsData = current.copy(
-        history = if (imported == null) current.history else (current.history.filter { manual(it) } + imported).distinctBy { it.id },
+    fun mergeImported(
+    current: SportsData,
+    imported: List<SportSession>?,
+    days: List<ActivityDay>?,
+    readAt: Long,
+    note: String
+): SportsData {
+    val mergedHistory = if (imported == null) {
+        current.history
+    } else {
+        // Aktualizuj rekordy o tym samym ID, ale nigdy nie usuwaj
+        // starszych treningów, których nie ma w bieżącym odczycie.
+        (current.history.associateBy { it.id } + imported.associateBy { it.id })
+            .values
+            .sortedBy { it.start }
+    }
+
+    val mergedDaily = if (days == null) {
+        current.daily
+    } else {
+        (current.daily.filter { old ->
+            days.none { it.date == old.date }
+        } + days)
+            .sortedByDescending { it.date }
+            .take(400)
+    }
+
+    return current.copy(
+        history = mergedHistory,
         updated = if (imported == null) current.updated else readAt,
-        daily = if (days == null) current.daily else (current.daily.filter { old -> days.none { it.date == old.date } } + days)
-            .sortedByDescending { it.date }.take(400),
+        daily = mergedDaily,
         healthUpdated = if (days == null) current.healthUpdated else readAt,
-        readNote = note.take(2000))
+        readNote = note.take(2000)
+    )
+}
     fun duplicateCount(sessions: List<SportSession>) = sessions.size - unique(sessions).size
     fun summary(data: SportsData, from: LocalDate, until: LocalDate, now: Instant,
         zone: ZoneId = ZoneId.systemDefault()): ActivitySummary {
