@@ -326,7 +326,7 @@ class HealthConnectManager(private val context: Context) : HealthConnectReader {
                 val response = client.aggregate(AggregateRequest(
                     metrics = setOf(StepsRecord.COUNT_TOTAL),
                     timeRangeFilter = TimeRangeFilter.between(startOfToday, now)))
-                stepsToday = response[StepsRecord.COUNT_TOTAL] ?: 0L
+                stepsToday = response[StepsRecord.COUNT_TOTAL]
             } catch (e: CancellationException) { throw e }
             catch (_: Exception) { failedReads++ }
         }
@@ -337,7 +337,7 @@ class HealthConnectManager(private val context: Context) : HealthConnectReader {
                 val response = client.aggregate(AggregateRequest(
                     metrics = setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL),
                     timeRangeFilter = TimeRangeFilter.between(startOfToday, now)))
-                totalCaloriesBurned = response[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories ?: 0.0
+                totalCaloriesBurned = response[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories
             } catch (e: CancellationException) { throw e }
             catch (_: Exception) { failedReads++ }
         }
@@ -348,7 +348,7 @@ class HealthConnectManager(private val context: Context) : HealthConnectReader {
                 val response = client.aggregate(AggregateRequest(
                     metrics = setOf(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL),
                     timeRangeFilter = TimeRangeFilter.between(startOfToday, now)))
-                activeCaloriesBurned = response[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories ?: 0.0
+                activeCaloriesBurned = response[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories
             } catch (e: CancellationException) { throw e }
             catch (_: Exception) { failedReads++ }
         }
@@ -356,24 +356,44 @@ class HealthConnectManager(private val context: Context) : HealthConnectReader {
         val exerciseList = mutableListOf<HealthExerciseEntry>()
         if (HealthPermission.getReadPermission(ExerciseSessionRecord::class) in granted) {
             try {
-                val response = client.readRecords(
-                    ReadRecordsRequest(
-                        recordType = ExerciseSessionRecord::class,
-                        timeRangeFilter = TimeRangeFilter.between(startOfToday, now)
-                    )
-                )
-                for (record in response.records) {
-                    val durationMin = java.time.Duration.between(record.startTime, record.endTime).toMinutes().coerceAtLeast(1)
-                    val title = record.title?.takeIf { it.isNotBlank() } ?: "Trening"
-                    exerciseList.add(
-                        HealthExerciseEntry(
-                            title = title,
-                            caloriesBurnedKcal = null,
-                            durationMinutes = durationMin,
-                            startTime = record.startTime
+                val records = WorkoutReadSupport.readPages { token ->
+                    val page = client.readRecords(
+                        ReadRecordsRequest(
+                            recordType = ExerciseSessionRecord::class,
+                            timeRangeFilter = TimeRangeFilter.between(thirtyDaysAgo, now),
+                            pageToken = token,
+                            pageSize = 100
                         )
                     )
+                    page.records to page.pageToken
                 }
+                records.filter { it.endTime <= now && it.endTime > it.startTime }
+                    .distinctBy { "${it.metadata.dataOrigin.packageName}|${it.metadata.id.ifBlank { "${it.startTime}|${it.endTime}|${it.exerciseType}" }}" }
+                    .sortedByDescending { it.startTime }
+                    .forEach { record ->
+                        val durationMin = java.time.Duration.between(record.startTime, record.endTime).toMinutes().coerceAtLeast(1)
+                        val title = record.title?.takeIf { it.isNotBlank() } ?: "Trening"
+                        val activeValue = if (HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class) in granted) {
+                            try {
+                                client.aggregate(
+                                    AggregateRequest(
+                                        metrics = setOf(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL),
+                                        timeRangeFilter = TimeRangeFilter.between(record.startTime, record.endTime),
+                                        dataOriginFilter = setOf(record.metadata.dataOrigin)
+                                    )
+                                )[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories
+                            } catch (e: CancellationException) { throw e }
+                            catch (_: Exception) { null }
+                        } else null
+                        exerciseList.add(
+                            HealthExerciseEntry(
+                                title = title,
+                                caloriesBurnedKcal = activeValue?.takeIf { it.isFinite() && it >= 0.0 },
+                                durationMinutes = durationMin,
+                                startTime = record.startTime
+                            )
+                        )
+                    }
             } catch (e: CancellationException) { throw e }
             catch (_: Exception) { failedReads++ }
         }
@@ -385,18 +405,25 @@ class HealthConnectManager(private val context: Context) : HealthConnectReader {
 
         if (HealthPermission.getReadPermission(WeightRecord::class) in granted) {
             try {
-                val response = client.readRecords(
-                    ReadRecordsRequest(
-                        recordType = WeightRecord::class,
-                        timeRangeFilter = TimeRangeFilter.between(thirtyDaysAgo, now)
+                val records = WorkoutReadSupport.readPages { token ->
+                    val page = client.readRecords(
+                        ReadRecordsRequest(
+                            recordType = WeightRecord::class,
+                            timeRangeFilter = TimeRangeFilter.between(thirtyDaysAgo, now),
+                            pageToken = token,
+                            pageSize = 100
+                        )
                     )
-                )
-                val sortedRecords = response.records.sortedByDescending { it.time }
+                    page.records to page.pageToken
+                }
+                val sortedRecords = records.filter { it.time <= now }
+                    .distinctBy { "${it.metadata.dataOrigin.packageName}|${it.metadata.id.ifBlank { it.time.toString() }}" }
+                    .sortedByDescending { it.time }
                 val latest = sortedRecords.firstOrNull()
                 if (latest != null) {
                     latestWeightKg = WeightPrecisionSupport.truncateKg(latest.weight.inKilograms)
                     latestWeightTime = latest.time
-                    latestWeightRecordId = latest.metadata.id
+                    latestWeightRecordId = latest.metadata.id.ifBlank { latest.time.toString() }
                 }
                 for (rec in sortedRecords) {
                     val kg = WeightPrecisionSupport.truncateKg(rec.weight.inKilograms)
@@ -404,7 +431,7 @@ class HealthConnectManager(private val context: Context) : HealthConnectReader {
                     val dateStr = String.format("%04d-%02d-%02d", localDate.year, localDate.monthValue, localDate.dayOfMonth)
                     weightHistory.add(
                         HealthWeightEntry(
-                            recordId = rec.metadata.id,
+                            recordId = rec.metadata.id.ifBlank { rec.time.toString() },
                             weightKg = kg,
                             time = rec.time,
                             dateString = dateStr
