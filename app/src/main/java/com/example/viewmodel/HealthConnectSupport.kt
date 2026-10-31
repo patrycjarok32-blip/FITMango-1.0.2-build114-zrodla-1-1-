@@ -139,6 +139,16 @@ fun isDuplicateMeasurement(
                 kotlin.math.abs(measurement.weightKg - weightKg) < 0.01f
 
         sameRecordId || sameHealthConnectMeasurement
+                val sameHealthConnectMeasurement =
+            measurement.source == "HEALTH_CONNECT" &&
+                measurement.timestamp > 0 &&
+                timestampMillis > 0 &&
+                kotlin.math.abs(measurement.timestamp - timestampMillis) < 60_000 &&
+                kotlin.math.abs(measurement.weightKg - weightKg) < 0.01f
+
+        sameRecordId || sameHealthConnectMeasurement
+    }
+}
     }
 }
         }
