@@ -351,7 +351,8 @@ class HealthConnectCoordinator(
                         existingMeasurements = existingMeasurements,
                         recordId = wEntry.recordId,
                         dateString = wEntry.dateString,
-                        timestampMillis = wEntry.time.toEpochMilli()
+                        timestampMillis = wEntry.time.toEpochMilli(),
+weightKg = wEntry.weightKg
                     )
                     if (!isDup) {
                         val measurement = BodyMeasurementEntity(
