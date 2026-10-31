@@ -30,20 +30,59 @@ object MeasurementRemovalSupport {
         return logs.filter { date(it.date) == day && kotlin.math.abs(it.weightKg - row.weightKg) < .001f }
     }
 
+    /**
+     * Strict identifier handling.
+     *
+     * Valid formats:
+     * - legacy: recordId
+     * - package-scoped: package|recordId
+     * - metric-scoped: metric|package|recordId
+     *
+     * No plain alias is generated for package-scoped measurements.
+     */
     fun hiddenIdsForMeasurement(recordId: String?, sourcePackageName: String? = null): Set<String> {
         val raw = recordId?.trim().orEmpty()
         if (raw.isEmpty()) return emptySet()
-        val plain = raw.substringAfterLast("|").ifBlank { raw }
-        val ids = linkedSetOf(raw, plain)
-        sourcePackageName?.trim()?.takeIf { it.isNotBlank() }?.let { pkg -> ids += "$pkg|$plain" }
-        return ids.filter { it.isNotBlank() }.toSet()
+
+        val parts = raw.split("|")
+        return when (parts.size) {
+            1 -> {
+                val legacy = raw.trim()
+                if (legacy.isEmpty()) emptySet() else setOf(legacy)
+            }
+            2 -> {
+                val pkg = parts[0].trim()
+                val rec = parts[1].trim()
+                if (pkg.isEmpty() || rec.isEmpty()) return emptySet()
+                if (!sourcePackageName.isNullOrBlank() && sourcePackageName != pkg) return emptySet()
+                setOf("$pkg|$rec")
+            }
+            3 -> {
+                val metric = parts[0].trim()
+                val pkg = parts[1].trim()
+                val rec = parts[2].trim()
+                if (metric.isEmpty() || pkg.isEmpty() || rec.isEmpty()) return emptySet()
+                if (!sourcePackageName.isNullOrBlank() && sourcePackageName != pkg) return emptySet()
+                setOf("$metric|$pkg|$rec")
+            }
+            else -> emptySet()
+        }
     }
 
     fun hiddenScale(row: ScaleMeasurement, ids: Set<String>): Boolean {
         if (row.origin != "health" || "weight" !in row.values) return false
-        val hiddenSet = ids.flatMap { hiddenIdsForMeasurement(it) }
-        val rowKey = row.id
-        val rowPlain = row.id.substringAfterLast("|")
-        return rowKey in hiddenSet || rowPlain in hiddenSet || hiddenSet.any { rowKey.endsWith("|$it") || rowKey == it || rowPlain == it }
+
+        val rowId = row.id.trim()
+        if (rowId.isEmpty()) return false
+
+        val normalizedRowId = HealthConnectSupport.normalizeMeasurementId(rowId)
+        if (normalizedRowId.isEmpty()) return false
+
+        val hiddenNormalized = ids.mapNotNull { raw ->
+            val id = raw.trim()
+            if (id.isEmpty()) null else HealthConnectSupport.normalizeMeasurementId(id)
+        }.filter { it.isNotEmpty() }.toSet()
+
+        return normalizedRowId in hiddenNormalized
     }
 }
