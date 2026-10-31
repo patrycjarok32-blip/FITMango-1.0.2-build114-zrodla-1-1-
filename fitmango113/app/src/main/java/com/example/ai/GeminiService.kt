@@ -1,6 +1,6 @@
 package com.example.ai
 
-import com.squareup.moshi.JsonClas
+
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.delay
