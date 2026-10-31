@@ -109,15 +109,15 @@ object HealthConnectSupport {
         }
     }
 
-    /**     /**
+        /**
      * Rozpoznaje duplikaty pomiarów wagi.
      */
     fun isDuplicateMeasurement(
         existingMeasurements: List<BodyMeasurementEntity>,
         recordId: String,
         dateString: String,
-        timestampMillis: Long,
-        weightKg: Float
+        timestampMillis = wEntry.time.toEpochMilli(),
+weightKg = wEntry.weightKg
     ): Boolean {
         return existingMeasurements.any { measurement ->
             val sameRecordId =
@@ -327,7 +327,11 @@ class HealthConnectCoordinator(
                     latestWeightKg = syncResult.latestWeightKg?.toDouble() ?: previousSync?.latestWeightKg ?: 0.0,
                     sleepDurationMinutes =
     if (
-        syncResult.sleepReadState in setOf("NO_PERMISSION", "EMPTY") ||
+            } else {
+        syncResult.sleepDurationMinutes
+    }
+)
+repository.saveHealthConnectSync(syncEntity)
         syncResult.sleepDurationMinutes == null
     ) {
         previousSync?.sleepDurationMinutes ?: 0L
