@@ -116,8 +116,8 @@ object HealthConnectSupport {
         existingMeasurements: List<BodyMeasurementEntity>,
         recordId: String,
         dateString: String,
-        timestampMillis = wEntry.time.toEpochMilli(),
-weightKg = wEntry.weightKg
+        timestampMillis: Long,
+weightKg: Float
     ): Boolean {
         return existingMeasurements.any { measurement ->
             val sameRecordId =
