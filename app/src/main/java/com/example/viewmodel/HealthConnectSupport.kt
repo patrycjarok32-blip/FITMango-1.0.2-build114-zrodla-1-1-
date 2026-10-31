@@ -333,8 +333,7 @@ class HealthConnectCoordinator(
                     activeCaloriesBurned = syncResult.activeCaloriesBurnedKcal ?: (if (previousIsToday) previousSync?.activeCaloriesBurned else null) ?: 0.0,
                     latestWeightKg = syncResult.latestWeightKg?.toDouble() ?: previousSync?.latestWeightKg ?: 0.0,
                     sleepDurationMinutes = if (syncResult.sleepReadState in setOf("NO_PERMISSION", "EMPTY")) 0L else
-                        syncResult.sleepDurationMinutes ?: (if (previousIsToday) previousSync?.sleepDurationMinutes else null) ?: 0L,
-                    syncStatusMessage = syncResult.statusMessage
+    syncResult.sleepDurationMinutes ?: (if (previousIsToday) previousSync?.sleepDurationMinutes else null) ?: 0L,
                 )
                 repository.saveHealthConnectSync(syncEntity)
                 if (syncResult.sleepReadMessage.isNotBlank()) {
