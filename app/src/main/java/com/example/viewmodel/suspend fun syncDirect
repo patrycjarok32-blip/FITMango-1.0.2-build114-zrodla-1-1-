@@ -339,12 +339,7 @@ class HealthConnectCoordinator(
                     }
                 )
                 repository.saveHealthConnectSync(syncEntity)
-    ) {
-        previousSync?.sleepDurationMinutes ?: 0L
-    } else {
-        syncResult.sleepDurationMinutes
-    },
-                repository.saveHealthConnectSync(syncEntity)
+  
                 if (syncResult.sleepReadMessage.isNotBlank()) {
                     syncPrefs.edit().putString("sleepMessage", syncResult.sleepReadMessage).apply()
                     _sleepReadMessage.value = syncResult.sleepReadMessage
