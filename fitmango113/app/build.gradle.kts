@@ -18,7 +18,7 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
- signingConfigs {
+   signingConfigs {
     create("release") {
       val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
       storeFile = file(keystorePath)
@@ -27,11 +27,6 @@ android {
       keyPassword = System.getenv("KEY_PASSWORD")
     }
   }
-    }
-  }
-    }
-  }
-
   buildTypes {
     release {
       isCrunchPngs = false
