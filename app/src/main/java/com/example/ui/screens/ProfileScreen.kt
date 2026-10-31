@@ -218,7 +218,7 @@ fun ProfileScreen(
     ) { padding ->
         if (detail == null) {
             Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
-                ProfileHub(tab, { tab = it }, listStates.getValue(tab), summaries, { openDetail(it) })
+                ProfileHub(tab, { tab = it }, listStates.getValue(tab), summaries, { openDetail(it) }, profile)
             }
         } else detailStates.SaveableStateProvider("profile_detail_" + detail) {
             CompositionLocalProvider(LocalStandaloneProfileSection provides true) {
