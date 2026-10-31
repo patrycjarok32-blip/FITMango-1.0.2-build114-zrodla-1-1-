@@ -1,18 +1,18 @@
 package com.example.ai
 
-import com.squareup.moshi.JsonClass
+
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 import java.io.IOException
 
-@JsonClass(generateAdapter = true)
+
 data class GeminiModelPage(
     val models: List<GeminiModelInfo> = emptyList(),
     val nextPageToken: String? = null
 )
 
-@JsonClass(generateAdapter = true)
+
 data class GeminiModelInfo(
     val name: String,
     val supportedGenerationMethods: List<String> = emptyList()
