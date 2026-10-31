@@ -109,7 +109,33 @@ object HealthConnectSupport {
         }
     }
 
-    /**
+    /**     /**
+     * Rozpoznaje duplikaty pomiarów wagi.
+     */
+    fun isDuplicateMeasurement(
+        existingMeasurements: List<BodyMeasurementEntity>,
+        recordId: String,
+        dateString: String,
+        timestampMillis: Long,
+        weightKg: Float
+    ): Boolean {
+        return existingMeasurements.any { measurement ->
+            val sameRecordId =
+                recordId.isNotBlank() &&
+                    !measurement.healthRecordId.isNullOrBlank() &&
+                    measurement.healthRecordId == recordId
+
+            val sameHealthConnectMeasurement =
+                measurement.source == "HEALTH_CONNECT" &&
+                    measurement.timestamp > 0 &&
+                    timestampMillis > 0 &&
+                    kotlin.math.abs(measurement.timestamp - timestampMillis) < 60_000 &&
+                    kotlin.math.abs(measurement.weightKg - weightKg) < 0.01f
+
+            sameRecordId || sameHealthConnectMeasurement
+        }
+    }
+}
      
 
 class HealthConnectCoordinator(
