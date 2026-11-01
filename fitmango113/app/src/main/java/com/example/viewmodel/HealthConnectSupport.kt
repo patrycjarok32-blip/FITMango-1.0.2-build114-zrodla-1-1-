@@ -28,6 +28,7 @@ import kotlinx.coroutines.sync.Mutex
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 object HealthConnectSupport {
@@ -63,7 +64,7 @@ object HealthConnectSupport {
 
     fun formatStepsDisplay(steps: Long?): String {
         return if (steps != null && steps >= 0) {
-            String.format(Locale.getDefault(), "%,d", steps).replace(',', ' ')
+            String.format(Locale.getDefault(), "%d", steps).replace(',', ' ')
         } else {
             "Brak danych"
         }
@@ -110,19 +111,33 @@ object HealthConnectSupport {
     }
 
     /**
-     * Determines whether a Health Connect weight entry is already present in existing measurements.
-     * Checks record identifier first, then timestamp (within 60s), then exact date match with HEALTH_CONNECT source.
+     * Rozpoznaje duplikaty pomiarów wagi w synchronizacji Health Connect.
+     * Najpierw porównuje rekordId, następnie czas (±60 s) oraz masę przy zbliżonym czasie,
+     * żeby uniknąć podwójnego zapisania tego samego pomiaru z różnych odczytów.
      */
     fun isDuplicateMeasurement(
         existingMeasurements: List<BodyMeasurementEntity>,
         recordId: String,
         dateString: String,
-        timestampMillis: Long
+        timestampMillis: Long,
+        weightKg: Float
     ): Boolean {
-        return existingMeasurements.any { m ->
-            (!m.healthRecordId.isNullOrBlank() && m.healthRecordId == recordId) ||
-                (m.timestamp > 0 && timestampMillis > 0 && kotlin.math.abs(m.timestamp - timestampMillis) < 60_000) ||
-                (m.date == dateString && m.source == "HEALTH_CONNECT")
+        return existingMeasurements.any { measurement ->
+            val sameRecordId = recordId.isNotBlank() &&
+                !measurement.healthRecordId.isNullOrBlank() &&
+                measurement.healthRecordId == recordId
+
+            val sameHealthConnectSample = measurement.source == "HEALTH_CONNECT" &&
+                measurement.timestamp > 0L &&
+                timestampMillis > 0L &&
+                abs(measurement.timestamp - timestampMillis) <= 60_000L &&
+                abs(measurement.weightKg - weightKg) <= 0.01f
+
+            val sameDateFallback = measurement.source == "HEALTH_CONNECT" &&
+                measurement.date == dateString &&
+                abs(measurement.weightKg - weightKg) <= 0.01f
+
+            sameRecordId || sameHealthConnectSample || sameDateFallback
         }
     }
 }
@@ -175,7 +190,6 @@ class HealthConnectCoordinator(
     val statusMessage: StateFlow<String?> = _statusMessage.asStateFlow()
 
     companion object {
-        // Shared by foreground coordinators and the periodic worker.
         internal val syncMutex = Mutex()
         const val AUTO_SYNC_INTERVAL_MS = 5 * 60 * 1000L
     }
@@ -224,7 +238,6 @@ class HealthConnectCoordinator(
         if (readerOverride == null && manager.canReadInBackground()) HealthSyncScheduler.schedule(application)
         syncDirect(automatic = true)
     }
-
 
     fun checkStatus() {
         scope.launch {
@@ -324,19 +337,19 @@ class HealthConnectCoordinator(
                     _sleepReadMessage.value = syncResult.sleepReadMessage
                 }
 
-                // Synchronize weight measurements without duplicates
                 com.example.data.PersonalDataGate.mutex.withLock {
-                val existingMeasurements = repository.getAllBodyMeasurementsDirect().toMutableList()
-                for (wEntry in syncResult.weightHistory) {
-                    if (wEntry.recordId in MeasurementRemovalSupport.hidden(application)) continue
-                    val isDup = HealthConnectSupport.isDuplicateMeasurement(
-                        existingMeasurements = existingMeasurements,
-                        recordId = wEntry.recordId,
-                        dateString = wEntry.dateString,
-                        timestampMillis = wEntry.time.toEpochMilli()
-                    )
-                    if (!isDup) {
-                        val measurement = BodyMeasurementEntity(
+                    val existingMeasurements = repository.getAllBodyMeasurementsDirect().toMutableList()
+                    for (wEntry in syncResult.weightHistory) {
+                        if (wEntry.recordId in MeasurementRemovalSupport.hidden(application)) continue
+                        val isDup = HealthConnectSupport.isDuplicateMeasurement(
+                            existingMeasurements = existingMeasurements,
+                            recordId = wEntry.recordId,
+                            dateString = wEntry.dateString,
+                            timestampMillis = wEntry.time.toEpochMilli(),
+                            weightKg = wEntry.weightKg
+                        )
+                        if (!isDup) {
+                            val measurement = BodyMeasurementEntity(
                                 date = wEntry.dateString,
                                 weightKg = wEntry.weightKg,
                                 waistCm = 0f,
@@ -348,16 +361,15 @@ class HealthConnectCoordinator(
                                 healthRecordId = wEntry.recordId,
                                 timestamp = wEntry.time.toEpochMilli()
                             )
-                        repository.insertBodyMeasurement(measurement)
-                        existingMeasurements.add(measurement)
+                            repository.insertBodyMeasurement(measurement)
+                            existingMeasurements.add(measurement)
+                        }
                     }
                 }
-                }
 
-                // Update user profile weight if new weight is provided
                 syncResult.latestWeightKg?.let { newWeight ->
                     val currentProfile = repository.userProfile.first()
-                    if (currentProfile != null && (currentProfile.currentWeightKg <= 0f || force || (automatic && previousSync?.latestWeightKg?.let { kotlin.math.abs(currentProfile.currentWeightKg - it.toFloat()) < 0.01f } == true))) {
+                    if (currentProfile != null && (currentProfile.currentWeightKg <= 0f || force || (automatic && previousSync?.latestWeightKg?.let { abs(currentProfile.currentWeightKg - it) > 0.1f } == true))) {
                         repository.saveUserProfile(currentProfile.copy(currentWeightKg = newWeight))
                     }
                 }
@@ -394,17 +406,17 @@ class HealthConnectCoordinator(
         return scope.launch {
             syncMutex.lock()
             try {
-            val current = repository.healthConnectSync.first()
-            if (current != null) {
-                repository.saveHealthConnectSync(current.copy(isConnected = false, syncStatusMessage = "Rozłączono"))
-            } else {
-                repository.saveHealthConnectSync(HealthConnectSyncEntity(id = 1, isConnected = false, syncStatusMessage = "Rozłączono"))
-            }
-            _grantedPermissions.value = emptySet()
-            syncPrefs.edit().remove("sleepMessage").apply()
-            _sleepReadMessage.value = ""
-            _statusMessage.value = "Odłączono od Health Connect. Lokalne pomiary zostały zachowane."
-            onComplete?.invoke()
+                val current = repository.healthConnectSync.first()
+                if (current != null) {
+                    repository.saveHealthConnectSync(current.copy(isConnected = false, syncStatusMessage = "Rozłączono"))
+                } else {
+                    repository.saveHealthConnectSync(HealthConnectSyncEntity(id = 1, isConnected = false, syncStatusMessage = "Rozłączono"))
+                }
+                _grantedPermissions.value = emptySet()
+                syncPrefs.edit().remove("sleepMessage").apply()
+                _sleepReadMessage.value = ""
+                _statusMessage.value = "Odłączono od Health Connect. Lokalne pomiary zostały zachowane."
+                onComplete?.invoke()
             } finally { syncMutex.unlock() }
         }
     }
