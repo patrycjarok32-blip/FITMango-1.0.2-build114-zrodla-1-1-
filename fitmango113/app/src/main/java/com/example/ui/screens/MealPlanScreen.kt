@@ -340,8 +340,6 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 regularity = dayRegularity
             )
 
-            item { NutritionWeekCard(viewModel) }
-
             LazyColumn(
                 state = plannerListState,
                 modifier = Modifier
@@ -351,13 +349,14 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     .testTag("meal_plan_lazy_column"),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                item { NutritionWeekCard(viewModel) }
                 item { com.example.ui.components.ChangeHistoryCard(viewModel) }
                 item { com.example.ui.components.NutritionAttentionCard(viewModel) }
                 item { com.example.ui.components.SavedMealSetsCard(viewModel, selectedDayName) }
                 item { com.example.ui.components.QuickMealsCard(viewModel, selectedDayName) }
                 item {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(if (remainingMeals.isEmpty() && eatenMeals.isNotEmpty()) "Wszystkie zaplanowane posiłki zjedzone ✓" else "Do zjedzenia: ${remainingMeals.size}", modifier = Modifier.testTag("meal_list_counter"), style = MaterialTheme.typography.labelLarge)
+                        Text(if (remainingMeals.isEmpty() && eatenMeals.isNotEmpty()) "Wszystkie zaplanowane posiłki zjedzone ✓" else "Do zjedzenia: ${remainingMeals.size}", modifier = Modifier.testTag("meal_plan_header"), style = MaterialTheme.typography.labelLarge, color = Cream)
                         if (eatenMeals.isNotEmpty()) TextButton(onClick = { showEatenHistory = true }, modifier = Modifier.testTag("show_eaten_history")) { Text("Zjedzone (${eatenMeals.size})") }
                     }
                 }
@@ -429,7 +428,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         dragController = dragController
                     )
                 }
-                if (dayMeals.isNotEmpty()) item { TextButton(onClick = { showEmptySlots = !showEmptySlots }, modifier = Modifier.testTag("show_other_meal_slots")) { Text(if (showEmptySlots) "Ukryj inne sloty" else "Pokaż pozostałe sloty") } }
+                if (dayMeals.isNotEmpty()) item { TextButton(onClick = { showEmptySlots = !showEmptySlots }, modifier = Modifier.testTag("show_other_meal_slots")) { Text(if (showEmptySlots) "Ukryj puste sloty" else "Pokaż inne sloty") } }
             }
         }
         MealDragOverlay(dragController)
@@ -526,10 +525,10 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                                 Card(
                                     modifier = Modifier.fillMaxWidth().clickable {
                                         if (editingMeal != null) {
-                                            viewModel.changeMealRecipe(editingMeal, recipe)
+                                            viewModel.changeMealPlanRecipe(editingMeal, recipe)
                                             mealToChangeRecipe = null
                                         } else {
-                                            viewModel.addMealToDay(selectedDayName, targetSlot?.canonicalName ?: "Obiad", recipe)
+                                            viewModel.addMealPlan(selectedDayName, targetSlot?.canonicalName ?: "Obiad", recipe, 1f)
                                             slotToAddRecipe = null
                                         }
                                     },
