@@ -62,10 +62,12 @@ import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ui.components.NutritionWeekCard
 import com.example.ui.components.PersonalProgressCards
 import com.example.ui.components.SportsHistoryControls
 import com.example.ui.components.SportsWeeklyReport
 import com.example.ui.theme.DarkBackground
+import com.example.ui.theme.ErrorInk
 import com.example.ui.theme.GoldAccent
 import com.example.ui.theme.LeafGreen
 import com.example.ui.theme.MangoYellow
@@ -76,7 +78,6 @@ import com.example.ui.theme.WarmBrown
 import com.example.viewmodel.ActivityRecoverySupport
 import com.example.viewmodel.CurrentActivitySupport
 import com.example.viewmodel.DietaViewModel
-import com.example.viewmodel.NutritionWeekCard
 import com.example.viewmodel.SportsGraphicsSupport
 import com.example.viewmodel.SportsReportNumbers
 import com.example.viewmodel.SportsSupport
@@ -322,7 +323,7 @@ fun SportsScreen(
                             QuickStatPill("Czas", if (summarySleep > 0L) "${summarySleep / 60}h" else "—", Modifier.weight(1f))
                         }
                         Text(
-                            "Dzisiaj: ${if (currentDayData != null) "${currentDayData.steps ?: 0} kroków" else "brak danych"} • Energia: ${summaryCalories} kcal • Regeneracja: ${if (summarySleep > 0L) "${summarySleep / 60}h" else "brak danych"}",
+                            "Dzisiaj: ${if (currentDayData != null) "${currentDayData.steps ?: 0} kroków" else "brak danych"} • Energia: ${summaryCalories} kcal • Regeneracja: ${if (summarySleep > 0L) "${summarySleep / 60}h ${summarySleep % 60}m" else "brak danych"}",
                             color = GoldAccent,
                             fontSize = 12.sp
                         )
@@ -434,3 +435,4 @@ private fun Int.safeProgress(): Float = this.coerceIn(0, 100).toFloat() / 100f
 private fun Long.formatDisplay(): String = this.toString()
 
 private fun Long.formatMinutes(): String = "${this / 60}h ${this % 60}m"
+

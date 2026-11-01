@@ -68,7 +68,7 @@ import com.example.ui.theme.OrangeInk
 import com.example.ui.theme.WarmBrown
 import com.example.viewmodel.CurrentActivitySupport
 import com.example.viewmodel.DietaViewModel
-import com.example.viewmodel.ingredientsubstitution.*
+import com.example.viewmodel.IngredientSubstitutionSupport
 import java.time.LocalDate
 import kotlin.math.roundToInt
 
@@ -370,3 +370,4 @@ private fun ActionCard(
         }
     }
 }
+

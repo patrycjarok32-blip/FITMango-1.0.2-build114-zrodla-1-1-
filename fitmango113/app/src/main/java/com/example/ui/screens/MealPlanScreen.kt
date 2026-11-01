@@ -168,7 +168,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
         if (dayMeals.isEmpty()) 0f else (eatenMeals.size.toFloat() / dayMeals.size.toFloat()).coerceIn(0f, 1f)
     }
     val dayRegularity = remember(dayMeals, mealPlans) {
-        if (dayMeals.isEmpty()) 0f else (dayMeals.count { it.completed == true || it.completed == null }.toFloat() / dayMeals.size.toFloat()).coerceIn(0f, 1f)
+        if (dayMeals.isEmpty()) 0f else (dayMeals.count { it.isCompleted }.toFloat() / dayMeals.size.toFloat()).coerceIn(0f, 1f)
     }
 
     Scaffold(
@@ -356,7 +356,8 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 item { com.example.ui.components.QuickMealsCard(viewModel, selectedDayName) }
                 item {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(if (remainingMeals.isEmpty() && eatenMeals.isNotEmpty()) "Wszystkie zaplanowane posiłki zjedzone ✓" else "Do zjedzenia: ${remainingMeals.size}", modifier = Modifier.testTag("meal_plan_header"), style = MaterialTheme.typography.labelLarge, color = Cream)
+                        Text(if (remainingMeals.isEmpty() && eatenMeals.isNotEmpty()) "Wszystkie zaplanowane posiłki zjedzone ✓" else "Do zjedzenia: ${remainingMeals.size}", modifier = Modifier.testTag("remaining_meals_header"),
+                            color = Cream, fontWeight = FontWeight.Bold)
                         if (eatenMeals.isNotEmpty()) TextButton(onClick = { showEatenHistory = true }, modifier = Modifier.testTag("show_eaten_history")) { Text("Zjedzone (${eatenMeals.size})") }
                     }
                 }
@@ -428,7 +429,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         dragController = dragController
                     )
                 }
-                if (dayMeals.isNotEmpty()) item { TextButton(onClick = { showEmptySlots = !showEmptySlots }, modifier = Modifier.testTag("show_other_meal_slots")) { Text(if (showEmptySlots) "Ukryj puste sloty" else "Pokaż inne sloty") } }
+                if (dayMeals.isNotEmpty()) item { TextButton(onClick = { showEmptySlots = !showEmptySlots }, modifier = Modifier.testTag("show_other_meal_slots")) { Text(if (showEmptySlots) "Ukryj wolne sloty" else "Pokaż wolne sloty") } }
             }
         }
         MealDragOverlay(dragController)
@@ -677,3 +678,4 @@ private fun SuccessFeedback(feedback: Int, tag: String = "meal_status_feedback")
         )
     }
 }
+
