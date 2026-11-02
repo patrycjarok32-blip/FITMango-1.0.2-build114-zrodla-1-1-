@@ -1,4 +1,3 @@
-```yaml
 name: FITMango Android CI
 
 on:
@@ -51,4 +50,3 @@ jobs:
           path: fitmango113/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 7
-```
