@@ -1,4 +1,5 @@
-package com.example.ai
+
+          package com.example.ai
 
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
@@ -306,4 +307,5 @@ internal suspend fun callGeminiWithService(
     }
 
     return Result.failure(lastError ?: Exception("Usługa Gemini nie zwróciła odpowiedzi."))
+}
 }
