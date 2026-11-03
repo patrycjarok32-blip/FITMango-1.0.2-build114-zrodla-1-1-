@@ -136,15 +136,7 @@ object HealthConnectSupport {
         }
     }
 }
-    ): Boolean {
-        return existingMeasurements.any { m ->
-            (!m.healthRecordId.isNullOrBlank() && m.healthRecordId == recordId) ||
-                (m.timestamp > 0 && timestampMillis > 0 && kotlin.math.abs(m.timestamp - timestampMillis) < 60_000) ||
-                (m.date == dateString && m.source == "HEALTH_CONNECT")
-        }
-    }
-}
-
+    
 class HealthConnectCoordinator(
     private val repository: DietaRepository,
     private val application: Application,
