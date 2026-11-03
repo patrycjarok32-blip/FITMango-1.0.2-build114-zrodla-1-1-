@@ -5,8 +5,16 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /** Presentation values only. Unknown days stay null; no new energy calculations. */
-data class SportGraphicDay(val date: LocalDate, val minutes: Long?, val sleepMinutes: Long?,
-    val sessions: List<SportSession>, val energy: Int?, val fatigue: Int?, val future: Boolean = false)
+data class SportGraphicDay(
+    val date: LocalDate,
+    val minutes: Long?,
+    val steps: Long?,
+    val sleepMinutes: Long?,
+    val sessions: List<SportSession>,
+    val energy: Int?,
+    val fatigue: Int?,
+    val future: Boolean = false
+)
 data class SportsReportNumbers(val from: LocalDate, val until: LocalDate, val approved: Int,
     val meanCalories: Double?, val meanProtein: Double?, val food: List<HabitDay>,
     val activity: ActivitySummary, val days: List<SportGraphicDay>, val estimatedFood: Boolean)
