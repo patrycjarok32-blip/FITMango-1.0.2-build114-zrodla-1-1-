@@ -678,4 +678,169 @@ private fun SuccessFeedback(feedback: Int, tag: String = "meal_status_feedback")
         )
     }
 }
+@Composable
+private fun MealCategorySection(
+    categorySpec: MealCategorySpec,
+    meals: List<MealPlanEntity>,
+    activeMealIds: Set<Long>,
+    nextMealId: Long?,
+    recipes: List<RecipeEntity>,
+    recipeIngredients: List<RecipeIngredientEntity>,
+    onAddRecipeToSlot: () -> Unit,
+    onAddProductToSlot: () -> Unit,
+    onDecreaseServings: (MealPlanEntity) -> Unit,
+    onIncreaseServings: (MealPlanEntity) -> Unit,
+    onEditServingsClick: (MealPlanEntity) -> Unit,
+    onSwapIngredientClick: (MealPlanEntity, String) -> Unit,
+    onViewInstructionsClick: (MealPlanEntity) -> Unit,
+    onChangeRecipeClick: (MealPlanEntity) -> Unit,
+    onMoveMealClick: (MealPlanEntity) -> Unit,
+    onRemoveMealClick: (MealPlanEntity) -> Unit,
+    onToggleEatenClick: (MealPlanEntity) -> Unit,
+    onIngredientQuantityChange: (MealPlanEntity, ResolvedMealIngredientItem, Float) -> Unit,
+    viewModel: DietaViewModel,
+    dragController: MealDragController
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("meal_category_section_${categorySpec.canonicalName}"),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                androidx.compose.material3.Icon(
+                    mealCategoryIcon(categorySpec.canonicalName),
+                    null,
+                    tint = mealCategoryColor(categorySpec.canonicalName),
+                    modifier = Modifier.size(20.dp)
+                )
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        categorySpec.canonicalName,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = mealCategoryColor(categorySpec.canonicalName)
+                    )
+                    Text(
+                        categorySpec.timeRange,
+                        fontSize = 11.sp,
+                        color = GoldAccent
+                    )
+                }
+            }
 
+            TextButton(
+                onClick = onAddRecipeToSlot,
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                modifier = Modifier.testTag("add_to_slot_${categorySpec.canonicalName}")
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = null,
+                    tint = MangoYellow,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(2.dp))
+                Text(
+                    "Dodaj przepis",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MangoYellow
+                )
+            }
+        }
+
+        TextButton(
+            onClick = onAddProductToSlot,
+            modifier = Modifier
+                .align(Alignment.End)
+                .testTag("add_product_to_slot_${categorySpec.canonicalName}"),
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+        ) {
+            Icon(
+                Icons.Default.Add,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp)
+            )
+            Text("Dodaj produkt", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        }
+
+        if (meals.isEmpty()) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, WarmBrown.copy(alpha = 0.35f), RoundedCornerShape(18.dp)),
+                shape = RoundedCornerShape(18.dp),
+                color = MutedSurface1.copy(alpha = 0.65f)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Brak zaplanowanego posiłku (${categorySpec.canonicalName})",
+                        fontSize = 12.sp,
+                        color = Cream.copy(alpha = 0.55f)
+                    )
+                    Text(
+                        text = "Wybierz →",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = GoldAccent,
+                        modifier = Modifier.clickable { onAddRecipeToSlot() }
+                    )
+                }
+            }
+        } else {
+            meals.forEach { meal ->
+                val matchedRecipe = recipes.find { it.id == meal.recipeId }
+                    ?: recipes.find {
+                        it.title.equals(meal.recipeTitle, ignoreCase = true)
+                    }
+
+                key(meal.id) {
+                    MealQueueMotionItem(visible = meal.id in activeMealIds) {
+                        PlannedMealDetailCard(
+                            meal = meal,
+                            interactionsEnabled = meal.id in activeMealIds,
+                            isUpcoming = meal.id == nextMealId,
+                            recipe = matchedRecipe,
+                            recipeIngredients = recipeIngredients,
+                            timeRange = categorySpec.timeRange,
+                            onDecreaseServings = { onDecreaseServings(meal) },
+                            onIncreaseServings = { onIncreaseServings(meal) },
+                            onEditServingsClick = { onEditServingsClick(meal) },
+                            onSwapIngredientClick = { ingLine ->
+                                onSwapIngredientClick(meal, ingLine)
+                            },
+                            onViewInstructionsClick = {
+                                onViewInstructionsClick(meal)
+                            },
+                            onChangeRecipeClick = { onChangeRecipeClick(meal) },
+                            onMoveMealClick = { onMoveMealClick(meal) },
+                            onRemoveMealClick = { onRemoveMealClick(meal) },
+                            onToggleEatenClick = { onToggleEatenClick(meal) },
+                            onIngredientQuantityChange = { ingredient, quantity ->
+                                onIngredientQuantityChange(meal, ingredient, quantity)
+                            },
+                            viewModel = viewModel,
+                            dragController = dragController
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
