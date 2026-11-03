@@ -1,0 +1,41 @@
+
+workflows:
+  fitmango-apk:
+    name: FitMango - Android APK
+    max_build_duration: 90
+    instance_type: linux_x2
+
+    environment:
+      java: 21
+
+    scripts:
+      - name: Check project
+        script: |
+          cd "$CM_BUILD_DIR/fitmango113"
+
+          if [ ! -f gradlew ]; then
+            echo "ERROR: Nie znaleziono pliku gradlew."
+            exit 1
+          fi
+
+          if [ ! -f app/build.gradle ] && [ ! -f app/build.gradle.kts ]; then
+            echo "ERROR: Nie znaleziono konfiguracji modułu app."
+            exit 1
+          fi
+
+          echo "Projekt FitMango został odnaleziony."
+
+      - name: Configure Android SDK
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/fitmango113/local.properties"
+
+      - name: Build FitMango APK
+        script: |
+          cd "$CM_BUILD_DIR/fitmango113"
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace assembleDebug
+
+    artifacts:
+      - fitmango113/app/build/outputs/apk/debug/*.apk
+      - fitmango113/app/build/outputs/mapping/**/*.txt
+      - /tmp/*.log
