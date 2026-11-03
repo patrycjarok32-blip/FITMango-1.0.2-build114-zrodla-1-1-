@@ -1,4 +1,3 @@
-
 name: FITMango Android CI
 
 on:
@@ -38,10 +37,16 @@ jobs:
         with:
           cmdline-tools-version: 12266719
           accept-android-sdk-licenses: true
-          packages: |
-            platform-tools
-            platforms;android-36
-            build-tools;36.0.0
+
+      - name: Install Android SDK packages
+        run: |
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Verify Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          sdkmanager --list_installed
+          adb version
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
