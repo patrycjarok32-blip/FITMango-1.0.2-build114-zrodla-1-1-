@@ -64,7 +64,6 @@ import androidx.health.connect.client.records.StepsRecord
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.components.NutritionWeekCard
 import com.example.ui.components.PersonalProgressCards
-import com.example.ui.components.SportsHistoryControls
 import com.example.ui.components.SportsWeeklyReport
 import com.example.ui.theme.DarkBackground
 import com.example.ui.theme.ErrorInk
@@ -435,4 +434,28 @@ private fun Int.safeProgress(): Float = this.coerceIn(0, 100).toFloat() / 100f
 private fun Long.formatDisplay(): String = this.toString()
 
 private fun Long.formatMinutes(): String = "${this / 60}h ${this % 60}m"
+@Composable
+fun SportsHistoryControls(
+    busy: Boolean,
+    onPermissions: () -> Unit,
+    onRefresh: () -> Unit
+) {
+    Row {
+        TextButton(
+            enabled = !busy,
+            onClick = onPermissions,
+            modifier = Modifier.testTag("sport_permissions")
+        ) {
+            Text("Połącz / uprawnienia")
+        }
+
+        TextButton(
+            enabled = !busy,
+            onClick = onRefresh,
+            modifier = Modifier.testTag("sport_refresh")
+        ) {
+            Text(if (busy) "Odczyt…" else "Odśwież")
+        }
+    }
+}
 
