@@ -292,8 +292,8 @@ internal suspend fun callGeminiWithService(
                 logE("GeminiRouter", "Error with model $model: ${e.javaClass.simpleName}")
                 lastError = e
                 break // Fallback
-            }
-        }
+            
+        
     }
 
     if (lastRateLimitOr503Code != null) {
