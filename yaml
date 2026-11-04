@@ -1,0 +1,57 @@
+workflows:
+  fitmango-1-1-0-build115:
+    name: FITMango 1.1.0 (build 115)
+    instance_type: linux_x2
+    max_build_duration: 120
+    environment:
+      groups:
+        - fitmango_signing
+      java: 21
+      vars:
+        GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g"
+    scripts:
+      - name: Check source and Gradle wrapper
+        script: |
+          set -euo pipefail
+          test -f app/build.gradle.kts
+          test -f gradle/wrapper/gradle-wrapper.jar
+          chmod +x gradlew
+          grep -q 'versionCode = 115' app/build.gradle.kts
+          grep -q 'versionName = "1.1.0"' app/build.gradle.kts
+          java -version
+      - name: Unit tests
+        script: |
+          set -euo pipefail
+          ./gradlew --no-daemon :app:testDebugUnitTest
+      - name: Android lint
+        script: |
+          set -euo pipefail
+          ./gradlew --no-daemon :app:lintDebug
+      - name: Restore existing upload keystore
+        script: |
+          set -euo pipefail
+          : "${FITMANGO_KEYSTORE_BASE64:?Set the existing keystore in fitmango_signing}"
+          : "${STORE_PASSWORD:?Set STORE_PASSWORD in fitmango_signing}"
+          : "${KEY_PASSWORD:?Set KEY_PASSWORD in fitmango_signing}"
+          export KEYSTORE_PATH="$CM_BUILD_DIR/fitmango-upload.jks"
+          printf '%s' "$FITMANGO_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+          test -s "$KEYSTORE_PATH"
+          echo "KEYSTORE_PATH=$KEYSTORE_PATH" >> "$CM_ENV"
+      - name: Build signed release APK and AAB
+        script: |
+          set -euo pipefail
+          ./gradlew --no-daemon :app:assembleRelease :app:bundleRelease
+          test -s app/build/outputs/apk/release/app-release.apk
+          test -s app/build/outputs/bundle/release/app-release.aab
+      - name: Verify release version
+        script: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/release/app-release.apk
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          "$AAPT" dump badging "$APK" | grep -E "^package: name='com.example' versionCode='115' versionName='1.1.0'"
+    artifacts:
+      - app/build/outputs/apk/release/*.apk
+      - app/build/outputs/bundle/release/*.aab
+      - app/build/reports/lint-results-debug.html
+      - app/build/test-results/testDebugUnitTest/**/*.xml
