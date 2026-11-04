@@ -288,24 +288,30 @@ internal suspend fun callGeminiWithService(
                 throw e
             } catch (e: IOException) {
                 return Result.failure(Exception("Nie można połączyć się z Gemini. Sprawdź połączenie z internetem i spróbuj ponownie."))
+            
             } catch (e: Exception) {
-                logE("GeminiRouter", "Error with model $model: ${e.javaClass.simpleName}")
+                logE(
+                    "GeminiRouter",
+                    "Error with model $model: ${e.javaClass.simpleName}"
+                )
                 lastError = e
                 break // Fallback
-            
-        
+            }
+        }
     }
 
     if (lastRateLimitOr503Code != null) {
         return Result.failure(
             GeminiRateLimitOrOverloadException(
-                lastError?.message ?: "Limit zapytań do AI został osiągnięty (HTTP $lastRateLimitOr503Code). Spróbuj ponownie później.",
+                lastError?.message
+                    ?: "Limit zapytań do AI został osiągnięty (HTTP $lastRateLimitOr503Code). Spróbuj ponownie później.",
                 lastRateLimitOr503Code,
                 lastError
             )
         )
     }
 
-    return Result.failure(lastError ?: Exception("Usługa Gemini nie zwróciła odpowiedzi."))
-}
+    return Result.failure(
+        lastError ?: Exception("Usługa Gemini nie zwróciła odpowiedzi.")
+    )
 }
