@@ -197,6 +197,19 @@ fun MainNavigation(viewModel: DietaViewModel) {
         Screen.Profile
     )
 
+    val currentEntry by navController.currentBackStackEntryAsState()
+    val activeRoute = currentEntry?.destination?.route
+    val navigatePrimaryTab: (Screen) -> Unit = { screen ->
+        keyboard?.hide()
+        if (navController.currentBackStackEntry?.destination?.route != screen.route) {
+            navController.navigate(screen.route) {
+                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                launchSingleTop = true
+                restoreState = screen != Screen.Dashboard
+            }
+        }
+    }
+
     Scaffold(
         modifier = Modifier.imePadding(),
         bottomBar = {
@@ -205,25 +218,40 @@ fun MainNavigation(viewModel: DietaViewModel) {
             MangoBottomNav(
                 items = items,
                 currentRoute = currentRoute,
-                onNavigate = { screen ->
-                    keyboard?.hide()
-                    if (currentRoute != screen.route) {
-                        navController.navigate(screen.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = screen != Screen.Dashboard
-                        }
-                    }
-                }
+                onNavigate = navigatePrimaryTab
             )
         }
     ) { padding ->
         NavHost(
             navController = navController,
             startDestination = Screen.Dashboard.route,
-            modifier = Modifier.padding(padding).consumeWindowInsets(padding),
+            modifier = Modifier
+                .padding(padding)
+                .consumeWindowInsets(padding)
+                .pointerInput(activeRoute, items) {
+                    // Swipe between the five main tabs only. Detail pages and AI forms are unaffected.
+                    if (items.none { it.route == activeRoute }) return@pointerInput
+                    var horizontalDrag = 0f
+                    detectHorizontalDragGestures(
+                        onDragStart = { horizontalDrag = 0f },
+                        onHorizontalDrag = { change, dragAmount ->
+                            horizontalDrag += dragAmount
+                            change.consume()
+                        },
+                        onDragEnd = {
+                            if (abs(horizontalDrag) >= 90.dp.toPx()) {
+                                val currentIndex = items.indexOfFirst { it.route == activeRoute }
+                                val nextIndex = (currentIndex + if (horizontalDrag < 0f) 1 else -1)
+                                    .coerceIn(0, items.lastIndex)
+                                if (currentIndex >= 0 && nextIndex != currentIndex) {
+                                    navigatePrimaryTab(items[nextIndex])
+                                }
+                            }
+                            horizontalDrag = 0f
+                        },
+                        onDragCancel = { horizontalDrag = 0f }
+                    )
+                },
             enterTransition = {
                 val direction = tabTransitionDirection(initialState.destination.route, targetState.destination.route)
                 slideInHorizontally(tween(if (reduced) 0 else 240)) { width -> if (reduced) 0 else direction * width / 8 } + fadeIn(tween(if (reduced) 0 else 200))
