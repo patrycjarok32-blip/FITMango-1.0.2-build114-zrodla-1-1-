@@ -467,7 +467,19 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                                     ) {
                                         Row(verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            MangoSectionArt(com.example.R.drawable.fit_icon_mango, MangoYellow, size = 32.dp)
+                                            Surface(
+                                                shape = RoundedCornerShape(14.dp),
+                                                color = MangoYellow.copy(alpha = 0.16f),
+                                                shadowElevation = 5.dp,
+                                                tonalElevation = 3.dp
+                                            ) {
+                                                Box(Modifier.padding(5.dp)) {
+                                                    MangoSectionArt(
+                                                        com.example.R.drawable.fit_icon_mango,
+                                                        MangoYellow, size = 32.dp
+                                                    )
+                                                }
+                                            }
                                             Text(category.canonicalName, fontWeight = FontWeight.Bold,
                                                 color = LeafGreen, maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis)
