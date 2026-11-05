@@ -82,7 +82,32 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
     val recipeIngredients by viewModel.recipeIngredients.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoadingAi.collectAsStateWithLifecycle()
     val refreshing by viewModel.healthConnect.isSyncing.collectAsStateWithLifecycle()
+    var showAiPlanOptions by remember { mutableStateOf(false) }
 
+    if (showAiPlanOptions) {
+        AlertDialog(
+            onDismissRequest = { showAiPlanOptions = false },
+            title = { Text("Jadłospis AI") },
+            text = { Text("Wybierz długość planu. Nowe posiłki zostaną dodane do wybranych dat, bez usuwania istniejących. Wyniki AI i kalorie są szacunkowe. Plan na 3 lub 7 dni wymaga połączenia z Gemini.") },
+            confirmButton = {
+                Column {
+                    TextButton(enabled = !isLoading, onClick = {
+                        showAiPlanOptions = false
+                        viewModel.generateAiMealPlan(selectedDayName)
+                    }) { Text("1 dzień") }
+                    TextButton(enabled = !isLoading, onClick = {
+                        showAiPlanOptions = false
+                        viewModel.generateAiMultiDayPlan(selectedDayName, 3)
+                    }) { Text("3 dni") }
+                    TextButton(enabled = !isLoading, onClick = {
+                        showAiPlanOptions = false
+                        viewModel.generateAiMultiDayPlan(selectedDayName, 7)
+                    }) { Text("7 dni") }
+                }
+            },
+            dismissButton = { TextButton(onClick = { showAiPlanOptions = false }) { Text("Anuluj") } }
+        )
+    }
     val currentDate by viewModel.currentDate.collectAsStateWithLifecycle()
     val today = java.time.LocalDate.parse(currentDate)
     var selectedDayName by remember(currentDate) { mutableStateOf(today.toString()) }
@@ -196,7 +221,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.generateAiMealPlan(selectedDayName) }) {
+                    IconButton(onClick = { showAiPlanOptions = true }) {
                         Icon(
                             imageVector = Icons.Default.AutoAwesome,
                             contentDescription = "Generuj z AI",
@@ -351,7 +376,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 }
 
                 Button(
-                    onClick = { viewModel.generateAiMealPlan(selectedDayName) },
+                    onClick = { showAiPlanOptions = true },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = JuicyOrange,
                         contentColor = MangoButtonInk
