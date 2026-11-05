@@ -211,7 +211,12 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Twoje przepisy", fontWeight = FontWeight.Bold, fontSize = 16.sp) },
+                title = {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text("Przepisy", fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, color = Cream)
+                        Text("Odkrywaj smaki z FITMango", fontSize = 11.sp, color = GoldAccent)
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateHome, modifier = Modifier.testTag("recipes_go_home")) {
                         Icon(Icons.Default.Home, "Wróć do Startu", tint = MangoYellow)
@@ -225,7 +230,7 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}) {
                             viewModel.clearImportFallbackMode()
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = JuicyOrange, contentColor = MangoButtonInk),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(22.dp),
                         modifier = Modifier
                             .pressScaleEffect()
                             .testTag("open_import_dialog_button")
