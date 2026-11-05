@@ -6,6 +6,8 @@ workflows:
 
     environment:
       java: 21
+      groups:
+        - fitmango_signing
 
     scripts:
       - name: Przygotowanie Gradle
