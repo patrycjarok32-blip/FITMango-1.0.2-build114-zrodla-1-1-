@@ -121,9 +121,9 @@ data class PdfChunkConfig(
                     overlapChars = 1_400
                 )
                 else -> PdfChunkConfig(
-                    targetChunkChars = 14_000,
-                    maxChunkChars = 18_000,
-                    minChunkChars = 8_500,
+                    targetChunkChars = 6_000,
+                    maxChunkChars = 8_000,
+                    minChunkChars = 3_500,
                     overlapChars = 1_500
                 )
             }
@@ -517,7 +517,7 @@ internal object PdfRecipeExtractor {
             val recipesArray: JSONArray = when (root) {
                 is JSONObject -> {
                     when {
-                        root.has("recipes") -> root.optJSONArray("recipes") ?: JSONArray()
+                        root.has("recipes") -> root.optJSONArray("recipes") ?: return null
                         root.has("title") && (root.has("ingredients") || root.has("instructions")) -> {
                             JSONArray().put(root)
                         }
@@ -533,7 +533,7 @@ internal object PdfRecipeExtractor {
                 val obj = recipesArray.optJSONObject(i) ?: continue
                 parseSingleRecipeObject(obj, defaultChunkLabel)?.let { parsedList.add(it) }
             }
-            parsedList
+            if (recipesArray.length() > 0 && parsedList.isEmpty()) null else parsedList
         } catch (_: Exception) {
             null
         }
@@ -1007,7 +1007,19 @@ internal object PdfRecipeExtractor {
                 val repairPrompt = buildJsonRepairPrompt(rawResponse, chunkLabel)
                 val repairResult = repairCall(repairPrompt)
                 val repairedText = repairResult.getOrNull().orEmpty()
-                structuredRecipes = tryParseStructuredRecipesJson(repairedText, chunkLabel) ?: emptyList()
+                structuredRecipes = tryParseStructuredRecipesJson(repairedText, chunkLabel)
+                if (structuredRecipes == null) {
+                    return PdfChunkExtractionOutcome(
+                        completedAllChunks = false,
+                        rateLimitedOrPaused = false,
+                        nextChunkIndex = i,
+                        totalChunks = chunks.size,
+                        perChunkCounts = perChunkCounts.toMap(),
+                        recipesBeforeDeduplication = rawRecipes.toList(),
+                        deduplicatedRecipes = currentDeduplicated,
+                        errorMessage = "Nie udało się odczytać pełnej odpowiedzi AI dla części ${i + 1}/${chunks.size}. Poprzednie przepisy zachowano; ponów analizę od tej części."
+                    )
+                }
             }
 
             val parsedFromChunk = structuredRecipes.map { it.toParsedRecipe(documentTitle) }
