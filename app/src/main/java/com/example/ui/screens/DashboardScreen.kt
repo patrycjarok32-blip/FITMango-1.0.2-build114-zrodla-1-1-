@@ -218,6 +218,36 @@ fun DashboardScreen(
                 FreshMangoDestinationCard("Postępy", "Wyniki", Icons.Default.TrendingUp,
                     Modifier.weight(1f), onNavigateToEffects)
             }
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_meal_preview")
+                    .clickable(onClick = onNavigateToMealPlan),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MutedSurface1)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier.size(54.dp).clip(RoundedCornerShape(18.dp))
+                            .background(MutedSurface2),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        androidx.compose.material3.Icon(Icons.Default.RestaurantMenu,
+                            contentDescription = null, tint = JuicyOrange,
+                            modifier = Modifier.size(28.dp))
+                    }
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text("Dzisiejsze posiłki", fontWeight = FontWeight.ExtraBold,
+                            fontSize = 16.sp, color = Cream)
+                        Text("Otwórz jadłospis i zaplanuj swój dzień",
+                            fontSize = 12.sp, color = GoldAccent)
+                    }
+                    androidx.compose.material3.Icon(Icons.Default.ChevronRight,
+                        contentDescription = null, tint = JuicyOrange)
+                }
+            }
             com.example.ui.components.ReleaseNotesControl(autoShow = true)
             com.example.ui.components.MealUndoCard(viewModel)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
