@@ -19,6 +19,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -70,7 +73,7 @@ import com.example.viewmodel.MealPlannerSupport
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun MealPlanScreen(viewModel: DietaViewModel) {
     val mealPlans by viewModel.mealPlans.collectAsStateWithLifecycle()
@@ -446,48 +449,64 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("Karty posiłków • przesuń palcem ↔", color = LeafGreen,
                             style = MaterialTheme.typography.labelMedium)
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(horizontal = 4.dp),
-                            modifier = Modifier.fillMaxWidth().testTag("meal_category_swipe_cards")
-                        ) {
-                            items(mealCategories, key = { it.canonicalName }) { category ->
-                                val count = renderedMeals.count {
-                                    MealPlannerSupport.matchesMealCategory(it.mealType, category.canonicalName)
-                                }
-                                ElevatedCard(
-                                    modifier = Modifier.width(210.dp).height(112.dp),
-                                    shape = RoundedCornerShape(24.dp),
-                                    colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 5.dp)
-                                ) {
-                                    Column(
-                                        Modifier.fillMaxSize().padding(14.dp),
-                                        verticalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            Surface(
-                                                shape = RoundedCornerShape(14.dp),
-                                                color = MangoYellow.copy(alpha = 0.16f),
-                                                shadowElevation = 5.dp,
-                                                tonalElevation = 3.dp
-                                            ) {
-                                                Box(Modifier.padding(5.dp)) {
-                                                    MangoSectionArt(
-                                                        com.example.R.drawable.fit_icon_mango,
-                                                        MangoYellow, size = 32.dp
-                                                    )
-                                                }
+                        val categoryPager = rememberPagerState(pageCount = { mealCategories.size })
+                        HorizontalPager(
+                            state = categoryPager,
+                            modifier = Modifier.fillMaxWidth().height(142.dp)
+                                .testTag("meal_category_swipe_cards"),
+                            contentPadding = PaddingValues(horizontal = 54.dp),
+                            pageSpacing = 12.dp,
+                            beyondViewportPageCount = 1
+                        ) { page ->
+                            val category = mealCategories[page]
+                            val count = renderedMeals.count {
+                                MealPlannerSupport.matchesMealCategory(it.mealType, category.canonicalName)
+                            }
+                            val distance = kotlin.math.abs(
+                                (categoryPager.currentPage - page) + categoryPager.currentPageOffsetFraction
+                            ).coerceIn(0f, 1f)
+                            val scale = if (reducedMotion) 1f else 1f - distance * 0.09f
+                            ElevatedCard(
+                                modifier = Modifier.fillMaxWidth().height(128.dp)
+                                    .graphicsLayer {
+                                        scaleX = scale
+                                        scaleY = scale
+                                        alpha = if (reducedMotion) 1f else 1f - distance * 0.22f
+                                    },
+                                shape = RoundedCornerShape(24.dp),
+                                colors = CardDefaults.elevatedCardColors(
+                                    containerColor = MaterialTheme.colorScheme.surface
+                                ),
+                                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp)
+                            ) {
+                                Column(Modifier.fillMaxSize().padding(14.dp),
+                                    verticalArrangement = Arrangement.SpaceBetween) {
+                                    Row(verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        Surface(shape = RoundedCornerShape(16.dp),
+                                            color = MangoYellow.copy(alpha = 0.12f),
+                                            shadowElevation = 5.dp, tonalElevation = 3.dp) {
+                                            Box(Modifier.padding(4.dp)) {
+                                                MangoMealIcon(page, size = 54.dp)
                                             }
-                                            Text(category.canonicalName, fontWeight = FontWeight.Bold,
-                                                color = LeafGreen, maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis)
                                         }
-                                        Text(if (count == 0) "Dodaj pierwszy posiłek" else "$count posiłków w planie",
-                                            color = GoldAccent, style = MaterialTheme.typography.bodySmall)
+                                        Text(category.canonicalName, fontWeight = FontWeight.Bold,
+                                            color = LeafGreen, maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis)
                                     }
+                                    Text(if (count == 0) "Dodaj pierwszy posiłek" else "$count posiłków w planie",
+                                        color = GoldAccent, style = MaterialTheme.typography.bodySmall)
                                 }
+                            }
+                        }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically) {
+                            repeat(mealCategories.size) { index ->
+                                Box(Modifier.padding(horizontal = 3.dp).size(
+                                    if (index == categoryPager.currentPage) 8.dp else 5.dp
+                                ).clip(CircleShape).background(
+                                    if (index == categoryPager.currentPage) JuicyOrange else GoldAccent.copy(alpha = .35f)
+                                ))
                             }
                         }
                     }
