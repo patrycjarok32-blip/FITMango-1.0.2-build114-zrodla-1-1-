@@ -61,7 +61,7 @@ import com.example.viewmodel.IngredientSubstitutionSupport
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}) {
+fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, openImportOnLaunch: Boolean = false) {
     val context = LocalContext.current
     val recipes by viewModel.recipes.collectAsStateWithLifecycle()
     val calorieIngredients by viewModel.recipeIngredients.collectAsStateWithLifecycle()
@@ -89,7 +89,7 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}) {
     var extraIngredientRecipe by remember { mutableStateOf<RecipeEntity?>(null) }
     var photoRecipe by remember { mutableStateOf<RecipeEntity?>(null) }
     var showPhotoRecipePicker by remember { mutableStateOf(false) }
-    var showImportDialog by rememberSaveable { mutableStateOf(false) }
+    var showImportDialog by rememberSaveable { mutableStateOf(openImportOnLaunch) }
     var instagramReaderUrl by rememberSaveable { mutableStateOf<String?>(null) }
     var importInput by rememberSaveable { mutableStateOf("") }
     var pastedFallbackText by rememberSaveable { mutableStateOf("") }
