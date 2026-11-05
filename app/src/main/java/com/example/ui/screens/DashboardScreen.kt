@@ -108,7 +108,7 @@ fun DashboardScreen(
                                 fontSize = 18.sp,
                                 color = MangoYellow
                             )
-                            Text("Fresh Mango • Build ${com.example.BuildConfig.VERSION_CODE}", fontSize = 11.sp, color = GoldAccent)
+                            Text("Fresh Mango • 1.7.0", fontSize = 11.sp, color = GoldAccent)
                         }
                     }
                 },
@@ -167,17 +167,6 @@ fun DashboardScreen(
                     }
                 }
             }
-            Row(
-                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_quick_navigation"),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                FreshMangoDestinationCard("Jadłospis", "Posiłki", Icons.Default.RestaurantMenu,
-                    Modifier.weight(1f), onNavigateToMealPlan)
-                FreshMangoDestinationCard("Trening", "Aktywność", Icons.Default.FitnessCenter,
-                    Modifier.weight(1f), onNavigateToSport)
-                FreshMangoDestinationCard("Postępy", "Wyniki", Icons.Default.TrendingUp,
-                    Modifier.weight(1f), onNavigateToEffects)
-            }
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_calorie_hero"),
                 shape = RoundedCornerShape(28.dp),
@@ -193,7 +182,7 @@ fun DashboardScreen(
                         fontWeight = FontWeight.ExtraBold)
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.size(174.dp)) {
                         CircularProgressIndicator(
-                            progress = { (consumedCalories.toFloat() / targetCalories).coerceIn(0f, 1f) },
+                            progress = { (consumedCalories.toFloat() / targetCalories.coerceAtLeast(1)).coerceIn(0f, 1f) },
                             modifier = Modifier.fillMaxSize(),
                             color = JuicyOrange,
                             trackColor = MutedSurface2,
@@ -217,6 +206,17 @@ fun DashboardScreen(
                             Modifier.weight(1f))
                     }
                 }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_quick_navigation"),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                FreshMangoDestinationCard("Jadłospis", "Posiłki", Icons.Default.RestaurantMenu,
+                    Modifier.weight(1f), onNavigateToMealPlan)
+                FreshMangoDestinationCard("Trening", "Aktywność", Icons.Default.FitnessCenter,
+                    Modifier.weight(1f), onNavigateToSport)
+                FreshMangoDestinationCard("Postępy", "Wyniki", Icons.Default.TrendingUp,
+                    Modifier.weight(1f), onNavigateToEffects)
             }
             com.example.ui.components.ReleaseNotesControl(autoShow = true)
             com.example.ui.components.MealUndoCard(viewModel)
