@@ -1154,14 +1154,15 @@ internal fun PlannedMealDetailCard(
         isSelected = MealPlannerSupport.completedInCurrentWeek(meal),
         modifier = Modifier
             .mangoExpand()
+            .clip(RoundedCornerShape(22.dp))
             .testTag("planned_meal_card_${meal.id}")
     ) {
         Column(
             modifier = Modifier
-                .background(mealCategoryColor(meal.mealType).copy(alpha = .045f))
-                .drawBehind { drawRect(mealCategoryColor(meal.mealType), size = androidx.compose.ui.geometry.Size(3.dp.toPx(), size.height)) }
-                .padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .background(mealCategoryColor(meal.mealType).copy(alpha = .035f))
+                .drawBehind { drawRect(mealCategoryColor(meal.mealType), size = androidx.compose.ui.geometry.Size(4.dp.toPx(), size.height)) }
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             if (isUpcoming) Surface(color = mealCategoryColor(meal.mealType).copy(alpha = .13f), shape = RoundedCornerShape(10.dp)) {
                 Text("Najbliższy posiłek", Modifier.padding(horizontal = 10.dp, vertical = 6.dp).testTag("upcoming_meal_${meal.id}"),
