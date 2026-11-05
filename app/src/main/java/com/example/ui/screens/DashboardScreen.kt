@@ -171,7 +171,7 @@ fun DashboardScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    MangoGuide(size = 52.dp)
+                    MangoGuide(size = 52.dp, event = consumedCalories + waterTotal)
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text("Twój dzień, Twój balans", fontWeight = FontWeight.ExtraBold,
                             fontSize = 20.sp, color = Cream)
@@ -179,6 +179,13 @@ fun DashboardScreen(
                     }
                 }
             }
+            MangoDailyGreeting(
+                today = today,
+                activeDates = habitDays.map { it.date },
+                waterMl = waterTotal,
+                consumed = consumedCalories,
+                calorieGoal = targetCalories
+            )
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_calorie_hero"),
                 shape = RoundedCornerShape(28.dp),
@@ -469,6 +476,7 @@ fun DashboardScreen(
                 "water" to {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             DailyIntakeCard(viewModel)
+            MangoAnimatedWaterGlass(waterTotal)
                     }
                 },
                 "suggestions" to {
