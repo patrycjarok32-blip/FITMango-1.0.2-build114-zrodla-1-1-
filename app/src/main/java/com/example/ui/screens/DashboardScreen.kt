@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -77,6 +78,17 @@ fun DashboardScreen(
     val consumed = nutritionSnapshot?.takeIf { it.date == currentDate }?.nutrition
         ?: com.example.viewmodel.ScaledMealNutrition(0, 0, 0, 0)
     val consumedCalories = consumed.calories ?: 0
+    val reducedMangoMotion = LocalReducedMangoMotion.current
+    val calorieFraction by animateFloatAsState(
+        targetValue = (consumedCalories.toFloat() / targetCalories).coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = if (reducedMangoMotion) 0 else 850),
+        label = "calorie_ring"
+    )
+    val animatedCalories by animateIntAsState(
+        targetValue = consumedCalories,
+        animationSpec = tween(durationMillis = if (reducedMangoMotion) 0 else 850),
+        label = "calorie_counter"
+    )
     val consumedProtein = consumed.protein ?: 0
     val consumedCarbs = consumed.carbs ?: 0
     val consumedFat = consumed.fat ?: 0
@@ -182,14 +194,14 @@ fun DashboardScreen(
                         fontWeight = FontWeight.ExtraBold)
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.size(174.dp)) {
                         CircularProgressIndicator(
-                            progress = { (consumedCalories.toFloat() / targetCalories.coerceAtLeast(1)).coerceIn(0f, 1f) },
+                            progress = { calorieFraction },
                             modifier = Modifier.fillMaxSize(),
                             color = JuicyOrange,
                             trackColor = MutedSurface2,
                             strokeWidth = 13.dp
                         )
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("$consumedCalories", color = Cream, fontSize = 35.sp,
+                            Text("$animatedCalories", color = Cream, fontSize = 35.sp,
                                 fontWeight = FontWeight.Black)
                             Text("/ $targetCalories kcal", color = GoldAccent, fontSize = 14.sp)
                         }
