@@ -442,6 +442,44 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     .testTag("meal_plan_lazy_column"),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("Karty posiłków • przesuń palcem ↔", color = LeafGreen,
+                            style = MaterialTheme.typography.labelMedium)
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp),
+                            modifier = Modifier.fillMaxWidth().testTag("meal_category_swipe_cards")
+                        ) {
+                            items(mealCategories, key = { it.canonicalName }) { category ->
+                                val count = renderedMeals.count {
+                                    MealPlannerSupport.matchesMealCategory(it.mealType, category.canonicalName)
+                                }
+                                ElevatedCard(
+                                    modifier = Modifier.width(210.dp).height(112.dp),
+                                    shape = RoundedCornerShape(24.dp),
+                                    colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 5.dp)
+                                ) {
+                                    Column(
+                                        Modifier.fillMaxSize().padding(14.dp),
+                                        verticalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            MangoSectionArt(com.example.R.drawable.fit_icon_mango, MangoYellow, size = 32.dp)
+                                            Text(category.canonicalName, fontWeight = FontWeight.Bold,
+                                                color = LeafGreen, maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis)
+                                        }
+                                        Text(if (count == 0) "Dodaj pierwszy posiłek" else "$count posiłków w planie",
+                                            color = GoldAccent, style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 item { com.example.ui.components.ChangeHistoryCard(viewModel) }
                 item { com.example.ui.components.NutritionAttentionCard(viewModel) }
                 item { com.example.ui.components.SavedMealSetsCard(viewModel, selectedDayName) }
