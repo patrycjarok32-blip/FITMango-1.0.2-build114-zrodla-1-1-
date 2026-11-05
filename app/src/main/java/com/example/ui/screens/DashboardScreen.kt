@@ -247,16 +247,6 @@ fun DashboardScreen(
                 } } },
                 "calories" to {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            val plannedCalories by produceState<Int?>(null, mealPlans, recipes, recipeIngredients, currentDate) {
-                value = null
-                value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-                    IngredientSubstitutionSupport.totalMealNutrition(
-                        mealPlans.filter { MealPlannerSupport.matchesDay(it.dayOfWeek, currentDate) },
-                        recipes, recipeIngredients).calories ?: 0
-                }
-            }
-            StudioBalanceCard(consumed, targetCalories, targetProtein, targetCarbs, targetFat,
-                plannedCalories, com.example.viewmodel.CurrentActivitySupport.calories(burnedCalories))
             com.example.ui.components.EnergyExplanationButton(viewModel, currentDate)
 
                     }
