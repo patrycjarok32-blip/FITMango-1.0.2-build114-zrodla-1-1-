@@ -75,6 +75,27 @@ fun AiCoachScreen(viewModel: DietaViewModel, onEffects: () -> Unit = {}) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             SuccessFeedback(savedFeedback, "Zapisano przepis")
+            Text("Szybkie funkcje Mango AI", color = GoldAccent,
+                style = MaterialTheme.typography.labelMedium)
+            androidx.compose.foundation.lazy.LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item {
+                    AssistChip(enabled = !isLoading, onClick = {
+                        viewModel.sendChatMessage("Pomóż mi zaplanować zbilansowane posiłki na dziś. Najpierw zapytaj o moje cele, ograniczenia i preferencje, jeśli nie są znane.")
+                    }, label = { Text("🥗 Pomysły na dziś") })
+                }
+                item {
+                    AssistChip(enabled = !isLoading, onClick = {
+                        viewModel.sendChatMessage("Chcę odchudzić przepis. Poproś mnie o składniki, ilości i liczbę porcji, a następnie zaproponuj lżejsze zamienniki. Podaj jedynie orientacyjne różnice kalorii, gdy dane pozwalają je policzyć.")
+                    }, label = { Text("✨ Odchudź przepis") })
+                }
+                item {
+                    AssistChip(enabled = !isLoading, onClick = onEffects,
+                        label = { Text("📊 Analiza tygodnia") })
+                }
+            }
+
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
