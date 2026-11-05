@@ -66,15 +66,15 @@ fun MangoBottomNav(
     Surface(
         color = MutedSurface1,
         tonalElevation = 0.dp,
-        shadowElevation = 0.dp,
+        shadowElevation = 8.dp,
         modifier = Modifier
             .fillMaxWidth()
             .border(
                 width = 1.dp,
-                color = WarmBrown.copy(alpha = 0.4f),
-                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+                color = WarmBrown.copy(alpha = 0.22f),
+                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
             )
-            .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+            .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
     ) {
         BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPadding().padding(vertical = 6.dp, horizontal = 2.dp)) {
             val slot = maxWidth / items.size.coerceAtLeast(1)
@@ -107,7 +107,7 @@ fun MangoBottomNav(
                         .scale(scale)
                         .clip(RoundedCornerShape(12.dp))
                         .selectable(selected = isSelected, role = Role.Tab, onClick = { onNavigate(screen) })
-                        .heightIn(min = 56.dp)
+                        .heightIn(min = 60.dp)
                         .padding(vertical = 4.dp)
                         .testTag("nav_tab_${screen.route}")
                 ) {
