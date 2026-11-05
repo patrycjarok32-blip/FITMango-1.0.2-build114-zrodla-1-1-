@@ -47,7 +47,7 @@ fun AiCoachScreen(viewModel: DietaViewModel, onEffects: () -> Unit = {}) {
                         Icon(Icons.Default.SmartToy, contentDescription = null, tint = MangoYellow, modifier = Modifier.size(24.dp))
                         Column {
                             Text("AI Dietetyk Mango", fontWeight = FontWeight.Black, fontSize = 16.sp, color = Cream)
-                            Text("Twój osobisty przewodnik zdrowia", fontSize = 10.sp, color = GoldAccent)
+                            Text("Twój osobisty przewodnik zdrowia ✦", fontSize = 10.sp, color = GoldAccent)
                         }
                     }
                 },
@@ -68,7 +68,7 @@ fun AiCoachScreen(viewModel: DietaViewModel, onEffects: () -> Unit = {}) {
                 .padding(padding)
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(DarkBackground, WarmBrown.copy(alpha = 0.3f))
+                        colors = listOf(DarkBackground, MangoPremiumGlow.copy(alpha = 0.20f), DarkBackground)
                     )
                 )
                 .padding(16.dp),
@@ -133,7 +133,7 @@ fun AiCoachScreen(viewModel: DietaViewModel, onEffects: () -> Unit = {}) {
                                         bottomEnd = if (isUser) 4.dp else 20.dp
                                     )
                                 ),
-                            color = if (isUser) JuicyOrange else MutedSurface1
+                            color = if (isUser) JuicyOrange else MutedSurface2
                         ) {
                             Column {
                             Text(
