@@ -1,173 +1,749 @@
 
-package com.example.ui.theme
+package com.example.ui.navigation
 
-import android.content.Context
-import android.content.ContextWrapper
-import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
-import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowCompat
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.example.ui.screens.*
+import com.example.ui.theme.*
+import com.example.viewmodel.DietaViewModel
+import kotlin.math.abs
 
-private val MangoCreamBackground = Color(0xFFFFFAF3)
-private val MangoCard = Color(0xFFFFFFFF)
-private val MangoSoftCream = Color(0xFFFFF0DC)
-private val MangoSoftOrange = Color(0xFFFFE3BE)
-private val MangoText = Color(0xFF30271F)
-private val MangoSecondaryText = Color(0xFF695A4C)
+sealed class Screen(
+    val route: String,
+    val title: String,
+    val icon: ImageVector
+) {
+    object Dashboard : Screen(
+        "dashboard", "Dieta", Icons.Outlined.RestaurantMenu
+    )
+
+    object MealPlan : Screen(
+        "meal_plan", "Jadłospis", Icons.Outlined.CalendarMonth
+    )
+
+    object Documents : Screen(
+        "documents", "Dokumenty", Icons.Outlined.PictureAsPdf
+    )
+
+    object AiCoach : Screen(
+        "ai_coach", "AI", Icons.Outlined.SmartToy
+    )
+
+    object Recipes : Screen(
+        "recipes", "Przepisy", Icons.Outlined.RestaurantMenu
+    )
+
+    object Shopping : Screen(
+        "shopping", "Zakupy", Icons.Outlined.ShoppingCart
+    )
+
+    object Progress : Screen(
+        "effects", "Postępy", Icons.Outlined.TrendingUp
+    )
+
+    object Sport : Screen(
+        "sport", "Aktywność", Icons.Outlined.FitnessCenter
+    )
+
+    object Profile : Screen(
+        "profile", "Profil", Icons.Outlined.Person
+    )
+}
+
+private val mainTabs = listOf(
+    Screen.Dashboard,
+    Screen.MealPlan,
+    Screen.Progress,
+    Screen.Sport,
+    Screen.Recipes,
+    Screen.Shopping,
+    Screen.Profile
+)
 
 @Composable
-fun MojaDietaAiTheme(
-    darkTheme: Boolean = false,
-    dynamicColor: Boolean = false,
-    content: @Composable () -> Unit
+fun MangoBottomNav(
+    items: List<Screen>,
+    currentRoute: String?,
+    onNavigate: (Screen) -> Unit
 ) {
-    val context = LocalContext.current
-    val view = LocalView.current
-    val prefs = remember(context) {
-        context.getSharedPreferences(
-            MangoAppearance.PREFS,
-            Context.MODE_PRIVATE
-        )
-    }
+    val reduced =
+        com.example.ui.components.LocalReducedMangoMotion.current
 
-    DisposableEffect(prefs) {
-        MangoAppearance.light = prefs.getBoolean(MangoAppearance.KEY, true)
+    val colors = MaterialTheme.colorScheme
 
-        val listener =
-            android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-                if (key == MangoAppearance.KEY || key == null) {
-                    MangoAppearance.light =
-                        prefs.getBoolean(MangoAppearance.KEY, true)
-                }
-            }
-
-        prefs.registerOnSharedPreferenceChangeListener(listener)
-        onDispose {
-            prefs.unregisterOnSharedPreferenceChangeListener(listener)
-        }
-    }
-
-    // The stored appearance preference remains authoritative, as in the original file.
-    val light = MangoAppearance.light
-
-    val scheme = if (light) {
-        lightColorScheme(
-            primary = JuicyOrange,
-            onPrimary = Color.White,
-            primaryContainer = MangoSoftOrange,
-            onPrimaryContainer = MangoText,
-            secondary = LeafGreen,
-            onSecondary = Color.White,
-            secondaryContainer = Color(0xFFE4F0DD),
-            onSecondaryContainer = MangoText,
-            tertiary = MangoYellow,
-            onTertiary = MangoText,
-            background = MangoCreamBackground,
-            onBackground = MangoText,
-            surface = MangoCard,
-            onSurface = MangoText,
-            surfaceVariant = MangoSoftCream,
-            onSurfaceVariant = MangoSecondaryText,
-            surfaceTint = JuicyOrange,
-            surfaceContainerLowest = MangoCard,
-            surfaceContainerLow = MangoCreamBackground,
-            surfaceContainer = MangoSoftCream,
-            surfaceContainerHigh = MangoSoftOrange,
-            surfaceContainerHighest = MangoSoftOrange,
-            outline = Color(0xFFAA9785),
-            outlineVariant = Color(0xFFE7D8C7),
-            error = Color(0xFFB3261E)
-        )
-    } else {
-        darkColorScheme(
-            primary = MangoYellow,
-            onPrimary = MangoButtonInk,
-            primaryContainer = MutedSurface2,
-            onPrimaryContainer = Cream,
-            secondary = JuicyOrange,
-            onSecondary = MangoButtonInk,
-            secondaryContainer = MutedSurface2,
-            onSecondaryContainer = Cream,
-            tertiary = LeafGreen,
-            onTertiary = MangoButtonInk,
-            background = DarkBackground,
-            onBackground = Cream,
-            surface = MutedSurface1,
-            onSurface = Cream,
-            surfaceVariant = MutedSurface2,
-            onSurfaceVariant = GoldAccent,
-            surfaceTint = LeafGreen,
-            surfaceContainerLowest = DarkBackground,
-            surfaceContainerLow = MutedSurface1,
-            surfaceContainer = DarkBackground,
-            surfaceContainerHigh = MutedSurface2,
-            surfaceContainerHighest = MutedSurface2,
-            outline = WarmBrown,
-            error = Color(0xFFFF8C95)
-        )
-    }
-
-    SideEffect {
-        context.findActivity()?.let { activity ->
-            val barStyle = if (light) {
-                SystemBarStyle.light(
-                    0xFFFFFAF3.toInt(),
-                    0xFFFFFAF3.toInt()
+    Surface(
+        color = colors.surface,
+        tonalElevation = 0.dp,
+        shadowElevation = 3.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                color = colors.outlineVariant,
+                shape = RoundedCornerShape(
+                    topStart = 20.dp,
+                    topEnd = 20.dp
                 )
-            } else {
-                SystemBarStyle.dark(0xFF0B1017.toInt())
-            }
+            )
+            .clip(
+                RoundedCornerShape(
+                    topStart = 20.dp,
+                    topEnd = 20.dp
+                )
+            )
+    ) {
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(
+                    vertical = 6.dp,
+                    horizontal = 2.dp
+                )
+        ) {
+            val slot =
+                maxWidth / items.size.coerceAtLeast(1)
 
-            activity.enableEdgeToEdge(
-                statusBarStyle = barStyle,
-                navigationBarStyle = barStyle
+            val selectedIndex =
+                items.indexOfFirst {
+                    it.route == currentRoute
+                }
+
+            val indicator by animateDpAsState(
+                targetValue =
+                    slot * selectedIndex.coerceAtLeast(0),
+                animationSpec = tween(
+                    if (reduced) 0 else 220
+                ),
+                label = "nav_indicator"
             )
 
-            WindowCompat.getInsetsController(activity.window, view).apply {
-                isAppearanceLightStatusBars = light
-                isAppearanceLightNavigationBars = light
+            if (selectedIndex >= 0) {
+                Box(
+                    modifier = Modifier
+                        .offset(
+                            x = indicator,
+                            y = 4.dp
+                        )
+                        .width(slot)
+                        .height(36.dp)
+                        .padding(horizontal = 5.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(
+                            colors.primary.copy(alpha = 0.13f)
+                        )
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement =
+                    Arrangement.SpaceEvenly,
+                verticalAlignment =
+                    Alignment.CenterVertically
+            ) {
+                items.forEach { screen ->
+                    val isSelected =
+                        currentRoute == screen.route
+
+                    val scale by animateFloatAsState(
+                        targetValue =
+                            if (isSelected && !reduced) 1.04f
+                            else 1f,
+                        animationSpec = tween(
+                            if (reduced) 0 else 150
+                        ),
+                        label = "navScale"
+                    )
+
+                    val iconColor by animateColorAsState(
+                        targetValue =
+                            if (isSelected)
+                                colors.primary
+                            else
+                                colors.onSurfaceVariant,
+                        animationSpec = tween(
+                            if (reduced) 0 else 150
+                        ),
+                        label = "navIcon"
+                    )
+
+                    val labelColor by animateColorAsState(
+                        targetValue =
+                            if (isSelected)
+                                colors.primary
+                            else
+                                colors.onSurfaceVariant,
+                        animationSpec = tween(
+                            if (reduced) 0 else 150
+                        ),
+                        label = "navLabel"
+                    )
+
+                    Column(
+                        horizontalAlignment =
+                            Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .weight(1f)
+                            .scale(scale)
+                            .clip(RoundedCornerShape(12.dp))
+                            .selectable(
+                                selected = isSelected,
+                                role = Role.Tab,
+                                onClick = {
+                                    onNavigate(screen)
+                                }
+                            )
+                            .heightIn(min = 56.dp)
+                            .padding(vertical = 4.dp)
+                            .testTag(
+                                "nav_tab_${screen.route}"
+                            )
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(Color.Transparent)
+                                .padding(
+                                    horizontal = 8.dp,
+                                    vertical = 4.dp
+                                ),
+                            contentAlignment =
+                                Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = screen.icon,
+                                contentDescription = screen.title,
+                                tint = iconColor,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Spacer(Modifier.height(2.dp))
+
+                        Text(
+                            text = screen.title,
+                            color = labelColor,
+                            fontSize = 10.sp,
+                            fontWeight =
+                                if (isSelected)
+                                    FontWeight.Bold
+                                else
+                                    FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
             }
         }
-    }
-
-    com.example.ui.components.MangoMotionProvider {
-        MaterialTheme(
-            colorScheme = scheme,
-            typography = Typography,
-            shapes = Shapes(
-                small = RoundedCornerShape(10.dp),
-                medium = RoundedCornerShape(16.dp),
-                large = RoundedCornerShape(20.dp)
-            ),
-            content = content
-        )
     }
 }
 
 @Composable
-fun MyApplicationTheme(
-    darkTheme: Boolean = false,
-    dynamicColor: Boolean = false,
-    content: @Composable () -> Unit
-) {
-    MojaDietaAiTheme(darkTheme, dynamicColor, content)
+fun MainNavigation(viewModel: DietaViewModel) {
+    val reduced =
+        com.example.ui.components.LocalReducedMangoMotion.current
+
+    val navController = rememberNavController()
+
+    val keyboard =
+        LocalSoftwareKeyboardController.current
+
+    val pendingSharedText by
+        viewModel.pendingSharedRecipeText.collectAsState()
+
+    val items = mainTabs
+
+    val navBackStackEntry by
+        navController.currentBackStackEntryAsState()
+
+    val currentRoute =
+        navBackStackEntry?.destination?.route
+
+    val currentRouteState =
+        rememberUpdatedState(currentRoute)
+
+    val keyboardState =
+        rememberUpdatedState(keyboard)
+
+    fun navigateToTab(screen: Screen) {
+        keyboard?.hide()
+
+        val route =
+            navController.currentBackStackEntry
+                ?.destination?.route
+
+        if (route != screen.route) {
+            navController.navigate(screen.route) {
+                popUpTo(
+                    navController.graph
+                        .findStartDestination().id
+                ) {
+                    saveState = true
+                }
+
+                launchSingleTop = true
+                restoreState =
+                    screen != Screen.Dashboard
+            }
+        }
+    }
+
+    LaunchedEffect(pendingSharedText) {
+        if (!pendingSharedText.isNullOrBlank()) {
+            val route =
+                navController.currentBackStackEntry
+                    ?.destination?.route
+
+            if (route != Screen.Recipes.route) {
+                navController.navigate(
+                    Screen.Recipes.route
+                ) {
+                    popUpTo(
+                        navController.graph
+                            .findStartDestination().id
+                    ) {
+                        saveState = true
+                    }
+
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
+        }
+    }
+
+    Scaffold(
+        modifier = Modifier
+            .imePadding()
+            .pointerInput(navController, items) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(
+                        requireUnconsumed = false,
+                        pass = PointerEventPass.Initial
+                    )
+
+                    val pointerId = down.id
+                    val startX = down.position.x
+                    val startY = down.position.y
+
+                    var endX = startX
+                    var endY = startY
+                    var cancelled = false
+
+                    while (true) {
+                        val event = awaitPointerEvent(
+                            pass = PointerEventPass.Initial
+                        )
+
+                        val change =
+                            event.changes.firstOrNull {
+                                it.id == pointerId
+                            } ?: break
+
+                        endX = change.position.x
+                        endY = change.position.y
+
+                        if (!change.pressed) {
+                            if (change.isConsumed) {
+                                cancelled = true
+                            }
+                            break
+                        }
+                    }
+
+                    val deltaX = endX - startX
+                    val deltaY = endY - startY
+
+                    if (
+                        !cancelled &&
+                        abs(deltaX) > 100.dp.toPx() &&
+                        abs(deltaX) > abs(deltaY) * 1.5f
+                    ) {
+                        val route =
+                            currentRouteState.value
+
+                        val currentIndex =
+                            items.indexOfFirst {
+                                it.route == route
+                            }
+
+                        if (currentIndex >= 0) {
+                            val nextIndex =
+                                if (deltaX < 0f)
+                                    currentIndex + 1
+                                else
+                                    currentIndex - 1
+
+                            if (nextIndex in items.indices) {
+                                val nextScreen = items[nextIndex]
+
+                                keyboardState.value?.hide()
+
+                                navController.navigate(
+                                    nextScreen.route
+                                ) {
+                                    popUpTo(
+                                        navController.graph
+                                            .findStartDestination().id
+                                    ) {
+                                        saveState = true
+                                    }
+
+                                    launchSingleTop = true
+                                    restoreState =
+                                        nextScreen !=
+                                            Screen.Dashboard
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+        bottomBar = {
+            MangoBottomNav(
+                items = items,
+                currentRoute = currentRoute,
+                onNavigate = { screen ->
+                    navigateToTab(screen)
+                }
+            )
+        }
+    ) { padding ->
+
+        NavHost(
+            navController = navController,
+            startDestination = Screen.Dashboard.route,
+
+            modifier = Modifier
+                .padding(padding)
+                .consumeWindowInsets(padding),
+
+            enterTransition = {
+                val direction =
+                    tabTransitionDirection(
+                        initialState.destination.route,
+                        targetState.destination.route
+                    )
+
+                slideInHorizontally(
+                    tween(if (reduced) 0 else 240)
+                ) { width ->
+                    if (reduced) 0
+                    else direction * width / 8
+                } + fadeIn(
+                    tween(if (reduced) 0 else 200)
+                )
+            },
+
+            exitTransition = {
+                val direction =
+                    tabTransitionDirection(
+                        initialState.destination.route,
+                        targetState.destination.route
+                    )
+
+                slideOutHorizontally(
+                    tween(if (reduced) 0 else 240)
+                ) { width ->
+                    if (reduced) 0
+                    else -direction * width / 8
+                } + fadeOut(
+                    tween(if (reduced) 0 else 160)
+                )
+            },
+
+            popEnterTransition = {
+                val direction =
+                    tabTransitionDirection(
+                        initialState.destination.route,
+                        targetState.destination.route,
+                        -1
+                    )
+
+                slideInHorizontally(
+                    tween(if (reduced) 0 else 240)
+                ) { width ->
+                    if (reduced) 0
+                    else direction * width / 8
+                } + fadeIn(
+                    tween(if (reduced) 0 else 200)
+                )
+            },
+
+            popExitTransition = {
+                val direction =
+                    tabTransitionDirection(
+                        initialState.destination.route,
+                        targetState.destination.route,
+                        -1
+                    )
+
+                slideOutHorizontally(
+                    tween(if (reduced) 0 else 240)
+                ) { width ->
+                    if (reduced) 0
+                    else -direction * width / 8
+                } + fadeOut(
+                    tween(if (reduced) 0 else 160)
+                )
+            }
+        ) {
+            composable(Screen.Dashboard.route) {
+                DashboardScreen(
+                    viewModel = viewModel,
+
+                    onNavigateToAiCoach = {
+                        navController.navigate(
+                            Screen.AiCoach.route
+                        )
+                    },
+
+                    onNavigateToRecipes = {
+                        navController.navigate(
+                            Screen.Recipes.route
+                        )
+                    },
+
+                    onNavigateToMealPlan = {
+                        navController.navigate(
+                            Screen.MealPlan.route
+                        )
+                    },
+
+                    onNavigateToBarcodeScanner = {
+                        navController.navigate(
+                            "barcode_scanner"
+                        )
+                    },
+
+                    onNavigateToProductPhoto = {
+                        navController.navigate(
+                            "product_photo"
+                        )
+                    },
+
+                    onNavigateToMeasurements = {
+                        navController.navigate(
+                            "measurements"
+                        )
+                    },
+
+                    onNavigateToDocuments = {
+                        navController.navigate(
+                            Screen.Documents.route
+                        )
+                    },
+
+                    onNavigateToSport = {
+                        navController.navigate(
+                            Screen.Sport.route
+                        )
+                    },
+
+                    onNavigateToEffects = {
+                        navController.navigate(
+                            Screen.Progress.route
+                        )
+                    }
+                )
+            }
+
+            composable(Screen.MealPlan.route) {
+                MealPlanScreen(
+                    viewModel = viewModel
+                )
+            }
+
+            composable(Screen.Documents.route) {
+                DocumentsScreen(
+                    viewModel = viewModel,
+                    onNavigateHome = {
+                        keyboard?.hide()
+
+                        navController.navigate(
+                            Screen.Dashboard.route
+                        ) {
+                            popUpTo(
+                                navController.graph
+                                    .findStartDestination().id
+                            )
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+
+            composable(Screen.AiCoach.route) {
+                AiCoachScreen(
+                    viewModel = viewModel,
+                    onEffects = {
+                        navController.navigate(
+                            Screen.Progress.route
+                        )
+                    }
+                )
+            }
+
+            composable(Screen.Recipes.route) {
+                RecipesScreen(
+                    viewModel = viewModel,
+                    onNavigateHome = {
+                        keyboard?.hide()
+
+                        navController.navigate(
+                            Screen.Dashboard.route
+                        ) {
+                            popUpTo(
+                                navController.graph
+                                    .findStartDestination().id
+                            )
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+
+            composable(Screen.Shopping.route) {
+                ShoppingScreen(
+                    viewModel = viewModel
+                )
+            }
+
+            composable(Screen.Profile.route) {
+                ProfileScreen(
+                    viewModel = viewModel,
+
+                    onNavigateToMeasurements = {
+                        navController.navigate(
+                            "measurements"
+                        )
+                    },
+
+                    onNavigateToAiCoach = {
+                        navController.navigate(
+                            Screen.AiCoach.route
+                        )
+                    },
+
+                    onNavigateToEffects = {
+                        navController.navigate(
+                            Screen.Progress.route
+                        )
+                    }
+                )
+            }
+
+            composable(Screen.Sport.route) {
+                SportsScreen(
+                    viewModel,
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Screen.Progress.route) {
+                EffectsScreen(
+                    viewModel,
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                    onProfile = {
+                        navController.navigate(
+                            Screen.Profile.route
+                        )
+                    }
+                )
+            }
+
+            composable("measurements") {
+                MeasurementsScreen(
+                    viewModel = viewModel,
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable("product_photo") {
+                ProductScannerScreen(
+                    viewModel = viewModel,
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                    initialPhotoMode = true
+                )
+            }
+
+            composable("barcode_scanner") {
+                ProductScannerScreen(
+                    viewModel = viewModel,
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+    }
 }
 
-private fun Context.findActivity(): ComponentActivity? {
-    var current = this
-    while (current is ContextWrapper) {
-        if (current is ComponentActivity) return current
+private fun tabTransitionDirection(
+    from: String?,
+    to: String?,
+    fallback: Int = 1
+): Int {
+    val tabs = mainTabs.map { it.route }
 
-        val next = current.baseContext
-        if (next === current) break
-        current = next
+    val fromIndex = tabs.indexOf(from)
+    val toIndex = tabs.indexOf(to)
+
+    return if (
+        fromIndex >= 0 &&
+        toIndex >= 0 &&
+        fromIndex != toIndex
+    ) {
+        if (toIndex > fromIndex) 1 else -1
+    } else {
+        fallback
     }
-    return current as? ComponentActivity
 }
