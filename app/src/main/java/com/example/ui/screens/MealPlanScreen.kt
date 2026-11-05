@@ -217,8 +217,8 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Surface(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_planner_header"),
@@ -226,14 +226,14 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 shape = RoundedCornerShape(22.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Icon(Icons.Default.CalendarMonth, contentDescription = null,
-                        tint = LeafGreen, modifier = Modifier.size(28.dp))
+                        tint = LeafGreen, modifier = Modifier.size(22.dp))
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Zaplanuj pyszny dzień", fontSize = 19.sp,
+                        Text("Zaplanuj pyszny dzień", fontSize = 16.sp,
                             fontWeight = FontWeight.ExtraBold, color = Cream)
                         Text("Wybierz dzień i ułóż posiłki po swojemu",
                             fontSize = 12.sp, color = GoldAccent)
@@ -275,7 +275,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                             .semantics { contentDescription = "$dayDate, zaplanowane: $plannedCount, zjedzone: $eatenCount" }
                             .clickable { selectedDayName = dayDate }
                             .testTag("planner_day_${daySpec.canonicalName}")
-                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                            .padding(horizontal = 5.dp, vertical = 3.dp)
                     ) {
                         Text(
                             text = daySpec.shortLetter,
@@ -283,10 +283,10 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                             color = if (isSelected) MangoYellow else Color.Gray,
                             fontWeight = FontWeight.Bold
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(1.dp))
                         Box(
                             modifier = Modifier
-                                .size(30.dp)
+                                .size(26.dp)
                                 .clip(CircleShape)
                                 .background(if (isSelected) JuicyOrange else Color.Transparent),
                             contentAlignment = Alignment.Center
@@ -298,7 +298,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                                 color = if (isSelected) MangoButtonInk else GoldAccent
                             )
                         }
-                        Row(Modifier.height(14.dp), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(Modifier.height(9.dp), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
                             if (plannedCount > 0) Box(Modifier.size(5.dp).clip(CircleShape).background(JuicyOrange))
                             if (eatenCount > 0) androidx.compose.material3.Icon(Icons.Default.CheckCircle, null, tint = LeafGreen, modifier = Modifier.size(11.dp))
                         }
@@ -306,55 +306,28 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                androidx.compose.material3.Icon(
-                    Icons.Default.SwapHoriz, contentDescription = null,
-                    tint = LeafGreen, modifier = Modifier.size(18.dp)
-                )
-                Spacer(Modifier.width(6.dp))
-                Text("Przesuń karty w lewo lub prawo, aby zmienić dzień",
-                    fontSize = 11.sp, color = GoldAccent)
-            }
-            Text("Obwódka: dziś • ● zaplanowane • ✓ zjedzone",
-                style = MaterialTheme.typography.bodySmall, color = GoldAccent)
-            HorizontalDivider(color = WarmBrown.copy(alpha = 0.3f))
-
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_planner_summary"),
-                shape = RoundedCornerShape(26.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MutedSurface2)
             ) {
-                Column(
-                    modifier = Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text("Twój plan na dziś", fontSize = 19.sp,
+                Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Text("Twój plan na dziś", fontSize = 15.sp,
                         fontWeight = FontWeight.ExtraBold, color = Cream)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        FreshMangoPlannerStat("Zaplanowane", "${dayMeals.size}",
-                            Modifier.weight(1f))
-                        FreshMangoPlannerStat("Do zjedzenia", "${remainingMeals.size}",
-                            Modifier.weight(1f))
-                        FreshMangoPlannerStat("Zjedzone", "${eatenMeals.size}",
-                            Modifier.weight(1f))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Zaplanowane: ${dayMeals.size}", fontSize = 12.sp, color = GoldAccent)
+                        Text("Do zjedzenia: ${remainingMeals.size}", fontSize = 12.sp, color = GoldAccent)
+                        Text("Zjedzone: ${eatenMeals.size}", fontSize = 12.sp, color = LeafGreen)
                     }
                     LinearProgressIndicator(
                         progress = { if (dayMeals.isEmpty()) 0f else
                             (eatenMeals.size.toFloat() / dayMeals.size).coerceIn(0f, 1f) },
-                        modifier = Modifier.fillMaxWidth().height(8.dp)
-                            .clip(RoundedCornerShape(8.dp)),
+                        modifier = Modifier.fillMaxWidth().height(4.dp)
+                            .clip(RoundedCornerShape(6.dp)),
                         color = LeafGreen,
                         trackColor = MutedSurface1
                     )
-                    Text("Zaplanuj posiłki i zaznaczaj je po zjedzeniu",
-                        fontSize = 12.sp, color = GoldAccent)
                 }
             }
 
