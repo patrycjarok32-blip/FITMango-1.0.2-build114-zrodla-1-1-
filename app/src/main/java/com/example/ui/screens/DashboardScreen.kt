@@ -178,6 +178,46 @@ fun DashboardScreen(
                 FreshMangoDestinationCard("Postępy", "Wyniki", Icons.Default.TrendingUp,
                     Modifier.weight(1f), onNavigateToEffects)
             }
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_calorie_hero"),
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(containerColor = MutedSurface1),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text("Dzisiejszy bilans", color = Cream, fontSize = 20.sp,
+                        fontWeight = FontWeight.ExtraBold)
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(174.dp)) {
+                        CircularProgressIndicator(
+                            progress = { (consumedCalories.toFloat() / targetCalories).coerceIn(0f, 1f) },
+                            modifier = Modifier.fillMaxSize(),
+                            color = JuicyOrange,
+                            trackColor = MutedSurface2,
+                            strokeWidth = 13.dp
+                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("$consumedCalories", color = Cream, fontSize = 35.sp,
+                                fontWeight = FontWeight.Black)
+                            Text("/ $targetCalories kcal", color = GoldAccent, fontSize = 14.sp)
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FreshMangoMacroTile("Białko", consumedProtein, targetProtein, LeafGreen,
+                            Modifier.weight(1f))
+                        FreshMangoMacroTile("Tłuszcze", consumedFat, targetFat, JuicyOrange,
+                            Modifier.weight(1f))
+                        FreshMangoMacroTile("Węglowodany", consumedCarbs, targetCarbs, MangoYellow,
+                            Modifier.weight(1f))
+                    }
+                }
+            }
             com.example.ui.components.ReleaseNotesControl(autoShow = true)
             com.example.ui.components.MealUndoCard(viewModel)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -633,6 +673,29 @@ private fun FreshMangoDestinationCard(
             Text(title, color = Cream, fontWeight = FontWeight.Bold, fontSize = 12.sp,
                 maxLines = 1)
             Text(subtitle, color = GoldAccent, fontSize = 10.sp, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+private fun FreshMangoMacroTile(
+    label: String,
+    value: Int,
+    target: Int,
+    accent: Color,
+    modifier: Modifier = Modifier
+) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(18.dp), color = MutedSurface2) {
+        Column(
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Box(Modifier.size(9.dp).clip(CircleShape).background(accent))
+            Text(label, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Cream,
+                maxLines = 1)
+            Text("$value g", fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = Cream)
+            Text("cel $target g", fontSize = 10.sp, color = GoldAccent)
         }
     }
 }
