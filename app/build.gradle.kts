@@ -1,3 +1,4 @@
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
@@ -12,8 +13,8 @@ android {
     applicationId = "com.example"
     minSdk = 26
     targetSdk = 36
-    versionCode = 114
-    versionName = "1.0.2"
+    versionCode = 118
+    versionName = "1.3.1"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -122,6 +123,7 @@ dependencies {
   // Sign-In via Credential Manager:
   // implementation(libs.firebase.auth)
   // implementation(libs.androidx.credentials)
+  // implementation(libs.androidx.credentials.play.services)
   // implementation(libs.androidx.credentials.play.services)
   // implementation(libs.googleid)
   implementation(libs.firebase.appcheck.recaptcha)
