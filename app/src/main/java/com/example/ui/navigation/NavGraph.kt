@@ -244,6 +244,7 @@ fun MainNavigation(viewModel: DietaViewModel) {
                     viewModel = viewModel,
                     onNavigateToAiCoach = { navController.navigate(Screen.AiCoach.route) },
                     onNavigateToRecipes = { navController.navigate(Screen.Recipes.route) },
+                    onNavigateToRecipeImport = { navController.navigate("recipe_import") },
                     onNavigateToMealPlan = { navController.navigate(Screen.MealPlan.route) },
                     onNavigateToBarcodeScanner = { navController.navigate("barcode_scanner") },
                     onNavigateToProductPhoto = { navController.navigate("product_photo") },
@@ -267,6 +268,15 @@ fun MainNavigation(viewModel: DietaViewModel) {
             }
             composable(Screen.AiCoach.route) {
                 AiCoachScreen(viewModel = viewModel, onEffects = { navController.navigate("effects") })
+            }
+            composable("recipe_import") {
+                RecipesScreen(viewModel = viewModel, openImportOnLaunch = true, onNavigateHome = {
+                    keyboard?.hide()
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo(navController.graph.findStartDestination().id)
+                        launchSingleTop = true
+                    }
+                })
             }
             composable(Screen.Recipes.route) {
                 RecipesScreen(viewModel = viewModel, onNavigateHome = {
