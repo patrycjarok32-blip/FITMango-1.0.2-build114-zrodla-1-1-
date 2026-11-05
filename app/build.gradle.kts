@@ -12,8 +12,8 @@ android {
     applicationId = "com.example"
     minSdk = 26
     targetSdk = 36
-    versionCode = 125
-    versionName = "1.7.0"
+    versionCode = 126
+    versionName = "1.7.1"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -27,10 +27,12 @@ android {
       keyPassword = System.getenv("KEY_PASSWORD")
     }
     create("debugConfig") {
+      // Codemagic restores this keystore from an encrypted environment variable.
+      // Never generate a new key automatically: updates require the same certificate.
       storeFile = file("${rootDir}/debug.keystore")
-      storePassword = "android"
-      keyAlias = "androiddebugkey"
-      keyPassword = "android"
+      storePassword = System.getenv("FITMANGO_STORE_PASSWORD")
+      keyAlias = System.getenv("FITMANGO_KEY_ALIAS")
+      keyPassword = System.getenv("FITMANGO_KEY_PASSWORD")
     }
   }
 
