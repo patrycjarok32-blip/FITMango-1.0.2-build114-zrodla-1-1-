@@ -34,7 +34,7 @@ fun SportInsightsCards(data: SportsData, today: LocalDate, report: SportsReportN
         latest == null && sleep == null -> "Brak danych — dodaj samopoczucie lub odczyt snu"
         latest?.energy?.let { it <= 2 } == true || latest?.fatigue?.let { it >= 4 } == true ||
             (sleep != null && sleep < 360) -> "Rozważ odpoczynek lub lżejszą aktywność"
-        latest?.energy?.let { it >= 4 } == true && latest.fatigue <= 2 -> "Samopoczucie sprzyja aktywności"
+        latest?.energy?.let { it >= 4 } == true && latest?.fatigue?.let { it <= 2 } == true -> "Samopoczucie sprzyja aktywności"
         else -> "Dostosuj intensywność do samopoczucia"
     }
     MangoCard(Modifier.fillMaxWidth().testTag("sport_readiness")) {
