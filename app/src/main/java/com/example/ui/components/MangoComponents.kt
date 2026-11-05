@@ -166,11 +166,11 @@ fun MangoCard(
                 color = if (isSelected) JuicyOrange else WarmBrown.copy(alpha = 0.35f),
                 shape = RoundedCornerShape(18.dp)
             ),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
             containerColor = MutedSurface1
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         content = content
     )
 }
@@ -312,9 +312,9 @@ fun MangoRecipeCard(
             .fillMaxWidth()
             .pressScaleEffect()
             .clickable { onClick() },
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MutedSurface1),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
         Column {
             Box(Modifier.fillMaxWidth()) {
@@ -324,8 +324,8 @@ fun MangoRecipeCard(
                     title = title,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(156.dp)
-                        .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)),
+                        .height(172.dp)
+                        .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
                     onChoosePhoto = onPhotoClick
                 )
                 Surface(
@@ -347,7 +347,7 @@ fun MangoRecipeCard(
                         )
                     }
                 }
-                Surface(Modifier.align(Alignment.BottomEnd).padding(8.dp), shape = RoundedCornerShape(8.dp), color = SurfaceDark.copy(alpha = .95f)) {
+                Surface(Modifier.align(Alignment.BottomEnd).padding(8.dp), shape = RoundedCornerShape(8.dp), color = SurfaceDark.copy(alpha = .90f)) {
                     Text((preparationMinutes?.let { "$it min • " } ?: "") + "$calories kcal",
                         color = MangoYellow, fontWeight = FontWeight.Bold, fontSize = 12.sp,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp))
