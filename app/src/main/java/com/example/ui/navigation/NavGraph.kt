@@ -18,6 +18,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import kotlin.math.abs
 import androidx.compose.ui.semantics.Role
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -76,7 +79,26 @@ fun MangoBottomNav(
             )
             .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
     ) {
-        BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPadding().padding(vertical = 6.dp, horizontal = 2.dp)) {
+        BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPadding().padding(vertical = 4.dp, horizontal = 2.dp)
+            .pointerInput(currentRoute, items) {
+                var drag = 0f
+                detectHorizontalDragGestures(
+                    onDragStart = { drag = 0f },
+                    onHorizontalDrag = { change, amount ->
+                        drag += amount
+                        change.consume()
+                    },
+                    onDragEnd = {
+                        if (abs(drag) > 56.dp.toPx()) {
+                            val current = items.indexOfFirst { it.route == currentRoute }
+                            val next = (current + if (drag < 0f) 1 else -1).coerceIn(0, items.lastIndex)
+                            if (current >= 0 && next != current) onNavigate(items[next])
+                        }
+                        drag = 0f
+                    },
+                    onDragCancel = { drag = 0f }
+                )
+            }) {
             val slot = maxWidth / items.size.coerceAtLeast(1)
             val selectedIndex = items.indexOfFirst { it.route == currentRoute }
             val indicator by animateDpAsState(targetValue = slot * selectedIndex.coerceAtLeast(0),
