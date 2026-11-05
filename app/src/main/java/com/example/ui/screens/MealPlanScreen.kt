@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
@@ -164,6 +165,11 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
     var swapSaving by remember { mutableStateOf(false) }
     var swapError by remember { mutableStateOf<String?>(null) }
 
+    val studioOrange = Color(0xFFFF922E)
+    val studioGreen = Color(0xFF16866B)
+    val studioInk = Color(0xFF263F36)
+    val studioSoft = Color(0xFFFFF1DC)
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -178,30 +184,28 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                             tint = MangoYellow,
                             modifier = Modifier.size(20.dp)
                         )
-                        Text(
-                            text = selectedDaySpec.displayWithDate,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 17.sp,
-                            color = Cream
-                        )
+                        Column {
+                            Text("TWÓJ PLAN ŻYWIENIA", fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                                color = studioGreen, letterSpacing = 1.2.sp)
+                            Text(selectedDaySpec.displayWithDate, fontWeight = FontWeight.ExtraBold,
+                                fontSize = 19.sp, color = studioInk)
+                        }
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.generateAiMealPlan(selectedDayName) }) {
-                        Icon(
-                            imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = "Generuj z AI",
-                            tint = GoldAccent
-                        )
+                    FilledIconButton(onClick = { viewModel.generateAiMealPlan(selectedDayName) },
+                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = studioOrange,
+                            contentColor = Color.White)) {
+                        Icon(Icons.Default.AutoAwesome, contentDescription = "Generuj z AI")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = Cream
+                    containerColor = Color(0xFFFFFAF3),
+                    titleContentColor = studioInk
                 )
             )
         },
-        containerColor = DarkBackground
+        containerColor = Color(0xFFFFFAF3)
     ) { padding ->
         androidx.compose.material3.pulltorefresh.PullToRefreshBox(isRefreshing = refreshing,
             onRefresh = { viewModel.refreshCurrentDate(); viewModel.healthConnect.sync(force = true) }, modifier = Modifier.fillMaxSize()) {
@@ -217,13 +221,21 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
             SuccessFeedback(motionFeedback, motionMessage, tag = "meal_status_feedback")
             actionError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             com.example.ui.components.LegacyPlanRepairCard(mealPlans, viewModel) { selectedDayName = it }
-            if (selectedDate == today) NutritionStatusBadge(NutritionStatus.IN_PROGRESS, "Dzień w toku")
+            if (selectedDate == today) Surface(color = Color(0xFFE4F5EB), shape = RoundedCornerShape(50.dp)) {
+                Row(Modifier.padding(horizontal = 12.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(Icons.Default.CheckCircle, null, tint = studioGreen, modifier = Modifier.size(15.dp))
+                    Text("Dzień w toku • planuj w swoim tempie", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                        color = studioInk)
+                }
+            }
             Column(Modifier.swipePlannerDays(selectedDayName) { selectedDayName = it }.testTag("planner_day_gesture")) {
                 com.example.ui.components.PlanDateSelector(selectedDayName, { selectedDayName = it }, "planner_date", showDays = false)
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(22.dp))
+                    .padding(horizontal = 5.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -241,7 +253,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                             .clip(RoundedCornerShape(18.dp))
                             .border(if (isToday || dropTarget) 1.5.dp else 0.dp,
                                 if (dropTarget) LeafGreen else if (isToday) MangoYellow else Color.Transparent, RoundedCornerShape(18.dp))
-                            .background(if (dropTarget) LeafGreen.copy(alpha = .2f) else if (isSelected) MutedSurface2 else Color.Transparent)
+                            .background(if (dropTarget) studioGreen.copy(alpha = .17f) else if (isSelected) studioSoft else Color.Transparent)
                             .onGloballyPositioned { dragController.register(dayDate, it.boundsInRoot(),
                                 selectedDate.minusDays(selectedDate.dayOfWeek.value - 1L).toString()) }
                             .semantics { contentDescription = "$dayDate, zaplanowane: $plannedCount, zjedzone: $eatenCount" }
@@ -260,14 +272,14 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                             modifier = Modifier
                                 .size(30.dp)
                                 .clip(CircleShape)
-                                .background(if (isSelected) JuicyOrange else Color.Transparent),
+                                .background(if (isSelected) studioOrange else Color.Transparent),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = daySpec.dayNumber.toString(),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp,
-                                color = if (isSelected) MangoButtonInk else GoldAccent
+                                color = if (isSelected) Color.White else studioInk
                             )
                         }
                         Row(Modifier.height(14.dp), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -278,45 +290,51 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 }
             }
 
-            Text("Obwódka: dziś • ● zaplanowane • ✓ zjedzone", style = MaterialTheme.typography.bodySmall, color = GoldAccent)
-            HorizontalDivider(color = WarmBrown.copy(alpha = 0.3f))
+            Text("● zaplanowane    ✓ zjedzone    ◯ dzisiaj", style = MaterialTheme.typography.labelSmall,
+                color = studioGreen, modifier = Modifier.padding(start = 8.dp))
 
             // Daily summary header + AI generate button
             val dailyNutrition = remember(dayMeals, recipes, recipeIngredients) {
                 IngredientSubstitutionSupport.totalMealNutrition(dayMeals, recipes, recipeIngredients)
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(Modifier.weight(1f)) {
-                    MangoSectionTitle(text = "Posiłki • ${selectedDaySpec.canonicalName}")
-                    key(selectedDayName) {
-                        if (dayMeals.isEmpty()) Text("Zaplanowano: 0 posiłków", modifier = Modifier.testTag("daily_nutrition_summary"), style = MaterialTheme.typography.labelMedium)
-                        else AnimatedMealNutrition(dailyNutrition, "daily_nutrition_summary", prefix = "Suma dnia: ")
+            Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp),
+                color = studioOrange) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Icon(Icons.Default.MenuBook, null, tint = Color.White, modifier = Modifier.size(24.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text("DZISIEJSZY JADŁOSPIS", fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                            color = Color.White.copy(alpha = .85f))
+                        Text(selectedDaySpec.canonicalName, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold,
+                            color = Color.White)
+                    }
+                    Surface(shape = RoundedCornerShape(14.dp), color = Color.White.copy(alpha = .18f)) {
+                        Text("${dayMeals.size} posiłków", Modifier.padding(10.dp),
+                            fontWeight = FontWeight.Bold, color = Color.White, fontSize = 12.sp)
                     }
                 }
-
-                Button(
-                    onClick = { viewModel.generateAiMealPlan(selectedDayName) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = JuicyOrange,
-                        contentColor = MangoButtonInk
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.pressScaleEffect()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Generuj", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Column(Modifier.weight(1f)) {
+                        key(selectedDayName) {
+                            if (dayMeals.isEmpty()) Text("Dodaj pierwszy posiłek", color = Color.White,
+                                modifier = Modifier.testTag("daily_nutrition_summary"), fontWeight = FontWeight.SemiBold)
+                            else AnimatedMealNutrition(dailyNutrition, "daily_nutrition_summary", prefix = "Suma: ")
+                        }
+                    }
+                    Button(onClick = { viewModel.generateAiMealPlan(selectedDayName) },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = studioInk),
+                        shape = RoundedCornerShape(14.dp), modifier = Modifier.pressScaleEffect()) {
+                        Icon(Icons.Default.AutoAwesome, null, modifier = Modifier.size(17.dp))
+                        Spacer(Modifier.width(5.dp))
+                        Text("Generuj AI", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
                 }
             }
+            }
+
 
             if (isLoading) {
                 LinearProgressIndicator(
@@ -826,6 +844,9 @@ private fun MealCategorySection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(22.dp))
+            .border(1.dp, Color(0xFFF0EBE2), RoundedCornerShape(22.dp))
+            .padding(13.dp)
             .testTag("meal_category_section_${categorySpec.canonicalName}"),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -839,9 +860,9 @@ private fun MealCategorySection(
                 androidx.compose.material3.Icon(mealCategoryIcon(categorySpec.canonicalName), null,
                     tint = mealCategoryColor(categorySpec.canonicalName), modifier = Modifier.size(20.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(categorySpec.canonicalName, fontWeight = FontWeight.Bold, fontSize = 15.sp,
+                    Text(categorySpec.canonicalName, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp,
                         color = mealCategoryColor(categorySpec.canonicalName))
-                    Text(categorySpec.timeRange, fontSize = 11.sp, color = GoldAccent)
+                    Text(categorySpec.timeRange, fontSize = 12.sp, color = Color(0xFF718578))
                 }
             }
 
@@ -879,9 +900,9 @@ private fun MealCategorySection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Brak zaplanowanego posiłku (${categorySpec.canonicalName})",
+                        text = "Tu pojawi się Twój posiłek",
                         fontSize = 12.sp,
-                        color = Cream.copy(alpha = 0.55f)
+                        color = Color(0xFF697E72)
                     )
                     Text(
                         text = "Wybierz →",
@@ -1099,7 +1120,7 @@ internal fun PlannedMealDetailCard(
     ) {
         Column(
             modifier = Modifier
-                .background(mealCategoryColor(meal.mealType).copy(alpha = .045f))
+                .background(Color.White, RoundedCornerShape(18.dp))
                 .drawBehind { drawRect(mealCategoryColor(meal.mealType), size = androidx.compose.ui.geometry.Size(3.dp.toPx(), size.height)) }
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -1170,8 +1191,8 @@ internal fun PlannedMealDetailCard(
                     Text(
                         text = headerText,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = Cream,
+                        fontSize = 16.sp,
+                        color = Color(0xFF263F36),
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -1380,7 +1401,8 @@ internal fun PlannedMealDetailCard(
                     }
                 }
                 Button(enabled = interactionsEnabled && !statusBusy, onClick = onToggleEatenClick, modifier = Modifier.weight(1f).testTag("toggle_eaten_${meal.id}"),
-                    colors = ButtonDefaults.buttonColors(containerColor = if (MealPlannerSupport.completedInCurrentWeek(meal)) LeafGreen else JuicyOrange, contentColor = MangoButtonInk)) {
+                    colors = ButtonDefaults.buttonColors(containerColor = if (MealPlannerSupport.completedInCurrentWeek(meal)) LeafGreen else Color(0xFFFF922E), contentColor = Color.White),
+                    shape = RoundedCornerShape(14.dp)) {
                     Text(if (statusBusy) "Zapisywanie…" else if (MealPlannerSupport.completedInCurrentWeek(meal)) "Cofnij zjedzenie" else "Zjedzone ✓")
                 }
             }
