@@ -167,6 +167,17 @@ fun DashboardScreen(
                     }
                 }
             }
+            Row(
+                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_quick_navigation"),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                FreshMangoDestinationCard("Jadłospis", "Posiłki", Icons.Default.RestaurantMenu,
+                    Modifier.weight(1f), onNavigateToMealPlan)
+                FreshMangoDestinationCard("Trening", "Aktywność", Icons.Default.FitnessCenter,
+                    Modifier.weight(1f), onNavigateToSport)
+                FreshMangoDestinationCard("Postępy", "Wyniki", Icons.Default.TrendingUp,
+                    Modifier.weight(1f), onNavigateToEffects)
+            }
             com.example.ui.components.ReleaseNotesControl(autoShow = true)
             com.example.ui.components.MealUndoCard(viewModel)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -588,6 +599,40 @@ fun QuickActionCard(title: String, icon: ImageVector, modifier: Modifier = Modif
                 color = Cream,
                 maxLines = 1
             )
+        }
+    }
+}
+
+@Composable
+private fun FreshMangoDestinationCard(
+    title: String,
+    subtitle: String,
+    imageVector: ImageVector,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = MutedSurface1),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Box(
+                modifier = Modifier.size(42.dp).clip(RoundedCornerShape(14.dp))
+                    .background(JuicyOrange.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.material3.Icon(imageVector, contentDescription = null,
+                    tint = JuicyOrange, modifier = Modifier.size(25.dp))
+            }
+            Text(title, color = Cream, fontWeight = FontWeight.Bold, fontSize = 12.sp,
+                maxLines = 1)
+            Text(subtitle, color = GoldAccent, fontSize = 10.sp, maxLines = 1)
         }
     }
 }
