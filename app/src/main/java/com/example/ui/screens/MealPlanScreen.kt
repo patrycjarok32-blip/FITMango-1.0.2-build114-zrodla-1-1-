@@ -325,7 +325,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         containerColor = JuicyOrange,
                         contentColor = MangoButtonInk
                     ),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(20.dp),
                     modifier = Modifier.pressScaleEffect()
                 ) {
                     Icon(
@@ -846,8 +846,12 @@ private fun MealCategorySection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MutedSurface1)
+            .border(1.dp, WarmBrown.copy(alpha = 0.22f), RoundedCornerShape(24.dp))
+            .padding(14.dp)
             .testTag("meal_category_section_${categorySpec.canonicalName}"),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -870,9 +874,9 @@ private fun MealCategorySection(
                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
                 modifier = Modifier.testTag("add_to_slot_${categorySpec.canonicalName}")
             ) {
-                Icon(Icons.Default.Add, contentDescription = null, tint = MangoYellow, modifier = Modifier.size(14.dp))
+                Icon(Icons.Default.Add, contentDescription = null, tint = JuicyOrange, modifier = Modifier.size(14.dp))
                 Spacer(modifier = Modifier.width(2.dp))
-                Text("Dodaj przepis", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MangoYellow)
+                Text("Dodaj przepis", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = JuicyOrange)
             }
         }
 
