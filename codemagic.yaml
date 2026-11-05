@@ -1,31 +1,36 @@
+
 workflows:
   android-build:
-    name: FITMango Fresh Mango Build 126
+    name: FITMango Fresh Mango Build 125
     instance_type: mac_mini_m2
     max_build_duration: 60
 
     environment:
       java: 21
-      groups:
-        - fitmango_signing
 
     scripts:
       - name: Przygotowanie Gradle
-        script: chmod +x gradlew
-
-      - name: Przywrocenie stalego klucza podpisujacego
         script: |
-          set -eu
-          : "${FITMANGO_KEYSTORE_BASE64:?Ustaw tajny FITMANGO_KEYSTORE_BASE64 w Codemagic}"
-          : "${FITMANGO_STORE_PASSWORD:?Ustaw tajny FITMANGO_STORE_PASSWORD w Codemagic}"
-          : "${FITMANGO_KEY_ALIAS:?Ustaw FITMANGO_KEY_ALIAS w Codemagic}"
-          : "${FITMANGO_KEY_PASSWORD:?Ustaw tajny FITMANGO_KEY_PASSWORD w Codemagic}"
-          printf '%s' "$FITMANGO_KEYSTORE_BASE64" | base64 --decode > debug.keystore
-          keytool -list -keystore debug.keystore -storepass "$FITMANGO_STORE_PASSWORD" -alias "$FITMANGO_KEY_ALIAS" > /dev/null
-          echo "Staly klucz podpisujacy jest gotowy."
+          chmod +x gradlew
 
-      - name: Budowanie APK aktualizacyjnego
-        script: ./gradlew :app:assembleDebug --stacktrace
+      - name: Przygotowanie debug.keystore
+        script: |
+          if [ ! -f debug.keystore ]; then
+            keytool -genkeypair \
+              -v \
+              -keystore debug.keystore \
+              -alias androiddebugkey \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass android \
+              -keypass android \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Budowanie APK
+        script: |
+          ./gradlew :app:assembleDebug --stacktrace
 
     artifacts:
       - app/build/outputs/apk/debug/*.apk
