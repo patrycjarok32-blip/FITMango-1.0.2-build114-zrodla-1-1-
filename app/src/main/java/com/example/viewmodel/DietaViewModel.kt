@@ -447,6 +447,62 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Generates 3 or 7 separate dated days in one request. Existing meals are never removed. */
+    fun generateAiMultiDayPlan(startDay: String, days: Int) {
+        if (days !in listOf(3, 7) || _isLoadingAi.value) return
+        val start = runCatching { java.time.LocalDate.parse(startDay) }.getOrNull() ?: run {
+            _mealPlanError.value = "Wybierz prawidłową datę rozpoczęcia."; return
+        }
+        _isLoadingAi.value = true
+        _mealPlanError.value = null
+        viewModelScope.launch {
+            try {
+                val kcal = (userProfile.value?.targetCalories ?: 2000).coerceAtLeast(1)
+                val goal = userProfile.value?.goal ?: "Zdrowe odżywianie"
+                val prompt = """
+                Ułóż jadłospis na $days kolejnych dni od $start, cel: $goal, około $kcal kcal dziennie.
+                Zwróć TYLKO JSON: tablica DOKŁADNIE $days obiektów, każdy z polami
+                "date" (ISO yyyy-MM-dd) i "meals" (tablica DOKŁADNIE 3 obiektów).
+                Każdy posiłek ma "mealType" (Śniadanie, Obiad, Kolacja),
+                "recipeTitle" (nazwa po polsku) i "calories" (dodatnia liczba całkowita).
+                Daty kolejno od $start. Każdego dnia inne potrawy.
+                Nie dopisuj składników, których nie znasz. Kaloryczność to szacunek.
+                """.trimIndent()
+                val response = callGemini(prompt).getOrThrow().trim()
+                    .removePrefix("```json").removePrefix("```JSON").removePrefix("```")
+                    .removeSuffix("```").trim()
+                val array = JSONArray(response)
+                require(array.length() == days) { "AI zwróciło niepełny jadłospis." }
+                val result = mutableListOf<MealPlanEntity>()
+                for (dayIndex in 0 until days) {
+                    val obj = array.getJSONObject(dayIndex)
+                    val expectedDate = start.plusDays(dayIndex.toLong()).toString()
+                    require(obj.getString("date") == expectedDate) { "Nieprawidłowe daty." }
+                    val meals = obj.getJSONArray("meals")
+                    require(meals.length() == 3) { "Każdy dzień musi mieć trzy posiłki." }
+                    val parsed = (0 until 3).map { i ->
+                        val m = meals.getJSONObject(i)
+                        val type = m.getString("mealType")
+                        val title = m.getString("recipeTitle").trim()
+                        val calories = m.getInt("calories")
+                        require(type in listOf("Śniadanie", "Obiad", "Kolacja") && title.isNotBlank() &&
+                            title.length <= 180 && calories in 1..3000)
+                        MealPlanEntity(dayOfWeek = expectedDate, mealType = type,
+                            recipeTitle = title, calories = calories, servings = 1f)
+                    }
+                    require(parsed.map { it.mealType }.toSet().size == 3)
+                    result.addAll(parsed)
+                }
+                repository.insertMealPlans(result)
+            } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+            catch (e: Exception) {
+                _mealPlanError.value = "Nie udało się wygenerować planu: ${e.message ?: "Sprawdź konfigurację AI i spróbuj ponownie."}"
+            } finally {
+                _isLoadingAi.value = false
+            }
+        }
+    }
+
     // Recipe Import from URL / Cookidoo / Instagram / Text via Jsoup, Schema.org JSON-LD & AI fallback
     fun importRecipeImage(context: Context, uri: Uri, onResult: (Boolean, String?) -> Unit) =
         importRecipeImages(context, listOf(uri), onResult)
