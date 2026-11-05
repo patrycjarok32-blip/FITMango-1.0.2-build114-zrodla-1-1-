@@ -247,6 +247,33 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private suspend fun saveAiGeneratedMeal(day: String, type: String, json: org.json.JSONObject): MealPlanEntity {
+        val title = json.getString("recipeTitle").trim()
+        val calories = json.getInt("calories")
+        val protein = json.getInt("protein")
+        val carbs = json.getInt("carbs")
+        val fat = json.getInt("fat")
+        val ingredientsJson = json.getJSONArray("ingredients")
+        require(title.isNotBlank() && title.length <= 180 && calories in 1..3000 &&
+            protein in 0..500 && carbs in 0..700 && fat in 0..400 &&
+            protein + carbs + fat > 0 && ingredientsJson.length() > 0) {
+            "AI zwróciło niepełne dane odżywcze posiłku."
+        }
+        val ingredients = (0 until ingredientsJson.length()).map { index ->
+            ingredientsJson.getString(index).trim().also { require(it.isNotBlank()) }
+        }.joinToString("\n")
+        val recipe = RecipeEntity(
+            title = title, description = "Jadłospis AI • 1 porcja • wartości szacunkowe",
+            ingredients = ingredients, instructions = "",
+            calories = calories, protein = protein, carbs = carbs, fat = fat,
+            category = type, source = "AI"
+        )
+        val recipeId = repository.saveImportedRecipe(recipe, emptyList())
+        require(recipeId > 0L) { "Nie udało się zapisać przepisu AI." }
+        return MealPlanEntity(dayOfWeek = day, mealType = type, recipeId = recipeId,
+            recipeTitle = title, servings = 1f, calories = calories)
+    }
+
     // AI Meal Plan Generator — wybiera zestaw najbliższy dziennemu celowi kalorii.
     fun generateAiMealPlan(goal: String) {
         _isLoadingAi.value = true
@@ -266,7 +293,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
 
                 Zwróć WYŁĄCZNIE poprawny JSON: tablicę 5 obiektów, każdy z polem "meals" zawierającym tablicę
                 dokładnie 3 obiektów z polami: "mealType" (dokładnie "Śniadanie", "Obiad" lub "Kolacja"),
-                "recipeTitle" (nazwa potrawy po polsku), "calories" (całkowite kcal całego posiłku).
+                "recipeTitle" (nazwa potrawy po polsku), "calories" (całkowite kcal całego posiłku),\n                "protein", "carbs", "fat" (gramy całego posiłku, liczby całkowite) i "ingredients"\n                (niepusta tablica składników z gramaturą, np. "Ryż — 100 g"). Oblicz makro z porcji.
                 Bez markdown i bez dodatkowego tekstu. Wszystkie 5 zestawów muszą mieć różne potrawy.
                 """.trimIndent()
 
@@ -292,22 +319,21 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                                         val title = obj.getString("recipeTitle").trim()
                                         val kcal = obj.getInt("calories")
                                         require(mealType in listOf("Śniadanie", "Obiad", "Kolacja") && title.isNotBlank() && kcal > 0)
-                                        Triple(mealType, title, kcal)
+                                        Triple(mealType, title, kcal) to obj
                                     }
-                                    require(parsed.map { it.first }.toSet() == setOf("Śniadanie", "Obiad", "Kolacja"))
+                                    require(parsed.map { it.first.first }.toSet() == setOf("Śniadanie", "Obiad", "Kolacja"))
                                     parsed
                                 } catch (_: Exception) { null }
                             }
                             require(candidates.isNotEmpty()) { "Brak poprawnych zestawów" }
                             // Minimalizujemy różnicę od celu; przy remisie preferujemy zestaw nieprzekraczający celu.
                             val chosen = candidates.minWithOrNull(
-                                compareBy<List<Triple<String, String, Int>>> { meals ->
-                                    kotlin.math.abs(meals.sumOf { it.third } - targetCalories)
-                                }.thenBy { meals -> if (meals.sumOf { it.third } <= targetCalories) 0 else 1 }
+                                compareBy<List<Pair<Triple<String, String, Int>, org.json.JSONObject>>> { meals ->
+                                    kotlin.math.abs(meals.sumOf { it.first.third } - targetCalories)
+                                }.thenBy { meals -> if (meals.sumOf { it.first.third } <= targetCalories) 0 else 1 }
                             )!!
-                            val meals = chosen.map { (mealType, title, kcal) ->
-                                MealPlanEntity(dayOfWeek = goal, mealType = mealType, recipeTitle = title,
-                                    calories = kcal, servings = 1f)
+                            val meals = chosen.map { (info, json) ->
+                                saveAiGeneratedMeal(goal, info.first, json)
                             }
                             repository.insertMealPlans(meals)
                         } catch (e: Exception) {
@@ -464,7 +490,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                 Zwróć TYLKO JSON: tablica DOKŁADNIE $days obiektów, każdy z polami
                 "date" (ISO yyyy-MM-dd) i "meals" (tablica DOKŁADNIE 3 obiektów).
                 Każdy posiłek ma "mealType" (Śniadanie, Obiad, Kolacja),
-                "recipeTitle" (nazwa po polsku) i "calories" (dodatnia liczba całkowita).
+                "recipeTitle" (nazwa po polsku), "calories" (dodatnia liczba całkowita),\n                "protein", "carbs", "fat" (gramy całego posiłku, liczby całkowite),\n                "ingredients" (niepusta tablica składników z ilościami, np. "Ryż — 100 g").\n                Wylicz szacunkowe makroskładniki na podstawie gramatur.
                 Daty kolejno od $start. Każdego dnia inne potrawy.
                 Nie dopisuj składników, których nie znasz. Kaloryczność to szacunek.
                 """.trimIndent()
@@ -487,8 +513,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                         val calories = m.getInt("calories")
                         require(type in listOf("Śniadanie", "Obiad", "Kolacja") && title.isNotBlank() &&
                             title.length <= 180 && calories in 1..3000)
-                        MealPlanEntity(dayOfWeek = expectedDate, mealType = type,
-                            recipeTitle = title, calories = calories, servings = 1f)
+                        saveAiGeneratedMeal(expectedDate, type, m)
                     }
                     require(parsed.map { it.mealType }.toSet().size == 3)
                     result.addAll(parsed)
