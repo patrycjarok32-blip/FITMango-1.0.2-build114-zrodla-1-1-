@@ -4,6 +4,9 @@ import com.example.ui.components.FitMangoIcon as Icon
 
 import com.example.ui.components.swipePlannerDays
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -398,18 +401,26 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
             }
 
             // All 5 meal categories (Śniadanie, II śniadanie, Obiad, Przekąska, Kolacja)
+            var dragPreview by remember { mutableFloatStateOf(0f) }
+            val previewOffset by animateFloatAsState(
+                targetValue = if (reducedMotion) 0f else dragPreview,
+                animationSpec = tween(durationMillis = if (reducedMotion) 0 else 170),
+                label = "meal_day_drag_preview"
+            )
             LazyColumn(
                 state = plannerListState,
                 modifier = Modifier
                     .fillMaxSize()
                     .weight(1f)
                     .mangoDayChange(selectedDate.toEpochDay())
-                    .pointerInput(selectedDate) {
+                    .graphicsLayer { translationX = previewOffset }
+                    .pointerInput(selectedDate, reducedMotion) {
                         var horizontalDistance = 0f
                         detectHorizontalDragGestures(
                             onDragStart = { horizontalDistance = 0f },
                             onHorizontalDrag = { change, dragAmount ->
                                 horizontalDistance += dragAmount
+                                if (!reducedMotion) dragPreview = (horizontalDistance * 0.22f).coerceIn(-48f, 48f)
                                 change.consume()
                             },
                             onDragEnd = {
@@ -420,8 +431,12 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                                     selectedDayName = nextDate.toString()
                                 }
                                 horizontalDistance = 0f
+                                dragPreview = 0f
                             },
-                            onDragCancel = { horizontalDistance = 0f }
+                            onDragCancel = {
+                                horizontalDistance = 0f
+                                dragPreview = 0f
+                            }
                         )
                     }
                     .testTag("meal_plan_lazy_column"),
