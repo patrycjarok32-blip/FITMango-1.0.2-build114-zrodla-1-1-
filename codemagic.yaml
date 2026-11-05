@@ -1,7 +1,7 @@
 
 workflows:
   android-build:
-    name: FITMango Fresh Mango Build 125
+    name: FITMango Premium - verified source
     instance_type: mac_mini_m2
     max_build_duration: 60
 
@@ -9,6 +9,15 @@ workflows:
       java: 21
 
     scripts:
+      - name: Potwierdzenie wersji i źródeł
+        script: |
+          echo "FITMango branch: $CM_BRANCH"
+          echo "FITMango commit: $(git rev-parse HEAD)"
+          echo "FITMango version from app/build.gradle.kts:"
+          grep -E 'versionCode|versionName' app/build.gradle.kts
+          test "$CM_BRANCH" = "fresh-mango-ui-build125" || { echo 'BŁĄD: wybrano niewłaściwą gałąź'; exit 1; }
+          grep -q 'PREMIUM UI • build 125' app/src/main/java/com/example/ui/screens/DashboardScreen.kt || { echo 'BŁĄD: brakuje ekranu Premium'; exit 1; }
+
       - name: Przygotowanie Gradle
         script: |
           chmod +x gradlew
@@ -31,6 +40,9 @@ workflows:
       - name: Budowanie APK
         script: |
           ./gradlew :app:assembleDebug --stacktrace
+          mkdir -p build-artifacts
+          cp app/build/outputs/apk/debug/app-debug.apk "build-artifacts/FITMango-Premium-build125-$(git rev-parse --short HEAD).apk"
+          echo "APK przygotowane z commita $(git rev-parse HEAD)"
 
     artifacts:
-      - app/build/outputs/apk/debug/*.apk
+      - build-artifacts/FITMango-Premium-*.apk
