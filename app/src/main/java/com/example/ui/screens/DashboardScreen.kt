@@ -44,6 +44,7 @@ fun DashboardScreen(
     viewModel: DietaViewModel,
     onNavigateToAiCoach: () -> Unit,
     onNavigateToRecipes: () -> Unit,
+    onNavigateToRecipeImport: () -> Unit = onNavigateToRecipes,
     onNavigateToMealPlan: () -> Unit,
     onNavigateToBarcodeScanner: () -> Unit,
     onNavigateToMeasurements: () -> Unit,
@@ -236,6 +237,26 @@ fun DashboardScreen(
                     Modifier.weight(1f), onNavigateToSport)
                 FreshMangoDestinationCard("Postępy", "Wyniki", Icons.Default.TrendingUp,
                     Modifier.weight(1f), onNavigateToEffects)
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("dashboard_import_recipe")
+                    .clickable(onClick = onNavigateToRecipeImport),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MutedSurface2)
+            ) {
+                Row(Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    androidx.compose.material3.Icon(Icons.Default.AddCircleOutline, contentDescription = null,
+                        tint = JuicyOrange, modifier = Modifier.size(30.dp))
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Importuj przepis", color = Cream, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                        Text("Instagram • Cookidoo • strony WWW • zdjęcia",
+                            color = GoldAccent, fontSize = 12.sp)
+                    }
+                    androidx.compose.material3.Icon(Icons.Default.ChevronRight,
+                        contentDescription = null, tint = JuicyOrange)
+                }
             }
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_meal_preview")
