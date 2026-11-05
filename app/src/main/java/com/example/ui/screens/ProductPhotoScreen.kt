@@ -32,6 +32,8 @@ fun ProductPhotoScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProduct:
     var message by remember { mutableStateOf<String?>(null) }
     var packagingQueries by remember { mutableStateOf<List<String>>(emptyList()) }
     var useAi by rememberSaveable { mutableStateOf(false) }
+    var analyzePlate by rememberSaveable { mutableStateOf(false) }
+    var mealAnalysis by remember { mutableStateOf<String?>(null) }
     val aiAllowed = !com.example.ai.SecureKeyStorage.localOnly()
     var remote by remember { mutableStateOf<List<SubstituteCandidate>>(emptyList()) }
     val recipes by viewModel.recipes.collectAsState()
@@ -44,9 +46,12 @@ fun ProductPhotoScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProduct:
     LaunchedEffect(readRequest) {
         val request = readRequest ?: return@LaunchedEffect
         var completed = false
-        message = null; remote = emptyList(); searchQuery = ""; packagingQueries = emptyList(); query = ""
+        message = null; mealAnalysis = null; remote = emptyList(); searchQuery = ""; packagingQueries = emptyList(); query = ""
         try {
-            if (useAi && aiAllowed) {
+            if (analyzePlate && aiAllowed) {
+                mealAnalysis = withTimeout(90_000) { ProductPhotoSupport.recognizeMeal(context, android.net.Uri.parse(request)) }
+                message = "To sugestia AI, nie automatycznie zapisany posiłek."
+            } else if (useAi && aiAllowed) {
                 query = withTimeout(90_000) { ProductPhotoSupport.recognize(context, android.net.Uri.parse(request)) }
                 searchQuery = query; revision++
                 message = "Sprawdź rozpoznaną nazwę i wybierz pasujący produkt."
@@ -82,7 +87,13 @@ fun ProductPhotoScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProduct:
     Surface(Modifier.fillMaxSize()) {
         Column(Modifier.imePadding().verticalScroll(rememberScrollState()).padding(20.dp).testTag("product_photo_screen"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             TextButton(onClick = onBack) { Text("Wróć") }
-            Text("Rozpoznaj produkt ze zdjęcia", style = MaterialTheme.typography.headlineSmall)
+            Text(if (analyzePlate) "Rozpoznaj danie ze zdjęcia" else "Rozpoznaj produkt ze zdjęcia", style = MaterialTheme.typography.headlineSmall)
+            if (aiAllowed) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("AI: rozpoznaj gotowe danie", modifier = Modifier.weight(1f))
+                    Switch(checked = analyzePlate, onCheckedChange = { analyzePlate = it; if (it) useAi = true }, enabled = !busy)
+                }
+            }
             Text("Sfotografuj nazwę na przodzie opakowania. Tekst odczytujemy lokalnie, bez Gemini i bez wysyłania zdjęcia. Możesz poprawić nazwę przed wyszukaniem w bazie.")
             if (aiAllowed) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -104,6 +115,15 @@ fun ProductPhotoScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProduct:
             }
             OutlinedTextField(query, { query = it.take(120) }, label = { Text("Nazwa lub marka produktu") }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("product_photo_query"), enabled = readRequest == null)
             Button(enabled = !busy && query.isNotBlank(), onClick = { searchQuery = query.trim(); revision++; message = null }, modifier = Modifier.testTag("product_photo_search")) { Text("Wyszukaj w bazie") }
+            mealAnalysis?.let { analysis ->
+                OutlinedCard(Modifier.fillMaxWidth().testTag("meal_photo_ai_result")) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Wynik rozpoznawania AI", style = MaterialTheme.typography.titleMedium)
+                        Text(analysis)
+                        Text("AI może pomylić składniki i porcje. Nic nie zostało automatycznie dodane do dziennika.")
+                    }
+                }
+            }
             message?.let { Text(it) }
             Text("Wybierz właściwy wariant. Kalorie i makro pochodzą z bazy, a nie ze zdjęcia. Sprawdź je z etykietą przed dodaniem.")
             @Composable fun results(title: String, items: List<SubstituteCandidate>) {
