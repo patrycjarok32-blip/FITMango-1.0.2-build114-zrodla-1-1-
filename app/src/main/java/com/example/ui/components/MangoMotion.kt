@@ -6,6 +6,10 @@ import android.content.SharedPreferences
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -90,15 +94,34 @@ fun MangoBadge(name: String, earned: Boolean) {
         }
         if (reduced) phase.snapTo(1f)
     }
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.graphicsLayer {
-            scaleX = if (reduced) 1f else 1f + 0.07f * kotlin.math.sin(phase.value * Math.PI).toFloat()
-            scaleY = scaleX
-        }) {
-        FitMangoAssetIcon(com.example.R.drawable.fit_clay_medal, modifier = Modifier.size(28.dp))
-        Text((if (earned) "★ Zdobyta: " else "☆ Do zdobycia: ") + name +
-            if (!reduced && phase.value < 1f) " ✨" else "",
-            color = if (earned) LeafGreen else GoldAccent, modifier = Modifier.weight(1f))
+    Box {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.graphicsLayer {
+                scaleX = if (reduced) 1f else 1f + 0.07f * kotlin.math.sin(phase.value * Math.PI).toFloat()
+                scaleY = scaleX
+            }) {
+            FitMangoAssetIcon(com.example.R.drawable.fit_clay_medal, modifier = Modifier.size(28.dp))
+            Text((if (earned) "★ Zdobyta: " else "☆ Do zdobycia: ") + name +
+                if (!reduced && phase.value < 1f) " ✨" else "",
+                color = if (earned) LeafGreen else GoldAccent, modifier = Modifier.weight(1f))
+        }
+        if (earned && !reduced && phase.value < 1f) {
+            Canvas(Modifier.matchParentSize().testTag("mango_badge_confetti")) {
+                val progress = phase.value
+                val colors = listOf(LeafGreen, MangoYellow, WaterAccent)
+                repeat(14) { index ->
+                    val fraction = (index + 0.5f) / 14f
+                    val angle = fraction * (2f * Math.PI).toFloat()
+                    val radius = size.minDimension * (0.08f + 0.5f * progress)
+                    val center = Offset(
+                        size.width * 0.5f + kotlin.math.cos(angle) * radius,
+                        size.height * 0.5f + kotlin.math.sin(angle) * radius
+                    )
+                    drawCircle(colors[index % colors.size].copy(alpha = (1f - progress).coerceIn(0f, 1f)),
+                        radius = 2.5.dp.toPx(), center = center)
+                }
+            }
+        }
     }
 }
 
