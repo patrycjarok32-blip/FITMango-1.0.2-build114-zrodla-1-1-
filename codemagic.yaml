@@ -1,0 +1,47 @@
+
+workflows:
+  fitmango-1-2-0-build116:
+    name: FITMango 1.2.0 - Build 116 (test APK)
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+
+    environment:
+      java: 21
+
+    scripts:
+      - name: Prepare project
+        script: |
+          set -e
+          java -version
+          chmod +x gradlew
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          grep -q 'versionCode = 116' app/build.gradle.kts
+          grep -q 'versionName = "1.2.0"' app/build.gradle.kts
+
+      - name: Create temporary debug keystore
+        script: |
+          set -e
+          if [ ! -f debug.keystore ]; then
+            keytool -genkeypair \
+              -keystore debug.keystore \
+              -storepass android \
+              -keypass android \
+              -alias androiddebugkey \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US" \
+              -noprompt
+          fi
+
+      - name: Compile test APK
+        script: |
+          ./gradlew --no-daemon :app:assembleDebug
+
+      - name: Verify artifact
+        script: |
+          test -s app/build/outputs/apk/debug/app-debug.apk
+
+    artifacts:
+      - app/build/outputs/apk/debug/*.apk
+      - app/build/outputs/logs/*.txt
