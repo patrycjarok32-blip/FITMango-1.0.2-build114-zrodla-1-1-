@@ -69,15 +69,17 @@ fun MangoBottomNav(
     Surface(
         color = MutedSurface1,
         tonalElevation = 0.dp,
-        shadowElevation = 8.dp,
+        shadowElevation = 14.dp,
+        shape = RoundedCornerShape(30.dp),
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 10.dp, vertical = 5.dp)
             .border(
                 width = 1.dp,
                 color = WarmBrown.copy(alpha = 0.22f),
-                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+                shape = RoundedCornerShape(30.dp)
             )
-            .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+            .clip(RoundedCornerShape(30.dp))
     ) {
         BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPadding().padding(vertical = 4.dp, horizontal = 2.dp)
             .pointerInput(currentRoute, items) {
@@ -104,7 +106,7 @@ fun MangoBottomNav(
             val indicator by animateDpAsState(targetValue = slot * selectedIndex.coerceAtLeast(0),
                 animationSpec = tween(if (reduced) 0 else 220), label = "nav_indicator")
             if (selectedIndex >= 0) Box(Modifier.offset(x = indicator, y = 4.dp).width(slot).height(36.dp)
-                .padding(horizontal = 5.dp).clip(RoundedCornerShape(20.dp)).background(JuicyOrange.copy(alpha = .18f)))
+                .padding(horizontal = 5.dp).clip(RoundedCornerShape(20.dp)).background(JuicyOrange.copy(alpha = .22f)))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
             items.forEach { screen ->
                 val isSelected = currentRoute == screen.route
