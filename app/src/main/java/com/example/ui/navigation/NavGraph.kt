@@ -53,7 +53,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Shopping : Screen("shopping", "Zakupy", Icons.Outlined.ShoppingCart)
     object Progress : Screen("effects", "Postępy", Icons.Outlined.TrendingUp)
     object Sport : Screen("sport", "Aktywność", Icons.Outlined.FitnessCenter)
-    object Profile : Screen("profile", "Profil", Icons.Outlined.Person)
+    object Profile : Screen("profile", "Więcej", Icons.Outlined.MoreHoriz)
 }
 
 @Composable
@@ -163,17 +163,13 @@ fun MainNavigation(viewModel: DietaViewModel) {
         }
     }
 
-    // Keep the bottom bar focused on the three core areas without duplicating
-    // the external workout planner: diet, progress and imported activity.
-    // Recipes, documents, AI coach and shopping remain available from existing
-    // dashboard/profile entry points.
+    // Five primary destinations match the Fresh Mango design.
+    // Recipes, shopping and AI remain accessible through existing screens.
     val items = listOf(
         Screen.Dashboard,
         Screen.MealPlan,
-        Screen.Progress,
         Screen.Sport,
-        Screen.Recipes,
-        Screen.Shopping,
+        Screen.Progress,
         Screen.Profile
     )
 
@@ -294,7 +290,7 @@ fun MainNavigation(viewModel: DietaViewModel) {
 
 // Match movement to the order of the bottom tabs; auxiliary screens follow push/back.
 private fun tabTransitionDirection(from: String?, to: String?, fallback: Int = 1): Int {
-    val tabs = listOf("dashboard", "meal_plan", "documents", "ai_coach", "recipes", "shopping", "profile")
+    val tabs = listOf("dashboard", "meal_plan", "sport", "effects", "profile")
     val fromIndex = tabs.indexOf(from)
     val toIndex = tabs.indexOf(to)
     return if (fromIndex >= 0 && toIndex >= 0 && fromIndex != toIndex) {
