@@ -6,21 +6,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 
 object MangoAppearance {
-    var light by mutableStateOf(false)
+    var light by mutableStateOf(true)
     const val PREFS = "FITMangoUsability"
     const val KEY = "lightTheme"
 }
 private fun role(dark: Long, light: Long) = Color(if (MangoAppearance.light) light else dark)
-val MangoYellow get() = role(0xFFFFC107, 0xFF8E5900)
-val JuicyOrange get() = Color(0xFFFFA000)
-val Cream get() = role(0xFFE8EDF5, 0xFF203C30)
-val LeafGreen get() = role(0xFF00C99A, 0xFF08755D)
-val DarkBackground get() = role(0xFF0B1017, 0xFFFFF8E7)
-val WarmBrown get() = role(0xFF334155, 0xFFD6DDCF)
-val GoldAccent get() = role(0xFF9BAAC0, 0xFF526B5B)
+val MangoYellow get() = role(0xFFFFC107, 0xFFAE6500)
+val JuicyOrange get() = Color(0xFFFF982D)
+val Cream get() = role(0xFFE8EDF5, 0xFF263A2C)
+val LeafGreen get() = role(0xFF00C99A, 0xFF258052)
+val DarkBackground get() = role(0xFF0B1017, 0xFFFFFAF1)
+val WarmBrown get() = role(0xFF334155, 0xFFD9D6C8)
+val GoldAccent get() = role(0xFF9BAAC0, 0xFF667867)
 val MutedSurface1 get() = role(0xFF101A2C, 0xFFFFFFFF)
-val MutedSurface2 get() = role(0xFF1D2A3E, 0xFFEEF3E7)
-val SurfaceDark get() = role(0xFF070D1C, 0xFFF6F3E7)
+val MutedSurface2 get() = role(0xFF1D2A3E, 0xFFFFF0D9)
+val SurfaceDark get() = role(0xFF070D1C, 0xFFFFF6E8)
 val RipeYellow get() = Color(0xFFFFCA28)
 val MangoButtonInk get() = Color(0xFF101827)
 val ActivityAccent get() = LeafGreen
