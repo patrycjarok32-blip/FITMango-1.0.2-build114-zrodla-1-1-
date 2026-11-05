@@ -206,7 +206,7 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(ProfileHubCatalog.title(detail), fontWeight = FontWeight.Black) },
+                title = { Text(if (detail == null) "Więcej" else ProfileHubCatalog.title(detail), fontWeight = FontWeight.Black) },
                 navigationIcon = { if (detail != null) TextButton(onClick = returnToHub, modifier = Modifier.testTag("profile_detail_back")) { Text("Wróć") } },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = DarkBackground,
