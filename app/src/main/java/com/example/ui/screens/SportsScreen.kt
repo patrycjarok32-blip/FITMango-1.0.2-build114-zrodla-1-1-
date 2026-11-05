@@ -44,6 +44,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
     var showReport by rememberSaveable { mutableStateOf(false) }
     var showExtras by rememberSaveable { mutableStateOf(false) }
+    var showSportNutrition by rememberSaveable { mutableStateOf(false) }
     var editGoal by rememberSaveable { mutableStateOf(false) }
     var feedback by remember { mutableIntStateOf(0) }
     var permissionError by remember { mutableStateOf<String?>(null) }
@@ -143,6 +144,20 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         item { RecoveryCard(data, today, busy,
             onSave = { d, energy, fatigue -> sports.recovery(d, energy, fatigue, ::saved) },
             onRemove = { sports.removeRecovery(it, ::saved) }) }
+        item { SportWellnessCards(data, today) }
+        item {
+            MangoCard(Modifier.fillMaxWidth().testTag("sport_nutrition_connection")) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Sport + dieta", style = MaterialTheme.typography.titleMedium, color = LeafGreen)
+                    Text("Sprawdź odżywianie obok treningów. Korzystamy z istniejącego raportu diety — bez kopiowania posiłków i bez zwiększania limitu kalorii o trening.",
+                        style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = { showSportNutrition = !showSportNutrition }) {
+                        Text(if (showSportNutrition) "Ukryj raport odżywiania −" else "Pokaż raport odżywiania +")
+                    }
+                }
+            }
+        }
+        if (showSportNutrition) item { NutritionWeekCard(viewModel) }
         item { Button(onClick = { showReport = true }, modifier = Modifier.fillMaxWidth().testTag("sport_open_report")) { Text("Zobacz raport tygodniowy →") } }
         item {
             TextButton(onClick = { showHistory = !showHistory }) { Text(if (showHistory) "Zwiń historię treningów −" else "Historia treningów (${visible.size}) +") }
