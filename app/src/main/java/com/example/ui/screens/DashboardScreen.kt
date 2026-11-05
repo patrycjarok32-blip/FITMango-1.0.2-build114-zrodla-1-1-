@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -105,6 +106,7 @@ fun DashboardScreen(
         ?: profile?.currentWeightKg
 
 
+    val appearanceContext = LocalContext.current
     Scaffold(
         topBar = {
             TopAppBar(
@@ -121,11 +123,23 @@ fun DashboardScreen(
                                 fontSize = 18.sp,
                                 color = MangoYellow
                             )
-                            Text("Fresh Mango • 1.7.0", fontSize = 11.sp, color = GoldAccent)
+                            Text("PREMIUM UI • build 125", fontSize = 11.sp, color = GoldAccent)
                         }
                     }
                 },
                 actions = {
+                    IconButton(onClick = {
+                        val nextLight = !MangoAppearance.light
+                        appearanceContext.getSharedPreferences(MangoAppearance.PREFS, 0)
+                            .edit().putBoolean(MangoAppearance.KEY, nextLight).apply()
+                        MangoAppearance.light = nextLight
+                    }) {
+                        androidx.compose.material3.Icon(
+                            if (MangoAppearance.light) Icons.Default.DarkMode else Icons.Default.LightMode,
+                            if (MangoAppearance.light) "Włącz ciemny motyw" else "Włącz jasny motyw",
+                            tint = LeafGreen
+                        )
+                    }
                     IconButton(onClick = onNavigateToProductPhoto) {
                         androidx.compose.material3.Icon(Icons.Default.CameraAlt, "Zdjęcie produktu", tint = MangoYellow)
                     }
