@@ -84,6 +84,10 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
     val refreshing by viewModel.healthConnect.isSyncing.collectAsStateWithLifecycle()
     var showAiPlanOptions by remember { mutableStateOf(false) }
 
+    val currentDate by viewModel.currentDate.collectAsStateWithLifecycle()
+    val today = java.time.LocalDate.parse(currentDate)
+    var selectedDayName by remember(currentDate) { mutableStateOf(today.toString()) }
+    val selectedDate = MealPlannerSupport.dateForDay(selectedDayName, today) ?: today
     if (showAiPlanOptions) {
         AlertDialog(
             onDismissRequest = { showAiPlanOptions = false },
@@ -108,10 +112,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
             dismissButton = { TextButton(onClick = { showAiPlanOptions = false }) { Text("Anuluj") } }
         )
     }
-    val currentDate by viewModel.currentDate.collectAsStateWithLifecycle()
-    val today = java.time.LocalDate.parse(currentDate)
-    var selectedDayName by remember(currentDate) { mutableStateOf(today.toString()) }
-    val selectedDate = MealPlannerSupport.dateForDay(selectedDayName, today) ?: today
+
     val weekDays = MealPlannerSupport.weekDays(selectedDate)
     val mealCategories = MealPlannerSupport.MEAL_CATEGORIES
 
