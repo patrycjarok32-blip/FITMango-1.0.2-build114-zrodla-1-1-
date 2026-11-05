@@ -938,7 +938,7 @@ private fun MealCategorySection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Brak zaplanowanego posiłku (${categorySpec.canonicalName})",
+                        text = "Zaplanuj ${categorySpec.canonicalName.lowercase()} na ten dzień",
                         fontSize = 12.sp,
                         color = Cream.copy(alpha = 0.55f)
                     )
@@ -1216,12 +1216,12 @@ internal fun PlannedMealDetailCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                RecipePhoto(showIllustrationLabel = false, 
+                RecipePhoto(showIllustrationLabel = false,
                     imageUrl = recipe?.imageUrl.orEmpty(),
                     title = meal.recipeTitle,
                     modifier = Modifier
-                        .size(60.dp)
-                        .clip(RoundedCornerShape(14.dp))
+                        .size(88.dp)
+                        .clip(RoundedCornerShape(20.dp))
                 )
                 Column(
                     modifier = Modifier.weight(1f),
@@ -1229,8 +1229,8 @@ internal fun PlannedMealDetailCard(
                 ) {
                     Text(
                         text = headerText,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 16.sp,
                         color = Cream,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
