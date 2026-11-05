@@ -23,15 +23,19 @@ jobs:
         uses: android-actions/setup-android@v3
       - name: Accept SDK licenses
         run: yes | sdkmanager --licenses || true
-      - name: Install Android SDK 36
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Install Android SDK 36 and minor API platform
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          sdkmanager --list | grep -E "platforms;android-36" || true
       - name: Generate debug signing key
         run: |
           keytool -genkeypair -v -keystore debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
-      - name: Compile and run unit tests
+      - name: Compile debug APK
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleDebug :app:testDebugUnitTest --stacktrace
+          ./gradlew :app:assembleDebug --stacktrace
+      - name: Run unit tests
+        run: ./gradlew :app:testDebugUnitTest --stacktrace
       - name: Upload verified debug APK
         if: success()
         uses: actions/upload-artifact@v4
