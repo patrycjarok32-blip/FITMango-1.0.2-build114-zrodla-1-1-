@@ -6,6 +6,8 @@ import com.example.ui.components.swipePlannerDays
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -388,6 +390,26 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     .fillMaxSize()
                     .weight(1f)
                     .mangoDayChange(selectedDate.toEpochDay())
+                    .pointerInput(selectedDate) {
+                        var horizontalDistance = 0f
+                        detectHorizontalDragGestures(
+                            onDragStart = { horizontalDistance = 0f },
+                            onHorizontalDrag = { change, dragAmount ->
+                                horizontalDistance += dragAmount
+                                change.consume()
+                            },
+                            onDragEnd = {
+                                if (abs(horizontalDistance) > 75.dp.toPx()) {
+                                    val nextDate = selectedDate.plusDays(
+                                        if (horizontalDistance < 0f) 1 else -1
+                                    )
+                                    selectedDayName = nextDate.toString()
+                                }
+                                horizontalDistance = 0f
+                            },
+                            onDragCancel = { horizontalDistance = 0f }
+                        )
+                    }
                     .testTag("meal_plan_lazy_column"),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
