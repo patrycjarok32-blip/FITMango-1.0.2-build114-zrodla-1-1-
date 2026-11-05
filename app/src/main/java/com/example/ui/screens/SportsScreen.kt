@@ -145,6 +145,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             onSave = { d, energy, fatigue -> sports.recovery(d, energy, fatigue, ::saved) },
             onRemove = { sports.removeRecovery(it, ::saved) }) }
         item { SportWellnessCards(data, today) }
+        item { SportInsightsCards(data, today, reportNumbers) }
         item {
             MangoCard(Modifier.fillMaxWidth().testTag("sport_nutrition_connection")) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
