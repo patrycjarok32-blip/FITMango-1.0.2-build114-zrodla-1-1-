@@ -308,4 +308,4 @@ internal suspend fun callGeminiWithService(
 
     return Result.failure(lastError ?: Exception("Usługa Gemini nie zwróciła odpowiedzi."))
 }
-}
+
