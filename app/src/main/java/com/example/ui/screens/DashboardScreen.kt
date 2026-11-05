@@ -155,7 +155,7 @@ fun DashboardScreen(
                 .imePadding()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(DarkBackground, DarkBackground)
+                        colors = listOf(DarkBackground, MangoPremiumGlow.copy(alpha = 0.32f), DarkBackground)
                     )
                 )
                 .verticalScroll(rememberScrollState())
@@ -165,7 +165,8 @@ fun DashboardScreen(
             Surface(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_welcome"),
                 shape = RoundedCornerShape(24.dp),
-                color = MutedSurface2
+                color = MutedSurface2,
+                shadowElevation = 7.dp
             ) {
                 Row(
                     modifier = Modifier.padding(18.dp),
@@ -191,14 +192,14 @@ fun DashboardScreen(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_calorie_hero"),
                 shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(containerColor = MutedSurface1),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 9.dp)
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Dzisiejszy bilans", color = Cream, fontSize = 20.sp,
+                    Text("✦ TWÓJ DZISIEJSZY BALANS", color = Cream, fontSize = 20.sp,
                         fontWeight = FontWeight.ExtraBold)
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.size(174.dp)) {
                         CircularProgressIndicator(
@@ -206,7 +207,7 @@ fun DashboardScreen(
                             modifier = Modifier.fillMaxSize(),
                             color = JuicyOrange,
                             trackColor = MutedSurface2,
-                            strokeWidth = 13.dp
+                            strokeWidth = 15.dp
                         )
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("$animatedCalories", color = Cream, fontSize = 35.sp,
