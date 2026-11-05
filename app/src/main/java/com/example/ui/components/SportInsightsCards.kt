@@ -1,6 +1,8 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -19,6 +21,7 @@ import kotlin.math.roundToInt
 /** Read-only insights derived from sports_v1. No duplicated activity or nutrition storage. */
 @Composable
 fun SportInsightsCards(data: SportsData, today: LocalDate, report: SportsReportNumbers?) {
+    val reduced = LocalReducedMangoMotion.current
     val unique = ActivityRecoverySupport.unique(data.history)
     val dated = unique.mapNotNull { session ->
         runCatching {
@@ -86,8 +89,13 @@ fun SportInsightsCards(data: SportsData, today: LocalDate, report: SportsReportN
                 Text(exercise, style = MaterialTheme.typography.labelLarge)
                 Row(Modifier.fillMaxWidth().height(48.dp), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                     volumes.forEach { volume ->
+                        val barFraction by animateFloatAsState(
+                            targetValue = (volume / max).toFloat().coerceIn(.04f, 1f),
+                            animationSpec = tween(if (reduced) 0 else 650),
+                            label = "strength_bar"
+                        )
                         Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.Bottom) {
-                            Box(Modifier.fillMaxWidth().fillMaxHeight((volume / max).toFloat().coerceIn(.04f, 1f))
+                            Box(Modifier.fillMaxWidth().fillMaxHeight(barFraction)
                                 .background(LeafGreen, RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp)))
                         }
                     }
@@ -116,7 +124,12 @@ fun SportInsightsCards(data: SportsData, today: LocalDate, report: SportsReportN
             counts.forEach { (label, count) ->
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                     Text(label, modifier = Modifier.width(126.dp), style = MaterialTheme.typography.bodySmall)
-                    LinearProgressIndicator(progress = { count.toFloat() / max },
+                    val animatedMuscle by animateFloatAsState(
+                        targetValue = count.toFloat() / max,
+                        animationSpec = tween(if (reduced) 0 else 650),
+                        label = "muscle_progress"
+                    )
+                    LinearProgressIndicator(progress = { animatedMuscle },
                         modifier = Modifier.weight(1f), color = LeafGreen)
                     Text("  $count", style = MaterialTheme.typography.labelSmall)
                 }
