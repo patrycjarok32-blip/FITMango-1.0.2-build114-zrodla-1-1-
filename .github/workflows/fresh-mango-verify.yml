@@ -1,0 +1,41 @@
+name: Fresh Mango APK verification
+
+on:
+  push:
+    branches:
+      - fresh-mango-ui-build125
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+      - name: Install JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Accept SDK licenses
+        run: yes | sdkmanager --licenses || true
+      - name: Install Android SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Generate debug signing key
+        run: |
+          keytool -genkeypair -v -keystore debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
+      - name: Compile and run unit tests
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug :app:testDebugUnitTest --stacktrace
+      - name: Upload verified debug APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FITMango-Fresh-Mango-125-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
