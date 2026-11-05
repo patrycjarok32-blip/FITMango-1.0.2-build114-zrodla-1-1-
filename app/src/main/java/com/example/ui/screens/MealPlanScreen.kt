@@ -6,6 +6,7 @@ import com.example.ui.components.swipePlannerDays
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.spring
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -438,7 +439,12 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                             val distance = kotlin.math.abs(
                                 (categoryPager.currentPage - page) + categoryPager.currentPageOffsetFraction
                             ).coerceIn(0f, 1f)
-                            val scale = if (reducedMotion) 1f else 1f - distance * 0.09f
+                            val focusedScale by animateFloatAsState(
+                                targetValue = if (reducedMotion) 1f else if (categoryPager.currentPage == page) 1.025f else 1f,
+                                animationSpec = spring(stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow),
+                                label = "meal_card_focus"
+                            )
+                            val scale = (if (reducedMotion) 1f else 1f - distance * 0.09f) * focusedScale
                             ElevatedCard(
                                 modifier = Modifier.fillMaxWidth().height(128.dp)
                                     .graphicsLayer {
