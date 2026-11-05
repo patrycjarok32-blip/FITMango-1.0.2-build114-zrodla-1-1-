@@ -1,0 +1,10 @@
+FITMango 1.5.0 / Build 121 — projekt Android do Codemagic
+
+1. Zrób kopię aktualnego repozytorium i bazy aplikacji.
+2. Rozpakuj ZIP. Przenieś ZAWARTOŚĆ folderu (app, gradle, gradlew, settings.gradle.kts, codemagic.yaml itd.) do głównego katalogu repozytorium GitHub, zamiast wgrywać ZIP jako jeden plik.
+3. W Codemagic wybierz workflow android-build, uruchom jeden build i pobierz APK.
+4. Przed zastąpieniem działającej aplikacji przetestuj APK i sprawdź zachowanie danych.
+
+Zakres: 7 zakładek z nową dolną nawigacją, wspólna paleta i karty, odświeżone nagłówki i sekcje Dieta/Jadłospis/Postępy/Aktywność/Przepisy/Zakupy/Profil. Dotychczasowe modele danych i funkcje pozostały.
+
+UWAGA: Projekt nie przeszedł kompilacji Gradle w tym środowisku (brak Android SDK). To paczka źródłowa, nie gotowy APK.
