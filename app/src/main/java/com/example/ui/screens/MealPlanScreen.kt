@@ -178,12 +178,12 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                             tint = MangoYellow,
                             modifier = Modifier.size(20.dp)
                         )
-                        Text(
-                            text = "Jadłospis • " + selectedDaySpec.displayWithDate,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 17.sp,
-                            color = Cream
-                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text("Jadłospis", fontWeight = FontWeight.ExtraBold,
+                                fontSize = 20.sp, color = Cream)
+                            Text(selectedDaySpec.displayWithDate, fontSize = 11.sp,
+                                color = GoldAccent)
+                        }
                     }
                 },
                 actions = {
