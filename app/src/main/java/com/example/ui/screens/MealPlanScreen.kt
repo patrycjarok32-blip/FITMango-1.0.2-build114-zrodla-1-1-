@@ -301,6 +301,41 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
             Text("Obwódka: dziś • ● zaplanowane • ✓ zjedzone", style = MaterialTheme.typography.bodySmall, color = GoldAccent)
             HorizontalDivider(color = WarmBrown.copy(alpha = 0.3f))
 
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_planner_summary"),
+                shape = RoundedCornerShape(26.dp),
+                colors = CardDefaults.cardColors(containerColor = MutedSurface2)
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text("Twój plan na dziś", fontSize = 19.sp,
+                        fontWeight = FontWeight.ExtraBold, color = Cream)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        FreshMangoPlannerStat("Zaplanowane", "${dayMeals.size}",
+                            Modifier.weight(1f))
+                        FreshMangoPlannerStat("Do zjedzenia", "${remainingMeals.size}",
+                            Modifier.weight(1f))
+                        FreshMangoPlannerStat("Zjedzone", "${eatenMeals.size}",
+                            Modifier.weight(1f))
+                    }
+                    LinearProgressIndicator(
+                        progress = { if (dayMeals.isEmpty()) 0f else
+                            (eatenMeals.size.toFloat() / dayMeals.size).coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth().height(8.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        color = LeafGreen,
+                        trackColor = MutedSurface1
+                    )
+                    Text("Zaplanuj posiłki i zaznaczaj je po zjedzeniu",
+                        fontSize = 12.sp, color = GoldAccent)
+                }
+            }
+
             // Daily summary header + AI generate button
             val dailyNutrition = remember(dayMeals, recipes, recipeIngredients) {
                 IngredientSubstitutionSupport.totalMealNutrition(dayMeals, recipes, recipeIngredients)
@@ -1427,5 +1462,25 @@ private fun buildNutritionDisplayLine(nutrition: com.example.viewmodel.ScaledMea
         "Brak danych o wartościach odżywczych"
     } else {
         parts.joinToString(" • ") + if (nutrition.isPartial) " • niepełne dane" else ""
+    }
+}
+
+@Composable
+private fun FreshMangoPlannerStat(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(18.dp),
+        color = MutedSurface1) {
+        Column(
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(value, fontSize = 24.sp, fontWeight = FontWeight.Black, color = JuicyOrange)
+            Text(label, fontSize = 10.sp, fontWeight = FontWeight.Medium,
+                color = GoldAccent, maxLines = 1)
+        }
     }
 }
