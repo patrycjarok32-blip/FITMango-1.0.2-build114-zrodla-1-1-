@@ -179,7 +179,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                             modifier = Modifier.size(20.dp)
                         )
                         Text(
-                            text = selectedDaySpec.displayWithDate,
+                            text = "Jadłospis • " + selectedDaySpec.displayWithDate,
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 17.sp,
                             color = Cream
@@ -212,6 +212,26 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            Surface(
+                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_planner_header"),
+                color = MutedSurface2,
+                shape = RoundedCornerShape(22.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(Icons.Default.CalendarMonth, contentDescription = null,
+                        tint = LeafGreen, modifier = Modifier.size(28.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Zaplanuj pyszny dzień", fontSize = 19.sp,
+                            fontWeight = FontWeight.ExtraBold, color = Cream)
+                        Text("Wybierz dzień i ułóż posiłki po swojemu",
+                            fontSize = 12.sp, color = GoldAccent)
+                    }
+                }
+            }
             MealUndoCard(viewModel)
             SuccessFeedback(actionFeedback)
             SuccessFeedback(motionFeedback, motionMessage, tag = "meal_status_feedback")
