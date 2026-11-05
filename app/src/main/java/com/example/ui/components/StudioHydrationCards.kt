@@ -1,6 +1,13 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -29,7 +36,29 @@ fun StudioHydrationCards(viewModel: DietaViewModel, details: @Composable () -> U
                         Text("Woda", color = WaterAccent, style = MaterialTheme.typography.titleMedium)
                     }
                     Text("$water / $goal ml", style = MaterialTheme.typography.bodyMedium)
-                    MangoProgressBar(water / goal.coerceAtLeast(1).toFloat(), color = WaterAccent)
+                    val fill = mangoFloat((water / goal.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f))
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(
+                            modifier = Modifier.size(width = 34.dp, height = 48.dp)
+                                .clip(RoundedCornerShape(bottomStart = 9.dp, bottomEnd = 9.dp, topStart = 3.dp, topEnd = 3.dp))
+                                .background(WaterAccent.copy(alpha = 0.12f))
+                                .testTag("hydration_animated_glass")
+                        ) {
+                            Canvas(Modifier.fillMaxSize()) {
+                                val waterHeight = size.height * fill
+                                drawRect(
+                                    color = WaterAccent.copy(alpha = 0.72f),
+                                    topLeft = Offset(0f, size.height - waterHeight),
+                                    size = androidx.compose.ui.geometry.Size(size.width, waterHeight)
+                                )
+                            }
+                        }
+                        Column(Modifier.weight(1f)) {
+                            MangoProgressBar(water / goal.coerceAtLeast(1).toFloat(), color = WaterAccent)
+                            Text("${(water * 100 / goal.coerceAtLeast(1)).coerceAtLeast(0)}% celu",
+                                style = MaterialTheme.typography.labelSmall, color = WaterAccent)
+                        }
+                    }
                     Row {
                         TextButton(onClick = { viewModel.addSpecificBeverage("Woda", 250) { error = it } },
                             modifier = Modifier.weight(1f).testTag("compact_water_add"), contentPadding = PaddingValues(0.dp)) { Text("+250", color = WaterAccent) }
