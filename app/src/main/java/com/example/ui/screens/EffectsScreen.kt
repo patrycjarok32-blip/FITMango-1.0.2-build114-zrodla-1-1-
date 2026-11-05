@@ -86,6 +86,20 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
     fun n(value: Double?, unit: String) = value?.let { String.format(java.util.Locale.getDefault(), "%.2f %s", it, unit) } ?: "brak danych"
     LazyColumn(Modifier.fillMaxSize().background(DarkBackground).padding(horizontal = 16.dp), state = rememberLazyListState(), verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(vertical = 12.dp)) {
         item {
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_progress_hero"),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(26.dp),
+                colors = CardDefaults.cardColors(containerColor = com.example.ui.theme.MutedSurface2)
+            ) {
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                    Text("Twoje postępy", style = MaterialTheme.typography.headlineSmall,
+                        color = com.example.ui.theme.Cream)
+                    Text("Każdy krok przybliża Cię do celu",
+                        style = MaterialTheme.typography.bodyMedium, color = com.example.ui.theme.GoldAccent)
+                }
+            }
+        }
+        item {
             Row(verticalAlignment = Alignment.CenterVertically) { TextButton(onClick = onBack) { Text("Wróć") }; Text("Efekty i analiza", style = MaterialTheme.typography.titleLarge) }
             SuccessFeedback(feedback, "Zapisano")
             message?.let { Text(it, color = ErrorInk) }
