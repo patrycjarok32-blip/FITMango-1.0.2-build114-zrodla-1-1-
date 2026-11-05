@@ -300,7 +300,21 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 }
             }
 
-            Text("Obwódka: dziś • ● zaplanowane • ✓ zjedzone", style = MaterialTheme.typography.bodySmall, color = GoldAccent)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                androidx.compose.material3.Icon(
+                    Icons.Default.SwapHoriz, contentDescription = null,
+                    tint = LeafGreen, modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(6.dp))
+                Text("Przesuń karty w lewo lub prawo, aby zmienić dzień",
+                    fontSize = 11.sp, color = GoldAccent)
+            }
+            Text("Obwódka: dziś • ● zaplanowane • ✓ zjedzone",
+                style = MaterialTheme.typography.bodySmall, color = GoldAccent)
             HorizontalDivider(color = WarmBrown.copy(alpha = 0.3f))
 
             Card(
