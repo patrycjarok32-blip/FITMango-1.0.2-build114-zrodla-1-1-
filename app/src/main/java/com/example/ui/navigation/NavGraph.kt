@@ -82,7 +82,7 @@ fun MangoBottomNav(
             val indicator by animateDpAsState(targetValue = slot * selectedIndex.coerceAtLeast(0),
                 animationSpec = tween(if (reduced) 0 else 220), label = "nav_indicator")
             if (selectedIndex >= 0) Box(Modifier.offset(x = indicator, y = 4.dp).width(slot).height(36.dp)
-                .padding(horizontal = 5.dp).clip(RoundedCornerShape(20.dp)).background(JuicyOrange.copy(alpha = .15f)))
+                .padding(horizontal = 5.dp).clip(RoundedCornerShape(20.dp)).background(JuicyOrange.copy(alpha = .18f)))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
             items.forEach { screen ->
                 val isSelected = currentRoute == screen.route
@@ -92,11 +92,11 @@ fun MangoBottomNav(
                     label = "navScale"
                 )
                 val iconColor by animateColorAsState(
-                    targetValue = if (isSelected) MangoYellow else GoldAccent,
+                    targetValue = if (isSelected) JuicyOrange else GoldAccent,
                     animationSpec = tween(if (reduced) 0 else 150), label = "navIcon"
                 )
                 val labelColor by animateColorAsState(
-                    targetValue = if (isSelected) MangoYellow else Cream.copy(alpha = 0.6f),
+                    targetValue = if (isSelected) JuicyOrange else Cream.copy(alpha = 0.75f),
                     animationSpec = tween(if (reduced) 0 else 150), label = "navLabel"
                 )
 
