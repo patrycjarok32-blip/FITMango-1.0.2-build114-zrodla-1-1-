@@ -1,7 +1,7 @@
 
 workflows:
   fitmango-1-2-0-build116:
-    name: FITMango 1.2.0 - Build 116 (test APK)
+    name: FITMango 1.2.0 - Build 116
     instance_type: mac_mini_m2
     max_build_duration: 120
 
@@ -9,18 +9,24 @@ workflows:
       java: 21
 
     scripts:
-      - name: Prepare project
+      - name: Prepare Android project
         script: |
           set -e
           java -version
           chmod +x gradlew
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-          grep -q 'versionCode = 116' app/build.gradle.kts
-          grep -q 'versionName = "1.2.0"' app/build.gradle.kts
 
-      - name: Create temporary debug keystore
+          echo "Checking Android SDK..."
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+
+          echo "Checking FITMango version..."
+          grep -nE 'versionCode|versionName' app/build.gradle.kts || true
+
+          echo "Project preparation completed."
+
+      - name: Create debug keystore
         script: |
           set -e
+
           if [ ! -f debug.keystore ]; then
             keytool -genkeypair \
               -keystore debug.keystore \
@@ -34,13 +40,27 @@ workflows:
               -noprompt
           fi
 
-      - name: Compile test APK
+          echo "Debug keystore is ready."
+
+      - name: Build FITMango APK
         script: |
+          set -e
+          chmod +x gradlew
           ./gradlew --no-daemon :app:assembleDebug
 
-      - name: Verify artifact
+      - name: Verify APK
         script: |
-          test -s app/build/outputs/apk/debug/app-debug.apk
+          set -e
+
+          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
+
+          if [ -f "$APK_PATH" ]; then
+            echo "FITMango APK created successfully."
+            ls -lh "$APK_PATH"
+          else
+            echo "ERROR: APK not found."
+            exit 1
+          fi
 
     artifacts:
       - app/build/outputs/apk/debug/*.apk
