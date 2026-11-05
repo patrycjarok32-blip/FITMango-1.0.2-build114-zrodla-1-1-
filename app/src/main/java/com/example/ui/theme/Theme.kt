@@ -1,3 +1,4 @@
+
 package com.example.ui.theme
 
 import androidx.activity.ComponentActivity
@@ -20,9 +21,9 @@ fun MojaDietaAiTheme(darkTheme: Boolean = false, dynamicColor: Boolean = false, 
     val view = LocalView.current
     val prefs = remember(context) { context.getSharedPreferences(MangoAppearance.PREFS, 0) }
     DisposableEffect(prefs) {
-        MangoAppearance.light = prefs.getBoolean(MangoAppearance.KEY, false)
+        MangoAppearance.light = prefs.getBoolean(MangoAppearance.KEY, true)
         val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key == MangoAppearance.KEY || key == null) MangoAppearance.light = prefs.getBoolean(MangoAppearance.KEY, false)
+            if (key == MangoAppearance.KEY || key == null) MangoAppearance.light = prefs.getBoolean(MangoAppearance.KEY, true)
         }
         prefs.registerOnSharedPreferenceChangeListener(listener)
         onDispose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
@@ -43,7 +44,7 @@ fun MojaDietaAiTheme(darkTheme: Boolean = false, dynamicColor: Boolean = false, 
         outline = WarmBrown, error = if (light) Color(0xFFB3261E) else Color(0xFFFF8C95))
     SideEffect {
         context.findActivity()?.let { activity ->
-            val barStyle = if (light) SystemBarStyle.light(0xFFFFF8E7.toInt(), 0xFFFFF8E7.toInt())
+            val barStyle = if (light) SystemBarStyle.light(0xFFFFFAF3.toInt(), 0xFFFFFAF3.toInt())
                 else SystemBarStyle.dark(0xFF0B1017.toInt())
             activity.enableEdgeToEdge(statusBarStyle = barStyle, navigationBarStyle = barStyle)
             WindowCompat.getInsetsController(activity.window, view).apply {
