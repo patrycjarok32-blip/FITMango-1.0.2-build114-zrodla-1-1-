@@ -108,7 +108,7 @@ fun DashboardScreen(
                                 fontSize = 18.sp,
                                 color = MangoYellow
                             )
-                            Text("Fresh Mango • Twój dzień w równowadze", fontSize = 11.sp, color = GoldAccent)
+                            Text("Fresh Mango • Build ${com.example.BuildConfig.VERSION_CODE}", fontSize = 11.sp, color = GoldAccent)
                         }
                     }
                 },
