@@ -4,6 +4,11 @@ import android.content.SharedPreferences
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Brush
+import com.example.ui.theme.MangoSunset
+import com.example.ui.theme.JuicyOrange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -32,7 +37,14 @@ fun MangoGuide(message: String? = null, event: Int = 0, size: Dp = 36.dp, modifi
         else { tilt.snapTo(-6f); tilt.animateTo(5f, tween(120)); tilt.animateTo(0f, tween(160)) }
     }
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FitMangoAssetIcon(R.drawable.fit_icon_mango, null, Modifier.size(size).graphicsLayer { rotationZ = tilt.value })
+        Box(
+            modifier = Modifier.size(size + 8.dp)
+                .background(Brush.linearGradient(listOf(MangoSunset.copy(alpha = .55f), JuicyOrange.copy(alpha = .18f))), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            FitMangoAssetIcon(R.drawable.fit_icon_mango, null,
+                Modifier.size(size).graphicsLayer { rotationZ = tilt.value })
+        }
         if (message != null) Text(message, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
     }
 }
