@@ -1,6 +1,13 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.expandVertically
+import androidx.compose.runtime.*
+import androidx.compose.ui.draw.scale
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -23,6 +30,7 @@ fun SportWellnessCards(data: SportsData, today: LocalDate) {
     val activityDates = ActivityRecoverySupport.unique(data.history)
         .mapNotNull { runCatching { Instant.parse(it.start).atZone(ZoneId.systemDefault()).toLocalDate() }.getOrNull() }
         .filter { !it.isAfter(today) }.toSet()
+    val reduced = LocalReducedMangoMotion.current
     val weekStart = SportsSupport.week(today)
     val weekDays = activityDates.count { !it.isBefore(weekStart) && !it.isAfter(today) }
     val recent14 = activityDates.count { !it.isBefore(today.minusDays(13)) }
@@ -31,6 +39,13 @@ fun SportWellnessCards(data: SportsData, today: LocalDate) {
     var streak = 0
     while (streak < 365 && streakStart.minusDays(streak.toLong()) in activityDates) streak++
 
+    val achieved = weekDays >= 3 || recent14 >= 6 || recent30 >= 12
+    var celebrate by remember { mutableStateOf(false) }
+    LaunchedEffect(achieved, reduced) { celebrate = achieved && !reduced }
+    val badgeScale by animateFloatAsState(
+        targetValue = if (celebrate) 1f else .92f,
+        animationSpec = tween(if (reduced) 0 else 500), label = "sport_badge_pop"
+    )
     MangoCard(Modifier.fillMaxWidth().testTag("sport_challenges")) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Wyzwania i medale", style = MaterialTheme.typography.titleMedium, color = LeafGreen)
@@ -40,6 +55,11 @@ fun SportWellnessCards(data: SportsData, today: LocalDate) {
                 style = MaterialTheme.typography.bodyMedium)
             LinearProgressIndicator(progress = { (weekDays / 3f).coerceIn(0f, 1f) },
                 modifier = Modifier.fillMaxWidth(), color = LeafGreen)
+            AnimatedVisibility(visible = celebrate, enter = fadeIn(tween(500)) + expandVertically(tween(500))) {
+                Text("🎉 🥭 ✨ Brawo! Zdobywasz sportową odznakę! ✨ 🏅",
+                    modifier = Modifier.scale(badgeScale).testTag("sport_confetti"),
+                    color = GoldAccent, style = MaterialTheme.typography.titleSmall)
+            }
             MangoBadge("Sport • 3 dni w tygodniu", weekDays >= 3)
             Text("Ostatnie 14 dni: $recent14 / 6 • ostatnie 30 dni: $recent30 / 12",
                 style = MaterialTheme.typography.bodySmall)
