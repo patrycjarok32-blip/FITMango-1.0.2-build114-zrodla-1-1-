@@ -108,7 +108,7 @@ fun DashboardScreen(
                                 fontSize = 18.sp,
                                 color = MangoYellow
                             )
-                            Text("Twój codzienny bilans • build ${com.example.BuildConfig.VERSION_CODE}", fontSize = 10.sp, color = GoldAccent)
+                            Text("Fresh Mango • Twój dzień w równowadze", fontSize = 11.sp, color = GoldAccent)
                         }
                     }
                 },
@@ -149,6 +149,24 @@ fun DashboardScreen(
                 .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            Surface(
+                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_welcome"),
+                shape = RoundedCornerShape(24.dp),
+                color = MutedSurface2
+            ) {
+                Row(
+                    modifier = Modifier.padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    MangoGuide(size = 52.dp)
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Twój dzień, Twój balans", fontWeight = FontWeight.ExtraBold,
+                            fontSize = 20.sp, color = Cream)
+                        Text("Małe kroki. Wielka zmiana. 🥭", fontSize = 12.sp, color = GoldAccent)
+                    }
+                }
+            }
             com.example.ui.components.ReleaseNotesControl(autoShow = true)
             com.example.ui.components.MealUndoCard(viewModel)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
