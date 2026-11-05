@@ -127,6 +127,24 @@ fun ShoppingScreen(viewModel: DietaViewModel) {
                     rangeTo = defaultFrom.plusDays(6).toString()
                 }) { Text("Bieżący tydzień") }
             }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = rangeFrom == currentDate && rangeTo == LocalDate.parse(currentDate).plusDays(2).toString(),
+                    onClick = {
+                        rangeFrom = currentDate
+                        rangeTo = LocalDate.parse(currentDate).plusDays(2).toString()
+                    },
+                    label = { Text("Najbliższe 3 dni") }
+                )
+                FilterChip(
+                    selected = rangeFrom == currentDate && rangeTo == LocalDate.parse(currentDate).plusDays(6).toString(),
+                    onClick = {
+                        rangeFrom = currentDate
+                        rangeTo = LocalDate.parse(currentDate).plusDays(6).toString()
+                    },
+                    label = { Text("Najbliższe 7 dni") }
+                )
+            }
             MangoCard {
                 Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Brakuje: ${items.count { !it.isChecked }}", color = MangoYellow, fontWeight = FontWeight.Bold)
