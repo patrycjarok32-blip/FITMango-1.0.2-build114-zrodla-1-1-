@@ -1006,6 +1006,23 @@ internal object PdfRecipeExtractor {
             if (structuredRecipes == null) {
                 val repairPrompt = buildJsonRepairPrompt(rawResponse, chunkLabel)
                 val repairResult = repairCall(repairPrompt)
+                if (repairResult.isFailure) {
+                    val repairError = repairResult.exceptionOrNull()
+                    val repairMessage = repairError?.message ?: "Nie udało się naprawić odpowiedzi AI."
+                    val paused = repairError is com.example.ai.GeminiRateLimitOrOverloadException ||
+                        repairMessage.contains("429") || repairMessage.contains("503") ||
+                        repairMessage.contains("Limit zapytań", ignoreCase = true)
+                    return PdfChunkExtractionOutcome(
+                        completedAllChunks = false,
+                        rateLimitedOrPaused = paused,
+                        nextChunkIndex = i,
+                        totalChunks = chunks.size,
+                        perChunkCounts = perChunkCounts.toMap(),
+                        recipesBeforeDeduplication = rawRecipes.toList(),
+                        deduplicatedRecipes = currentDeduplicated,
+                        errorMessage = repairMessage
+                    )
+                }
                 val repairedText = repairResult.getOrNull().orEmpty()
                 structuredRecipes = tryParseStructuredRecipesJson(repairedText, chunkLabel)
                 if (structuredRecipes == null) {
