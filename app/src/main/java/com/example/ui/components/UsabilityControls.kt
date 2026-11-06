@@ -96,8 +96,9 @@ fun BackupReminderCard(viewModel: DietaViewModel) {
     val backup = viewModel.backup
     val status by backup.status.state.collectAsState()
     val busy by backup.busy.collectAsState()
+    var backupPassword by remember { mutableStateOf("") }
     val save = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/zip")) { uri ->
-        uri?.let { backup.export(it) }
+        uri?.let { backup.export(it, backupPassword) }
     }
     if (status.changes >= 5 || status.lastExport == 0L && status.lastAutomatic > 0) {
         Card {
@@ -106,7 +107,15 @@ fun BackupReminderCard(viewModel: DietaViewModel) {
                 Text("Ostatnia kopia do pliku: ${backup.status.date(status.lastExport)}", style = MaterialTheme.typography.bodySmall)
                 Text("Kopia na telefonie: ${backup.status.date(status.lastAutomatic)}", style = MaterialTheme.typography.bodySmall)
                 Text("Zmiany od ostatniego eksportu: ${status.changes}", style = MaterialTheme.typography.bodySmall)
-                Button(enabled = !busy, onClick = { save.launch("FITMango-kopia-${java.time.LocalDate.now()}.zip") }) { Text("Zapisz kopię do pliku") }
+                OutlinedTextField(
+                    value = backupPassword,
+                    onValueChange = { backupPassword = it },
+                    label = { Text("Hasło kopii (minimum 8 znaków)") },
+                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Button(enabled = !busy && backupPassword.length >= 8, onClick = { save.launch("FITMango-kopia-${java.time.LocalDate.now()}.zip") }) { Text("Zapisz szyfrowaną kopię do pliku") }
             }
         }
     }
