@@ -152,6 +152,32 @@ data class PdfChunkExtractionOutcome(
 
 internal object PdfRecipeExtractor {
 
+
+    fun extractPageSpanningRecipes(text: String, source: String): List<ParsedRecipe> {
+        val pages = Regex("""(?m)^=== STRONA \d+ ===\s*$""").split(text)
+        val found = mutableListOf<ParsedRecipe>()
+        for (i in 1 until pages.size - 2) {
+            val title = pages[i].trim()
+            if (title.length !in 8..100 || title.lines().size > 3 || title.any { it.isLowerCase() }) continue
+            val ingredientsPage = pages[i + 1]
+            val preparationPage = pages[i + 2]
+            if (!ingredientsPage.contains("Składniki") || !preparationPage.contains("Przygotowanie")) continue
+            val ingredients = ingredientsPage.substringAfter("Składniki").substringBefore("Sugerowana liczba porcji")
+                .lines().map { it.trim() }.filter { it.startsWith("•") || it.startsWith("- ") }
+                .map { it.removePrefix("•").removePrefix("-").trim() }
+            val steps = Regex("""(?m)^\s*\d+[.)]\s+(.+)""")
+                .findAll(preparationPage.substringAfter("Przygotowanie"))
+                .map { it.groupValues[1] }.toList()
+            if (ingredients.size < 2 || steps.size < 2) continue
+            found.add(ParsedRecipe(
+                title = title, servings = "1", ingredients = ingredients.joinToString("\n"),
+                instructions = steps.joinToString("\n"), calories = 0, protein = 0,
+                carbs = 0, fat = 0, source = source, sourcePageOrChunk = "PDF"
+            ))
+        }
+        return deduplicateParsedRecipes(found)
+    }
+
     private val PAGE_BOUNDARY_REGEX = Regex("""\n(?==== STRONA \d+ ===|--- PAGE \d+ ---|\f|Strona \d+\b)""", RegexOption.IGNORE_CASE)
 
     private val RECIPE_HEADING_REGEX = Regex(

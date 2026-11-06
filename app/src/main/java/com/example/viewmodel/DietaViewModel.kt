@@ -903,6 +903,18 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                     return@launch
                 }
 
+                if (!resume) {
+                    val localRecipes = PdfRecipeExtractor.extractPageSpanningRecipes(text, document.title)
+                    if (localRecipes.isNotEmpty()) {
+                        _pdfFoundRecipes.value = _pdfFoundRecipes.value + (document.id to localRecipes)
+                        _pdfRawFoundRecipes.value = _pdfRawFoundRecipes.value + (document.id to localRecipes)
+                        _pdfAnalysisStates.value = _pdfAnalysisStates.value + (document.id to PdfAnalysisState.Completed(localRecipes.size))
+                        repository.updateDocument(document.copy(aiAnalysisResult = "Znaleziono " + localRecipes.size + " przepisów bez AI."))
+                        _isLoadingAi.value = false
+                        onResult(localRecipes, null)
+                        return@launch
+                    }
+                }
                 val cachedChunks = if (resume) _pdfChunksCache.value[document.id] else null
                 val chunks = if (!cachedChunks.isNullOrEmpty()) {
                     cachedChunks
