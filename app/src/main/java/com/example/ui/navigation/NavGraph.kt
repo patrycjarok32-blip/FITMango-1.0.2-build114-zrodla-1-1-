@@ -76,14 +76,14 @@ fun MangoBottomNav(
     Surface(
         color = MutedSurface1,
         tonalElevation = 0.dp,
-        shadowElevation = 5.dp,
+        shadowElevation = 2.dp,
         shape = RoundedCornerShape(24.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 10.dp, vertical = 5.dp)
             .border(
                 width = 1.dp,
-                color = WarmBrown.copy(alpha = 0.22f),
+                color = WarmBrown.copy(alpha = 0.12f),
                 shape = RoundedCornerShape(30.dp)
             )
             .clip(RoundedCornerShape(30.dp))
