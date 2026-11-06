@@ -48,13 +48,13 @@ import com.example.ui.theme.*
 import com.example.viewmodel.DietaViewModel
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Dashboard : Screen("dashboard", "Dieta", Icons.Outlined.RestaurantMenu)
+    object Dashboard : Screen("dashboard", "Dieta", Icons.Outlined.RamenDining)
     object MealPlan : Screen("meal_plan", "Jadłospis", Icons.Outlined.CalendarMonth)
     object Documents : Screen("documents", "Dokumenty", Icons.Outlined.PictureAsPdf)
     object AiCoach : Screen("ai_coach", "AI", Icons.Outlined.SmartToy)
     object Recipes : Screen("recipes", "Przepisy", Icons.Outlined.RestaurantMenu)
     object Shopping : Screen("shopping", "Zakupy", Icons.Outlined.ShoppingCart)
-    object Progress : Screen("effects", "Postępy", Icons.Outlined.TrendingUp)
+    object Progress : Screen("effects", "Postępy", Icons.Outlined.ShowChart)
     object Sport : Screen("sport", "Aktywność", Icons.Outlined.FitnessCenter)
     object Profile : Screen("profile", "Więcej", Icons.Outlined.MoreHoriz)
 }
@@ -67,10 +67,10 @@ fun MangoBottomNav(
 ) {
     val reduced = com.example.ui.components.LocalReducedMangoMotion.current
     fun accent(route: String): Color = when (route) {
-        Screen.Dashboard.route -> MangoCoral
+        Screen.Dashboard.route -> JuicyOrange
         Screen.MealPlan.route -> JuicyOrange
-        Screen.Sport.route -> MangoMint
-        Screen.Progress.route -> MangoLavender
+        Screen.Sport.route -> JuicyOrange
+        Screen.Progress.route -> JuicyOrange
         else -> MangoYellow
     }
     Surface(
