@@ -52,6 +52,8 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.semantics.*
 import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -83,6 +85,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
     val isLoading by viewModel.isLoadingAi.collectAsStateWithLifecycle()
     val refreshing by viewModel.healthConnect.isSyncing.collectAsStateWithLifecycle()
     var showAiPlanOptions by remember { mutableStateOf(false) }
+    val motion = progressMotionEnabled()
 
     val currentDate by viewModel.currentDate.collectAsStateWithLifecycle()
     val today = java.time.LocalDate.parse(currentDate)
@@ -250,19 +253,19 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
             Surface(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_planner_header"),
                 color = MutedSurface2,
-                shape = RoundedCornerShape(22.dp)
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Icon(Icons.Default.CalendarMonth, contentDescription = null,
                         tint = LeafGreen, modifier = Modifier.size(22.dp))
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Zaplanuj pyszny dzień", fontSize = 16.sp,
+                        Text("Zaplanuj dzień", fontSize = 14.sp,
                             fontWeight = FontWeight.ExtraBold, color = Cream)
-                        Text("Wybierz dzień i ułóż posiłki po swojemu",
+                        Text("Wybierz datę i dodaj posiłki",
                             fontSize = 12.sp, color = GoldAccent)
                     }
                 }
@@ -347,9 +350,10 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         Text("Do zjedzenia: ${remainingMeals.size}", fontSize = 12.sp, color = GoldAccent)
                         Text("Zjedzone: ${eatenMeals.size}", fontSize = 12.sp, color = LeafGreen)
                     }
-                    LinearProgressIndicator(
-                        progress = { if (dayMeals.isEmpty()) 0f else
-                            (eatenMeals.size.toFloat() / dayMeals.size).coerceIn(0f, 1f) },
+                    val completion by animateFloatAsState(
+                        targetValue = if (dayMeals.isEmpty()) 0f else (eatenMeals.size.toFloat() / dayMeals.size).coerceIn(0f, 1f),
+                        animationSpec = tween(if (motion) 450 else 0), label = "planner_completion")
+                    LinearProgressIndicator(progress = { completion },
                         modifier = Modifier.fillMaxWidth().height(4.dp)
                             .clip(RoundedCornerShape(6.dp)),
                         color = LeafGreen,
@@ -932,13 +936,14 @@ private fun MealCategorySection(
     viewModel: DietaViewModel,
     dragController: MealDragController
 ) {
+    var addMenuOpen by remember(categorySpec.canonicalName) { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
             .background(MutedSurface1)
             .border(1.dp, WarmBrown.copy(alpha = 0.22f), RoundedCornerShape(24.dp))
-            .padding(14.dp)
+            .padding(10.dp)
             .testTag("meal_category_section_${categorySpec.canonicalName}"),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -958,22 +963,17 @@ private fun MealCategorySection(
                 }
             }
 
-            TextButton(
-                onClick = onAddRecipeToSlot,
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                modifier = Modifier.testTag("add_to_slot_${categorySpec.canonicalName}")
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null, tint = JuicyOrange, modifier = Modifier.size(14.dp))
-                Spacer(modifier = Modifier.width(2.dp))
-                Text("Dodaj przepis", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = JuicyOrange)
+            Box {
+                TextButton(onClick = { addMenuOpen = true }, modifier = Modifier.testTag("add_to_slot_${categorySpec.canonicalName}")) {
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Text("Dodaj", color = JuicyOrange)
+                }
+                DropdownMenu(expanded = addMenuOpen, onDismissRequest = { addMenuOpen = false }) {
+                    DropdownMenuItem(text = { Text("Dodaj przepis") }, onClick = { addMenuOpen = false; onAddRecipeToSlot() })
+                    DropdownMenuItem(text = { Text("Dodaj produkt") }, onClick = { addMenuOpen = false; onAddProductToSlot() },
+                        modifier = Modifier.testTag("add_product_to_slot_${categorySpec.canonicalName}"))
+                }
             }
-        }
-
-        TextButton(onClick = onAddProductToSlot,
-            modifier = Modifier.align(Alignment.End).testTag("add_product_to_slot_${categorySpec.canonicalName}"),
-            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)) {
-            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-            Text("Dodaj produkt", fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
 
         if (meals.isEmpty()) {
@@ -987,7 +987,7 @@ private fun MealCategorySection(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -1062,6 +1062,7 @@ internal fun PlannedMealDetailCard(
 ) {
     val statusBusy = if (viewModel != null) meal.id in viewModel.mealStatusBusy.collectAsStateWithLifecycle().value else false
     var expanded by remember(meal.id) { mutableStateOf(false) }
+    val motion = progressMotionEnabled()
     var actionsOpen by remember(meal.id) { mutableStateOf(false) }
     var copying by remember(meal.id) { mutableStateOf(false) }
     var batching by remember(meal.id) { mutableStateOf(false) }
@@ -1208,6 +1209,7 @@ internal fun PlannedMealDetailCard(
         isSelected = MealPlannerSupport.completedInCurrentWeek(meal),
         modifier = Modifier
             .mangoExpand()
+            .animateContentSize(animationSpec = tween(if (motion) 240 else 0))
             .clip(RoundedCornerShape(22.dp))
             .testTag("planned_meal_card_${meal.id}")
     ) {
@@ -1274,8 +1276,8 @@ internal fun PlannedMealDetailCard(
                     imageUrl = recipe?.imageUrl.orEmpty(),
                     title = meal.recipeTitle,
                     modifier = Modifier
-                        .size(88.dp)
-                        .clip(RoundedCornerShape(20.dp))
+                        .size(if (recipe?.imageUrl.isNullOrBlank()) 52.dp else 64.dp)
+                        .clip(RoundedCornerShape(14.dp))
                 )
                 Column(
                     modifier = Modifier.weight(1f),
@@ -1316,7 +1318,8 @@ internal fun PlannedMealDetailCard(
                 }
             }
             TextButton(enabled = interactionsEnabled, onClick = { expanded = !expanded }, modifier = Modifier.fillMaxWidth().testTag("toggle_meal_details_${meal.id}")) {
-                Text(if (expanded) "Zwiń szczegóły −" else "Składniki i szczegóły +", color = MangoYellow)
+                Text(if (expanded) "Ukryj szczegóły" else "Pokaż składniki i szczegóły", color = MangoYellow)
+                Icon(if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null)
             }
             if (expanded) {
             if (viewModel != null) com.example.ui.components.SaveSingleMealSetButton(viewModel, meal)

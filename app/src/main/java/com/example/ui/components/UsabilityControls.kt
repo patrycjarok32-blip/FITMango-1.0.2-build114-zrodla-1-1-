@@ -1,6 +1,9 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
@@ -18,8 +21,11 @@ fun ProductShortcuts(recent: List<SubstituteCandidate>, favorites: List<Substitu
     var query by remember { mutableStateOf("") }
     var expanded by remember(tab, query) { mutableStateOf(false) }
     if (recent.isNotEmpty() || favorites.isNotEmpty()) {
-        Row { TextButton(enabled = enabled, onClick = { tab = false }) { Text("Ostatnie") }; TextButton(enabled = enabled, onClick = { tab = true }) { Text("★ Ulubione") } }
-        OutlinedTextField(query, { query = it }, singleLine = true, label = { Text("Szukaj w zapisanych produktach") }, modifier = Modifier.fillMaxWidth())
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = !tab, onClick = { tab = false }, enabled = enabled, label = { Text("Ostatnie") }, leadingIcon = { Icon(Icons.Outlined.History, null, Modifier.size(18.dp)) })
+            FilterChip(selected = tab, onClick = { tab = true }, enabled = enabled, label = { Text("Ulubione") }, leadingIcon = { Icon(Icons.Outlined.StarOutline, null, Modifier.size(18.dp)) })
+        }
+        OutlinedTextField(query, { query = it }, singleLine = true, placeholder = { Text("Szukaj produktu...") }, leadingIcon = { Icon(Icons.Outlined.Search, null) }, modifier = Modifier.fillMaxWidth())
         val products = ProductHistorySupport.unique(if (tab) favorites else recent).filter {
             ProduceSupport.normalize(it.name + " " + it.brand).contains(ProduceSupport.normalize(query.trim())) }
         for (product in products.take(if (expanded) 30 else 3)) {
@@ -33,7 +39,10 @@ fun ProductShortcuts(recent: List<SubstituteCandidate>, favorites: List<Substitu
                     }
                 }
                 TextButton(enabled = enabled, onClick = { onFavorite(product) }) { Text(if (favorites.any { ProductHistorySupport.same(it, product) }) "★" else "☆") }
-                if (!tab) TextButton(enabled = enabled, onClick = { onRemoveRecent(product) }) { Text("Usuń", style = MaterialTheme.typography.labelSmall) }
+                if (!tab) { var confirmRemove by remember(product.name) { mutableStateOf(false) }
+                    if (confirmRemove) TextButton(enabled = enabled, onClick = { onRemoveRecent(product); confirmRemove = false }) { Text("Potwierdź") }
+                    else IconButton(enabled = enabled, onClick = { confirmRemove = true }) { Icon(Icons.Outlined.DeleteOutline, "Usuń z ostatnich") }
+                }
             }
         }
         if (products.size > 3) TextButton(onClick = { expanded = !expanded }) { Text(if (expanded) "Pokaż mniej" else "Pokaż więcej (${products.size})") }

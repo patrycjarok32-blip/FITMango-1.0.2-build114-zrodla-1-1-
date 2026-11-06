@@ -2,6 +2,11 @@ package com.example.ui.components
 
 import com.example.ui.components.FitMangoIcon as Icon
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -64,6 +69,8 @@ fun IngredientReplacementDialog(
     val initialUnit = IngredientSubstitutionSupport.normalizeMassOrVolumeUnit(parsedOriginal.unit)
 
     var selectedMode by remember { mutableStateOf(SubstituteOptionMode.OPEN_FOOD_FACTS) }
+    var showMoreSources by remember { mutableStateOf(!isAddition) }
+    val motion = com.example.ui.screens.progressMotionEnabled()
     var offQuery by remember(originalName) { mutableStateOf(originalName) }
     var barcodeInput by remember { mutableStateOf("") }
     var localSearchQuery by remember { mutableStateOf("") }
@@ -184,7 +191,7 @@ fun IngredientReplacementDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 540.dp).verticalScroll(rememberScrollState()).testTag("ingredient_picker_scroll"),
+                    .heightIn(max = 540.dp).verticalScroll(rememberScrollState()).animateContentSize(tween(if (motion) 220 else 0)).testTag("ingredient_picker_scroll"),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 ProductShortcuts(recentProducts, favoriteProducts,
@@ -205,6 +212,15 @@ fun IngredientReplacementDialog(
                         mealPreview?.let { preview -> Text(preview(repairedCandidate ?: product, amount, selectedUnit), style = MaterialTheme.typography.bodySmall) }
                     }
                 }
+                if (isAddition) {
+                    TextButton(onClick = { showMoreSources = !showMoreSources }, modifier = Modifier.fillMaxWidth().testTag("picker_more_sources")) {
+                        Icon(if (showMoreSources) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null)
+                        Spacer(Modifier.width(6.dp))
+                        Text(if (showMoreSources) "Ukryj źródła produktów" else "Więcej źródeł: Open Food Facts, lokalna baza i AI")
+                    }
+                }
+                AnimatedVisibility(visible = showMoreSources, enter = expandVertically(tween(if (motion) 220 else 0)), exit = shrinkVertically(tween(if (motion) 200 else 0))) {
+                    Column {
                 // 1. Four Replacement Options (2x2 Grid so full Polish labels are always visible)
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(
@@ -245,6 +261,17 @@ fun IngredientReplacementDialog(
                             },
                             modifier = Modifier.weight(1f)
                         )
+                    }
+                }
+
+                    }
+                }
+                if (isAddition && !showMoreSources) {
+                    OutlinedButton(onClick = { selectedMode = SubstituteOptionMode.BARCODE_SCAN; showFullScreenScanner = true },
+                        modifier = Modifier.fillMaxWidth().testTag("picker_quick_scan")) {
+                        Icon(Icons.Default.QrCodeScanner, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Skanuj kod kreskowy")
                     }
                 }
 
