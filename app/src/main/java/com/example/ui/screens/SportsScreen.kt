@@ -103,7 +103,26 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             item { reportNumbers?.let { numbers -> SportsWeeklyReport(numbers, profile, aiReport, aiBusy) { viewModel.runWeeklyAiAnalysis() } }
                 ?: LinearProgressIndicator(Modifier.fillMaxWidth()) }
         } else {
-        item { ActivityTodayCard(data, today, current) }
+        item {
+            FreshMangoPanel(Modifier.fillMaxWidth().testTag("fresh_mango_steps_hero")) {
+                Text("Dzisiejsze kroki", style = MaterialTheme.typography.titleMedium, color = Cream)
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    FreshMangoRing(
+                        value = (current.steps ?: 0L).toFloat() / 10000f,
+                        center = current.steps?.let { "%,d".format(it) } ?: "—",
+                        subtitle = "z 10 000 kroków",
+                        diameter = 150.dp
+                    )
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FreshMangoStat("Spalone", current.calories?.let { "${it.toInt()} kcal" } ?: "—",
+                        Modifier.weight(1f))
+                    FreshMangoStat("Sen", current.sleepMinutes?.let { "${it / 60} h ${it % 60} min" } ?: "—",
+                        Modifier.weight(1f))
+                }
+            }
+        }
+        if (showActivityDetails) item { ActivityTodayCard(data, today, current) }
         if (showActivityDetails) item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
         if (showActivityDetails) item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("Twój tydzień • $start – ${start.plusDays(6)}", style = MaterialTheme.typography.labelLarge, color = GoldAccent)
