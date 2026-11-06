@@ -102,6 +102,32 @@ fun WeeklySummaryCard(viewModel: DietaViewModel) {
         if (today >= start && today <= end) Text("Dziś w toku — nie uwzględniamy tego dnia w analizie.", style = MaterialTheme.typography.bodySmall)
         val present = foodValues.filterNotNull()
         if (present.isNotEmpty()) Text("Średnia z ${present.size} dni z wpisami: ${(present.sum() / present.size).roundToInt()} ${metric.unit}", style = MaterialTheme.typography.titleSmall)
+        if (metric == WeeklyMetric.ENERGY) {
+            val completedDays = dates.filter { it < today }
+            val foodRecorded = completedDays.count { d ->
+                days.any { it.date == d.toString() && it.meals.isNotEmpty() }
+            }
+            val energyRecorded = completedDays.count { d ->
+                analysisEnergy.any { it.date == d.toString() && it.totalKcal > 0L }
+            }
+            Surface(color = com.example.ui.theme.MutedSurface2,
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp)) {
+                Column(Modifier.fillMaxWidth().padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Text("Jakość danych tygodnia", style = MaterialTheme.typography.titleSmall,
+                        color = com.example.ui.theme.MangoMint)
+                    Text("Dni z wpisami posiłków: $foodRecorded / ${completedDays.size}",
+                        style = MaterialTheme.typography.bodySmall)
+                    Text("Dni z danymi o wydatku energii: $energyRecorded / ${completedDays.size}",
+                        style = MaterialTheme.typography.bodySmall)
+                    Text("Bilans jest orientacyjny. Brak odczytu nie oznacza zera spalonych kalorii; bieżący dzień nie jest zakończony.",
+                        style = MaterialTheme.typography.bodySmall)
+                    if (sync?.isConnected != true && !profileEnergy)
+                        Text("Połącz Health Connect, aby zobaczyć rzeczywiste odczyty wydatku energii.",
+                            style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
         syncMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
         TextButton(enabled = !loading, onClick = { coordinator.loadWeeklyEnergy(start, end) }) { Text("Odśwież spalanie z Health Connect") }
