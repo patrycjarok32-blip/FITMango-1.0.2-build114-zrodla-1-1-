@@ -82,13 +82,11 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 onSelected = { showReport = it == "Tydzień"; showExtras = it == "Miesiąc" })
         }
         item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onBack) { Text("Wróć") }
-                Text("Dzisiaj", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-            }
             SuccessFeedback(feedback, "Zapisano")
             message?.let { Text(it, color = GoldAccent) }
             permissionError?.let { Text(it, color = ErrorInk) }
+        }
+        if (showActivityDetails) item {
             SportsHistoryControls(busy,
                 onPermissions = { permissionError = null; runCatching { launcher.launch(setOf(
                     HealthPermission.getReadPermission(ExerciseSessionRecord::class), HealthPermission.getReadPermission(DistanceRecord::class),
@@ -118,6 +116,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     FreshMangoStat("Spalone", current.calories?.let { "${it.toInt()} kcal" } ?: "—",
                         Modifier.weight(1f))
                     FreshMangoStat("Sen", current.sleepMinutes?.let { "${it / 60} h ${it % 60} min" } ?: "—",
+                        Modifier.weight(1f))
+                    FreshMangoStat("Treningi", visible.count { runCatching { Instant.parse(it.start).atZone(ZoneId.systemDefault()).toLocalDate() == today }.getOrDefault(false) }.toString(),
                         Modifier.weight(1f))
                 }
             }
