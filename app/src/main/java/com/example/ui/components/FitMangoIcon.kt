@@ -15,18 +15,22 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
+import com.example.ui.theme.MangoCoral
+import com.example.ui.theme.MangoMint
+import com.example.ui.theme.MangoLavender
+import com.example.ui.theme.JuicyOrange
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import com.example.R
 
 internal fun fitMangoIconResource(name: String): Int? = when (name.substringAfterLast('.')) {
-    "Home", "HomeFilled" -> R.drawable.fit_icon_home
+    "Home", "HomeFilled", "Dashboard" -> R.drawable.fit_icon_home
     "CalendarMonth", "CalendarToday", "DateRange" -> R.drawable.fit_icon_calendar
     "RestaurantMenu", "MenuBook", "Restaurant" -> R.drawable.fit_icon_recipes
     "ShoppingCart", "ShoppingBag" -> R.drawable.fit_icon_shopping
-    "Person", "AccountCircle" -> R.drawable.fit_icon_profile
-    "SmartToy", "AutoAwesome" -> R.drawable.fit_icon_ai
+    "Person", "AccountCircle", "MoreHoriz" -> R.drawable.fit_icon_profile
+    "SmartToy", "AutoAwesome", "Psychology" -> R.drawable.fit_icon_ai
     "PictureAsPdf", "UploadFile" -> R.drawable.fit_icon_pdf
     "Description", "Article" -> R.drawable.fit_icon_document
     "WaterDrop", "LocalDrink" -> R.drawable.fit_icon_water
@@ -142,6 +146,13 @@ private fun fitMangoPainter(resource: Int): Painter {
 fun FitMangoIcon(imageVector: ImageVector, contentDescription: String?, modifier: Modifier = Modifier,
     tint: Color = LocalContentColor.current, colorful: Boolean = false) {
     val resource = fitMangoIconResource(imageVector.name)
+    val freshTint = when (imageVector.name.substringAfterLast('.')) {
+        "Home", "HomeFilled", "Dashboard", "Favorite", "FavoriteBorder" -> MangoCoral
+        "CalendarMonth", "CalendarToday", "DateRange", "RestaurantMenu", "MenuBook" -> JuicyOrange
+        "FitnessCenter", "DirectionsWalk", "DirectionsRun", "WaterDrop", "ShoppingCart" -> MangoMint
+        "TrendingUp", "ShowChart", "BarChart", "SmartToy", "AutoAwesome", "Psychology" -> MangoLavender
+        else -> tint
+    }
     if (resource != null && colorful) {
         androidx.compose.material3.Icon(painter = fitMangoPainter(resource), contentDescription = contentDescription,
             modifier = modifier.then(Modifier.size(28.dp)), tint = Color.Unspecified)
@@ -161,7 +172,7 @@ fun FitMangoIcon(imageVector: ImageVector, contentDescription: String?, modifier
             else -> imageVector
         }
         androidx.compose.material3.Icon(imageVector = simple, contentDescription = contentDescription,
-            modifier = modifier, tint = tint)
+            modifier = modifier, tint = if (colorful) freshTint else tint)
     }
 }
 
