@@ -1,9 +1,6 @@
 name: Fresh Mango APK verification
 
 on:
-  push:
-    branches:
-      - fresh-mango-ui-build125
   workflow_dispatch:
 
 jobs:
@@ -45,3 +42,4 @@ jobs:
           name: FITMango-Fresh-Mango-125-debug
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+          retention-days: 3
