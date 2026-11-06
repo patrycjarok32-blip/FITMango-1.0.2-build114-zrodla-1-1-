@@ -3,6 +3,9 @@ package com.example.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.ui.theme.MutedSurface1
+import com.example.ui.theme.MutedSurface2
+import com.example.ui.theme.JuicyOrange
+import com.example.ui.theme.LeafGreen
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -44,6 +47,12 @@ fun ProfileHub(tab: String, onTab: (String) -> Unit, listState: LazyListState,
     summaries: Map<String, String>, onOpen: (String) -> Unit) {
     val keys = ProfileHubCatalog.tabs.keys.toList()
     Column(Modifier.fillMaxSize()) {
+        Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MutedSurface2)) {
+            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Twoje centrum FITMango", style = MaterialTheme.typography.titleLarge, color = LeafGreen)
+                Text("Zdrowie, postępy i ustawienia w jednym miejscu", style = MaterialTheme.typography.bodyMedium)
+            }
+        }
         TabRow(selectedTabIndex = keys.indexOf(tab).coerceAtLeast(0)) {
             ProfileHubCatalog.tabs.forEach { (id, label) ->
                 Tab(selected = tab == id, onClick = { onTab(id) }, modifier = Modifier.testTag("profile_tab_$id"), text = { Text(label) })
@@ -58,14 +67,14 @@ fun ProfileHub(tab: String, onTab: (String) -> Unit, listState: LazyListState,
         LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("profile_content"),
             contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(ProfileHubCatalog.sections.filter { it.tab == tab }, key = { it.id }) { section ->
-                Card(onClick = { onOpen(section.id) }, colors = CardDefaults.cardColors(containerColor = MutedSurface1), shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth().testTag("profile_tile_${section.id}")) {
-                    Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Card(onClick = { onOpen(section.id) }, colors = CardDefaults.cardColors(containerColor = MutedSurface1), shape = RoundedCornerShape(24.dp), modifier = Modifier.fillMaxWidth().testTag("profile_tile_${section.id}")) {
+                    Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         MangoSectionArt(sectionArtwork(section.artwork), sectionArtworkAccent(section.artwork), size = 32.dp)
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                             Text(section.title, style = MaterialTheme.typography.titleSmall)
                             Text(summaries[section.id].orEmpty(), style = MaterialTheme.typography.bodySmall)
                         }
-                        Text("›", style = MaterialTheme.typography.headlineSmall)
+                        Text("›", style = MaterialTheme.typography.headlineSmall, color = JuicyOrange)
                     }
                 }
             }
