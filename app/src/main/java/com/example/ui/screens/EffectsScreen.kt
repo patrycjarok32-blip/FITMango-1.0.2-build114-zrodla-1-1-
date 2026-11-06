@@ -25,6 +25,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -97,6 +98,19 @@ fun WeightTrendChart(points: List<WeightPoint>) {
                 val start = position(a)
                 val end = position(b)
                 drawLine(color, start, Offset(start.x + (end.x - start.x) * fraction, start.y + (end.y - start.y) * fraction), thickness)
+            }
+        }
+        if (smooth.size >= 2) {
+            val visiblePoints = smooth.map { position(it) }
+                .takeWhile { it.x <= size.width * drawFraction }
+            if (visiblePoints.size >= 2) {
+                val fill = Path().apply {
+                    moveTo(visiblePoints.first().x, size.height)
+                    visiblePoints.forEach { lineTo(it.x, it.y) }
+                    lineTo(visiblePoints.last().x, size.height)
+                    close()
+                }
+                drawPath(fill, trendColor.copy(alpha = .10f))
             }
         }
         points.zipWithNext().forEach { (a, b) -> animatedSegment(a, b, rawColor.copy(alpha = .4f), 1.dp.toPx()) }
