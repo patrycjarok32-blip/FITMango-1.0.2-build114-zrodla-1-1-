@@ -171,7 +171,7 @@ fun DashboardScreen(
                 .imePadding()
 .background(DarkBackground)
                 .verticalScroll(rememberScrollState())
-                .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Card(
@@ -185,22 +185,14 @@ fun DashboardScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(9.dp)
                 ) {
-                    Text("Bilans dnia", color = Cream, fontSize = 15.sp,
+                    Text("Dzisiejszy bilans", color = Cream, fontSize = 15.sp,
                         fontWeight = FontWeight.ExtraBold)
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(116.dp)) {
-                        CircularProgressIndicator(
-                            progress = { calorieFraction },
-                            modifier = Modifier.fillMaxSize(),
-                            color = LeafGreen,
-                            trackColor = MutedSurface2,
-                            strokeWidth = 8.dp
-                        )
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("$animatedCalories", color = Cream, fontSize = 28.sp,
-                                fontWeight = FontWeight.Black)
-                            Text("/ $targetCalories kcal", color = GoldAccent, fontSize = 12.sp)
-                        }
-                    }
+                    FreshMangoRing(
+                        value = calorieFraction,
+                        center = "$animatedCalories kcal",
+                        subtitle = "z $targetCalories kcal",
+                        diameter = 144.dp
+                    )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
