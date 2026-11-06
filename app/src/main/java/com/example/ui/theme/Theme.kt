@@ -31,10 +31,11 @@ fun MojaDietaAiTheme(darkTheme: Boolean = false, dynamicColor: Boolean = false, 
     val base = if (light) lightColorScheme() else darkColorScheme()
     val scheme = base.copy(
         primary = if (light) JuicyOrange else MangoYellow, onPrimary = MangoButtonInk,
-        primaryContainer = MutedSurface2, onPrimaryContainer = Cream,
+        primaryContainer = if (light) Color(0xFFFFE5CE) else MutedSurface2, onPrimaryContainer = Cream,
         secondary = LeafGreen, onSecondary = Color.White,
-        secondaryContainer = MutedSurface2, onSecondaryContainer = Cream,
-        tertiary = LeafGreen, onTertiary = if (light) Color.White else MangoButtonInk,
+        secondaryContainer = if (light) Color(0xFFDFF7E9) else MutedSurface2, onSecondaryContainer = Cream,
+        tertiary = MangoLavender, onTertiary = Color.White,
+        tertiaryContainer = if (light) Color(0xFFEDE7FF) else Color(0xFF342A54),
         background = DarkBackground, onBackground = Cream,
         surface = MutedSurface1, onSurface = Cream,
         surfaceVariant = MutedSurface2, onSurfaceVariant = GoldAccent,
@@ -54,7 +55,7 @@ fun MojaDietaAiTheme(darkTheme: Boolean = false, dynamicColor: Boolean = false, 
     }
     com.example.ui.components.MangoMotionProvider {
         MaterialTheme(colorScheme = scheme, typography = Typography,
-            shapes = Shapes(small = RoundedCornerShape(14.dp), medium = RoundedCornerShape(20.dp), large = RoundedCornerShape(28.dp)), content = content)
+            shapes = Shapes(extraSmall = RoundedCornerShape(10.dp), small = RoundedCornerShape(16.dp), medium = RoundedCornerShape(22.dp), large = RoundedCornerShape(28.dp), extraLarge = RoundedCornerShape(32.dp)), content = content)
     }
 }
 
