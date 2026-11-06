@@ -83,7 +83,7 @@ fun DashboardScreen(
     val reducedMangoMotion = LocalReducedMangoMotion.current
     val calorieFraction by animateFloatAsState(
         targetValue = (consumedCalories.toFloat() / targetCalories).coerceIn(0f, 1f),
-        animationSpec = tween(durationMillis = if (reducedMangoMotion) 0 else 850),
+        animationSpec = tween(durationMillis = if (reducedMangoMotion) 0 else 650),
         label = "calorie_ring"
     )
     val animatedCalories by animateIntAsState(
@@ -123,7 +123,7 @@ fun DashboardScreen(
                                 fontSize = 18.sp,
                                 color = MangoYellow
                             )
-                            Text("PREMIUM UI • build 125", fontSize = 11.sp, color = GoldAccent)
+                            Text("Twój dzień, Twoja energia ✨", fontSize = 11.sp, color = GoldAccent)
                         }
                     }
                 },
