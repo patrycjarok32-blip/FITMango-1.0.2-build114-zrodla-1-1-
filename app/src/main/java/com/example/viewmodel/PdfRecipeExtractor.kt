@@ -158,17 +158,17 @@ internal object PdfRecipeExtractor {
         val found = mutableListOf<ParsedRecipe>()
         for (i in 1 until pages.size - 2) {
             val title = pages[i].trim()
-            if (title.length !in 8..100 || title.lines().size > 3 || title.any { it.isLowerCase() }) continue
+            if (title.length !in 5..160 || title.lines().size > 5 || title.startsWith("PRZEPISY ", ignoreCase = true)) continue
             val ingredientsPage = pages[i + 1]
             val preparationPage = pages[i + 2]
-            if (!ingredientsPage.contains("Składniki") || !preparationPage.contains("Przygotowanie")) continue
+            if (!ingredientsPage.contains("Składniki", ignoreCase = true) || !preparationPage.contains("Przygotowanie", ignoreCase = true)) continue
             val ingredients = ingredientsPage.substringAfter("Składniki").substringBefore("Sugerowana liczba porcji")
-                .lines().map { it.trim() }.filter { it.startsWith("•") || it.startsWith("- ") }
-                .map { it.removePrefix("•").removePrefix("-").trim() }
+                .lines().map { it.trim() }.filter { it.startsWith("•") || it.startsWith("- ") || it.startsWith("॰") }
+                .map { it.removePrefix("•").removePrefix("-").removePrefix("॰").trim() }
             val steps = Regex("""(?m)^\s*\d+[.)]\s+(.+)""")
                 .findAll(preparationPage.substringAfter("Przygotowanie"))
                 .map { it.groupValues[1] }.toList()
-            if (ingredients.size < 2 || steps.size < 2) continue
+            if (ingredients.size < 2 || steps.isEmpty()) continue
             found.add(ParsedRecipe(
                 title = title, servings = "1", ingredients = ingredients.joinToString("\n"),
                 instructions = steps.joinToString("\n"), calories = 0, protein = 0,
