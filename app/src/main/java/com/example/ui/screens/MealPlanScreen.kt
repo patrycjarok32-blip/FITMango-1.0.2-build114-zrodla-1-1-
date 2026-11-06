@@ -208,6 +208,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
     var swapError by remember { mutableStateOf<String?>(null) }
 
     var showQuickAdd by remember { mutableStateOf(false) }
+    var showPlannerCalendar by rememberSaveable { mutableStateOf(false) }
     var quickAddProduct by remember { mutableStateOf(false) }
     if (showQuickAdd) {
         AlertDialog(
@@ -236,14 +237,12 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
     }
     Scaffold(
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            FloatingActionButton(
                 onClick = { showQuickAdd = true },
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Dodaj posiłek") },
                 containerColor = JuicyOrange,
                 contentColor = MangoButtonInk,
                 modifier = Modifier.testTag("fresh_mango_quick_add")
-            )
+            ) { Icon(Icons.Default.Add, contentDescription = "Dodaj posiłek") }
         },
         topBar = {
             TopAppBar(
@@ -302,6 +301,13 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 com.example.ui.components.PlanDateSelector(selectedDayName, { selectedDayName = it }, "planner_date", showDays = false)
             }
 
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = !showPlannerCalendar, onClick = { showPlannerCalendar = false },
+                    label = { Text("Dziś") }, modifier = Modifier.weight(1f))
+                FilterChip(selected = showPlannerCalendar, onClick = { showPlannerCalendar = true },
+                    label = { Text("Kalendarz") }, modifier = Modifier.weight(1f))
+            }
+            if (showPlannerCalendar) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -356,6 +362,8 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         }
                     }
                 }
+            }
+
             }
 
             // Daily summary header + AI generate button
