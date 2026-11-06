@@ -149,12 +149,8 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
     LazyColumn(Modifier.fillMaxSize().background(DarkBackground).padding(horizontal = 16.dp), state = rememberLazyListState(), verticalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(vertical = 16.dp)) {
         item {
             Text("Postępy", style = MaterialTheme.typography.headlineSmall, color = Cream)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("Waga", "Pomiary", "Cele").forEach { label ->
-                    FilterChip(selected = progressTab == label, onClick = { progressTab = label },
-                        label = { Text(label) }, modifier = Modifier.weight(1f))
-                }
-            }
+            FreshMangoTabs(listOf("Waga", "Pomiary", "Cele"), progressTab,
+                onSelected = { progressTab = it })
             SuccessFeedback(feedback, "Zapisano")
             message?.let { Text(it, color = ErrorInk) }
             if (progressTab == "Waga") {
