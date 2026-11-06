@@ -174,57 +174,31 @@ fun DashboardScreen(
                 )
                 .verticalScroll(rememberScrollState())
                 .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Surface(
-                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_welcome"),
-                shape = RoundedCornerShape(24.dp),
-                color = MutedSurface2,
-                shadowElevation = 7.dp
-            ) {
-                Row(
-                    modifier = Modifier.padding(18.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    MangoGuide(size = 52.dp, event = consumedCalories + waterTotal)
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Twój dzień, Twój balans", fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp, color = Cream)
-                        Text("Małe kroki. Wielka zmiana. 🥭", fontSize = 12.sp, color = GoldAccent)
-                    }
-                }
-            }
-            MangoDailyGreeting(
-                today = today,
-                activeDates = habitDays.map { it.date },
-                waterMl = waterTotal,
-                consumed = consumedCalories,
-                calorieGoal = targetCalories
-            )
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_calorie_hero"),
-                shape = RoundedCornerShape(22.dp),
+                shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(containerColor = MutedSurface1),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Dzisiejszy bilans", color = Cream, fontSize = 18.sp,
+                    Text("Bilans dnia", color = Cream, fontSize = 18.sp,
                         fontWeight = FontWeight.ExtraBold)
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.size(132.dp)) {
                         CircularProgressIndicator(
                             progress = { calorieFraction },
                             modifier = Modifier.fillMaxSize(),
-                            color = JuicyOrange,
+                            color = LeafGreen,
                             trackColor = MutedSurface2,
                             strokeWidth = 10.dp
                         )
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("$animatedCalories", color = Cream, fontSize = 30.sp,
+                            Text("$animatedCalories kcal", color = Cream, fontSize = 26.sp,
                                 fontWeight = FontWeight.Black)
                             Text("/ $targetCalories kcal", color = GoldAccent, fontSize = 14.sp)
                         }
@@ -737,12 +711,12 @@ private fun FreshMangoDestinationCard(
 ) {
     Card(
         modifier = modifier.clickable(onClick = onClick),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MutedSurface1),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 14.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
