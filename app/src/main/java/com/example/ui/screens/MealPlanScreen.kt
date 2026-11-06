@@ -301,12 +301,9 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 com.example.ui.components.PlanDateSelector(selectedDayName, { selectedDayName = it }, "planner_date", showDays = false)
             }
 
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = !showPlannerCalendar, onClick = { showPlannerCalendar = false },
-                    label = { Text("Dziś") }, modifier = Modifier.weight(1f))
-                FilterChip(selected = showPlannerCalendar, onClick = { showPlannerCalendar = true },
-                    label = { Text("Kalendarz") }, modifier = Modifier.weight(1f))
-            }
+            FreshMangoTabs(listOf("Dziś", "Kalendarz"),
+                if (showPlannerCalendar) "Kalendarz" else "Dziś",
+                onSelected = { showPlannerCalendar = it == "Kalendarz" })
             if (showPlannerCalendar) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
