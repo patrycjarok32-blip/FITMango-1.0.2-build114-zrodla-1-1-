@@ -59,6 +59,10 @@ fun WeightTrendChart(points: List<WeightPoint>) {
     val lo = points.minOf { it.kg } - .5; val hi = points.maxOf { it.kg } + .5
     val from = LocalDate.parse(points.first().date).toEpochDay(); val to = LocalDate.parse(points.last().date).toEpochDay()
     val rawColor = GoldAccent; val trendColor = LeafGreen; val axis = WarmBrown
+    val values = points.map { it.kg }
+    val averageWeight = values.average()
+    val minWeight = values.minOrNull() ?: 0.0
+    val maxWeight = values.maxOrNull() ?: 0.0
     val weightChange = points.last().kg - points.first().kg
     val changeLabel = String.format(
         java.util.Locale.getDefault(), "%+.1f kg", weightChange
@@ -69,6 +73,14 @@ fun WeightTrendChart(points: List<WeightPoint>) {
         Text("Zmiana w okresie: $changeLabel", color = LeafGreen,
             style = MaterialTheme.typography.bodySmall)
     }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text("Średnia: ${String.format(java.util.Locale.getDefault(), "%.2f", averageWeight)} kg",
+            color = MangoMint, style = MaterialTheme.typography.bodySmall)
+        Text("Min–max: ${String.format(java.util.Locale.getDefault(), "%.1f–%.1f", minWeight, maxWeight)} kg",
+            color = GoldAccent, style = MaterialTheme.typography.bodySmall)
+    }
+    Text("Liczba pomiarów: ${points.size} • zakres: ${points.first().date} – ${points.last().date}",
+        style = MaterialTheme.typography.labelSmall)
     Canvas(Modifier.fillMaxWidth().height(170.dp).padding(8.dp).testTag("effects_weight_chart").pointerInput(points) {
         detectTapGestures { tap ->
             selected = points.minByOrNull { abs((LocalDate.parse(it.date).toEpochDay() - from).toFloat() / (to - from).coerceAtLeast(1) * size.width - tap.x) }
