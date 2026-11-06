@@ -291,14 +291,25 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 .padding(horizontal = 16.dp, vertical = 6.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            MealUndoCard(viewModel)
             SuccessFeedback(actionFeedback)
             SuccessFeedback(motionFeedback, motionMessage, tag = "meal_status_feedback")
             actionError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             com.example.ui.components.LegacyPlanRepairCard(mealPlans, viewModel) { selectedDayName = it }
-            if (selectedDate == today) NutritionStatusBadge(NutritionStatus.IN_PROGRESS, "Dzień w toku")
-            Column(Modifier.swipePlannerDays(selectedDayName) { selectedDayName = it }.testTag("planner_day_gesture")) {
-                com.example.ui.components.PlanDateSelector(selectedDayName, { selectedDayName = it }, "planner_date", showDays = false)
+            Row(Modifier.fillMaxWidth().swipePlannerDays(selectedDayName) { selectedDayName = it }
+                .testTag("planner_day_gesture"), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween) {
+                IconButton(onClick = { selectedDayName = selectedDate.minusDays(1).toString() }) {
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Poprzedni dzień",
+                        tint = JuicyOrange, modifier = Modifier.size(22.dp).graphicsLayer { rotationZ = 90f })
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(selectedDaySpec.displayWithDate, color = Cream, fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.bodyMedium)
+                }
+                IconButton(onClick = { selectedDayName = selectedDate.plusDays(1).toString() }) {
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Następny dzień",
+                        tint = JuicyOrange, modifier = Modifier.size(22.dp).graphicsLayer { rotationZ = -90f })
+                }
             }
 
             FreshMangoTabs(listOf("Dziś", "Kalendarz"),
@@ -376,9 +387,9 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
             ) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = JuicyOrange, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = JuicyOrange, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("🔥 Bilans dnia", color = Cream, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        Text("Bilans dnia", color = Cream, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                         Text("${dayMeals.size} posiłków", color = GoldAccent, style = MaterialTheme.typography.labelMedium)
                     }
                     if (dayMeals.isEmpty()) {
@@ -399,10 +410,10 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(Modifier.weight(1f)) {
-                    MangoSectionTitle(text = "Posiłki • ${selectedDaySpec.canonicalName}")
+                    MangoSectionTitle(text = "Posiłki")
                     key(selectedDayName) {
-                        if (dayMeals.isEmpty()) Text("Zaplanowano: 0 posiłków", modifier = Modifier.testTag("daily_nutrition_summary"), style = MaterialTheme.typography.labelMedium)
-                        else AnimatedMealNutrition(dailyNutrition, "daily_nutrition_summary", prefix = "Suma dnia: ")
+                        if (dayMeals.isEmpty()) Spacer(Modifier.height(0.dp))
+                        else Spacer(Modifier.height(0.dp))
                     }
                 }
 
@@ -508,7 +519,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 }
                 item {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(if (remainingMeals.isEmpty() && eatenMeals.isNotEmpty()) "Wszystkie zaplanowane posiłki zjedzone ✓" else "Do zjedzenia: ${remainingMeals.size}", modifier = Modifier.weight(1f))
+                        Text(if (remainingMeals.isEmpty() && eatenMeals.isNotEmpty()) "Wszystkie posiłki zjedzone ✓" else "Do zjedzenia: ${remainingMeals.size}", modifier = Modifier.weight(1f))
                         if (eatenMeals.isNotEmpty()) TextButton(onClick = { showEatenHistory = true }, modifier = Modifier.testTag("show_eaten_history")) { Text("Zjedzone (${eatenMeals.size})") }
                     }
                 }
