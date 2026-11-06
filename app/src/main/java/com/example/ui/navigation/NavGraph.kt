@@ -82,7 +82,7 @@ fun MangoBottomNav(
             .fillMaxWidth()
             .border(width = 1.dp, color = WarmBrown.copy(alpha = 0.12f), shape = RoundedCornerShape(0.dp))
     ) {
-        BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPadding().padding(vertical = 2.dp, horizontal = 2.dp)
+        BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPadding().padding(vertical = 1.dp, horizontal = 3.dp)
             .pointerInput(currentRoute, items) {
                 var drag = 0f
                 detectHorizontalDragGestures(
@@ -107,7 +107,7 @@ fun MangoBottomNav(
             val indicator by animateDpAsState(targetValue = slot * selectedIndex.coerceAtLeast(0),
                 animationSpec = tween(if (reduced) 0 else 220), label = "nav_indicator")
             if (selectedIndex >= 0) Box(Modifier.offset(x = indicator, y = 3.dp).width(slot).height(32.dp)
-                .padding(horizontal = 12.dp).clip(RoundedCornerShape(18.dp)).background(accent(items[selectedIndex].route).copy(alpha = .14f)))
+                .padding(horizontal = 9.dp).clip(RoundedCornerShape(18.dp)).background(accent(items[selectedIndex].route).copy(alpha = .12f)))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
             items.forEach { screen ->
                 val isSelected = currentRoute == screen.route
@@ -132,8 +132,8 @@ fun MangoBottomNav(
                         .scale(scale)
                         .clip(RoundedCornerShape(12.dp))
                         .selectable(selected = isSelected, role = Role.Tab, onClick = { onNavigate(screen) })
-                        .heightIn(min = 52.dp)
-                        .padding(vertical = 4.dp)
+                        .heightIn(min = 50.dp)
+                        .padding(vertical = 3.dp)
                         .testTag("nav_tab_${screen.route}")
                 ) {
                     Box(
@@ -147,7 +147,7 @@ fun MangoBottomNav(
                             imageVector = screen.icon,
                             contentDescription = screen.title,
                             tint = iconColor,
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(21.dp),
                             colorful = false
                         )
                     }
