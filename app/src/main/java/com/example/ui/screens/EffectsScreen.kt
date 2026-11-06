@@ -124,6 +124,8 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
     val date by viewModel.currentDate.collectAsStateWithLifecycle()
     val today = LocalDate.parse(date)
     var range by rememberSaveable { mutableIntStateOf(30) }
+    var progressTab by rememberSaveable { mutableStateOf("Waga") }
+    var showAdvancedProgress by rememberSaveable { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var feedback by remember { mutableIntStateOf(0) }
@@ -146,31 +148,29 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
     fun n(value: Double?, unit: String) = value?.let { String.format(java.util.Locale.getDefault(), "%.2f %s", it, unit) } ?: "brak danych"
     LazyColumn(Modifier.fillMaxSize().background(DarkBackground).padding(horizontal = 16.dp), state = rememberLazyListState(), verticalArrangement = Arrangement.spacedBy(14.dp), contentPadding = PaddingValues(vertical = 16.dp)) {
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_progress_hero"),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(containerColor = com.example.ui.theme.MutedSurface2)
-            ) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Icon(Icons.Outlined.Insights, contentDescription = null, tint = com.example.ui.theme.GoldAccent)
-                        Text("Twoje postępy", style = MaterialTheme.typography.titleLarge,
-                        color = com.example.ui.theme.Cream)
-                    }
-                    Text("Twoja waga, pomiary i cele",
-                        style = MaterialTheme.typography.bodyMedium, color = com.example.ui.theme.GoldAccent)
+            Text("Postępy", style = MaterialTheme.typography.headlineSmall, color = Cream)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("Waga", "Pomiary", "Cele").forEach { label ->
+                    FilterChip(selected = progressTab == label, onClick = { progressTab = label },
+                        label = { Text(label) }, modifier = Modifier.weight(1f))
                 }
             }
-        }
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically) { TextButton(onClick = onBack) { Text("Wróć") }; Text("Twoje wyniki", style = MaterialTheme.typography.titleLarge) }
             SuccessFeedback(feedback, "Zapisano")
             message?.let { Text(it, color = ErrorInk) }
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { listOf(14, 30, 90).forEach { value -> FilterChip(range == value, { range = value }, label = { Text("$value dni") }) } }
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                Text("Cel: ${profile?.goal ?: "nieustawiony"}", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                TextButton(onClick = { showGoalPicker = !showGoalPicker }) { Text(if (showGoalPicker) "Zamknij" else "Zmień cel") }
+            if (progressTab == "Waga") {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf(7, 30, 90).forEach { value ->
+                        FilterChip(range == value, { range = value }, label = { Text("$value dni") })
+                    }
+                }
             }
+            if (progressTab == "Cele") {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Text("Cel: ${profile?.goal ?: "nieustawiony"}", modifier = Modifier.weight(1f))
+                    TextButton(onClick = { showGoalPicker = !showGoalPicker }) {
+                        Text(if (showGoalPicker) "Zamknij" else "Zmień cel")
+                    }
+                }
             if (showGoalPicker) {
                 Column {
                     listOf("Redukcja", "Utrzymanie", "Budowanie masy").forEach { goal ->
@@ -185,10 +185,14 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                     Text("Zmiana celu kalorii wymaga osobnego zatwierdzenia.", style = MaterialTheme.typography.bodySmall)
                 }
             }
+            }
+            if (progressTab == "Pomiary") {
+                TextButton(onClick = onProfile) { Text("Otwórz pomiary ciała →") }
+            }
         }
         val r = report
         if (r != null) {
-            item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (progressTab == "Waga") item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Podsumowanie • ostatnie $range dni", style = MaterialTheme.typography.titleMedium)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Card(Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
@@ -212,16 +216,16 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                 Text("Talia: ${n(r.waistChange, "cm")} • Pomiary: ${r.points.size}", style = MaterialTheme.typography.bodySmall)
                 Text("Wahania wagi są naturalne. Obserwuj trend, nie pojedynczy pomiar.", style = MaterialTheme.typography.bodySmall)
             } } }
-        item { ReductionPlanCard(settings.reductionPlan, today, busy, profile?.targetCalories, onProfile) { plan ->
+        if (progressTab == "Cele") item { ReductionPlanCard(settings.reductionPlan, today, busy, profile?.targetCalories, onProfile) { plan ->
             busy = true
             viewModel.saveEffectsSettings(settings.copy(reductionPlan = plan), ::completed)
         } }
-            item { CollapsibleMangoCard("Jakość danych", "effects_quality") {
+            if (showAdvancedProgress) item { CollapsibleMangoCard("Jakość danych", "effects_quality") {
                 Text("Zakończone dni w okresie: ${r.periodDays}. Dni z jedzeniem: ${r.loggedDays}. Z aktualnym zatwierdzeniem: ${r.confirmedDays}. Pełny zapis potwierdzony przez Ciebie: ${r.completeDays}.")
                 Text("Szacunkowe wartości składników: ${r.partialDays} dni. Pomiary wagi: ${r.points.size}. Dzisiejszy dzień jedzenia nie jest analizowany.")
                 Text("Brak wpisu to brak danych. Każdy zatwierdzony dzień oznacza pełny zapis i wchodzi do średnich. Szacunki składników oznaczamy osobno; automatyczna korekta kalorii wymaga precyzyjnych danych.")
             } }
-            item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (showAdvancedProgress) item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Zapotrzebowanie i cel", style = MaterialTheme.typography.titleMedium)
                 Text("Utrzymanie z profilu: ${r.maintenance?.toInt()?.let { "$it kcal/dzień" } ?: "uzupełnij Profil"}.")
                 Text("Cel jedzenia: ${profile?.targetCalories ?: "brak danych"} kcal. Średnia ze wszystkich zatwierdzonych dni (także zaakceptowanych szacunków): ${r.meanCalories?.toInt() ?: "brak danych"} kcal; białko: ${r.meanProtein?.toInt() ?: "brak danych"} g.")
@@ -233,8 +237,8 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                     Button(enabled = !busy, onClick = { adjustment = target to delta }, modifier = Modifier.testTag("effects_review_adjustment")) { Text("Rozważ: $target → ${target + delta} kcal") }
                 }
             } } }
-            item { CollapsibleMangoCard("Raport tygodniowy", "effects_week") { Text(r.weeklyText) } }
-            item { CollapsibleMangoCard("Trening i samopoczucie", "effects_wellbeing") {
+            if (showAdvancedProgress) item { CollapsibleMangoCard("Raport tygodniowy", "effects_week") { Text(r.weeklyText) } }
+            if (showAdvancedProgress) item { CollapsibleMangoCard("Trening i samopoczucie", "effects_wellbeing") {
                 Text(r.strengthText)
                 Text("Pokazujemy zapisane wyniki; porównaj także powtórzenia i technikę ćwiczenia.", style = MaterialTheme.typography.bodySmall)
                 Text(r.wellbeingText)
@@ -250,7 +254,8 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                 }) { Text("Zapisz samopoczucie ✓") }
             } }
         }
-        item { CollapsibleMangoCard("Przedział wagi na utrzymanie", "effects_band") {
+        item { OutlinedButton(onClick = { showAdvancedProgress = !showAdvancedProgress }, modifier = Modifier.fillMaxWidth()) { Text(if (showAdvancedProgress) "Zwiń szczegółowe analizy" else "Szczegółowe analizy i ustawienia") } }
+        if (showAdvancedProgress) item { CollapsibleMangoCard("Przedział wagi na utrzymanie", "effects_band") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(low, { low = it.take(6) }, label = { Text("Od kg") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.weight(1f))
                 OutlinedTextField(high, { high = it.take(6) }, label = { Text("Do kg") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.weight(1f))
@@ -260,7 +265,7 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                 busy = true; viewModel.saveEffectsSettings(settings.copy(low = l, high = h), ::completed)
             }) { Text("Zapisz przedział") }
         } }
-        item { CollapsibleMangoCard("Opcjonalne wyjaśnienie AI", "effects_ai") {
+        if (showAdvancedProgress) item { CollapsibleMangoCard("Opcjonalne wyjaśnienie AI", "effects_ai") {
             Text("Wyślesz do Gemini podsumowanie trendu, jedzenia, treningów i samopoczucia. Raport lokalny działa bez AI. Wyjaśnienie opisuje dane z chwili uruchomienia; po nowych wpisach wygeneruj je ponownie.")
             TextButton(onClick = onProfile) { Text("Ustawienia AI w Profilu") }
             val aiPulse by animateFloatAsState(if (aiBusy && motion) 0.72f else 1f, animationSpec = tween(if (motion) 450 else 0), label = "ai_busy_pulse")
