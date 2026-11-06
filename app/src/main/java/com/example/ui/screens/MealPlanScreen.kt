@@ -4,6 +4,11 @@ import com.example.ui.components.FitMangoIcon as Icon
 
 import com.example.ui.components.swipePlannerDays
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.spring
@@ -486,10 +491,37 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     .testTag("meal_plan_lazy_column"),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                item { com.example.ui.components.ChangeHistoryCard(viewModel) }
-                item { com.example.ui.components.NutritionAttentionCard(viewModel) }
-                item { com.example.ui.components.SavedMealSetsCard(viewModel, selectedDayName) }
-                item { com.example.ui.components.QuickMealsCard(viewModel, selectedDayName) }
+                item {
+                    var toolsExpanded by rememberSaveable { mutableStateOf(false) }
+                    Surface(color = MutedSurface1, shape = RoundedCornerShape(20.dp), tonalElevation = 1.dp) {
+                        Column(Modifier.fillMaxWidth().animateContentSize()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().clickable { toolsExpanded = !toolsExpanded }.padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = JuicyOrange)
+                                Spacer(Modifier.width(10.dp))
+                                Text("Skróty i narzędzia", modifier = Modifier.weight(1f), color = Cream, fontWeight = FontWeight.SemiBold)
+                                Text(if (toolsExpanded) "Zwiń" else "Rozwiń", color = LeafGreen)
+                            }
+                            AnimatedVisibility(
+                                visible = toolsExpanded,
+                                enter = fadeIn(tween(180)) + expandVertically(tween(240)),
+                                exit = fadeOut(tween(120)) + shrinkVertically(tween(200))
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(horizontal = 8.dp).padding(bottom = 8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    com.example.ui.components.ChangeHistoryCard(viewModel)
+                                    com.example.ui.components.NutritionAttentionCard(viewModel)
+                                    com.example.ui.components.SavedMealSetsCard(viewModel, selectedDayName)
+                                    com.example.ui.components.QuickMealsCard(viewModel, selectedDayName)
+                                }
+                            }
+                        }
+                    }
+                }
                 item {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(if (remainingMeals.isEmpty() && eatenMeals.isNotEmpty()) "Wszystkie zaplanowane posiłki zjedzone ✓" else "Do zjedzenia: ${remainingMeals.size}", modifier = Modifier.weight(1f))
