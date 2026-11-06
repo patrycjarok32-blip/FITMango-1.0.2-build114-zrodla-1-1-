@@ -3,6 +3,7 @@ package com.example.ui.screens
 import com.example.ui.components.FitMangoIcon as Icon
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable

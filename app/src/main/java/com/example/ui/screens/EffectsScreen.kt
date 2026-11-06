@@ -11,7 +11,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalAccessibilityManager
 import android.provider.Settings
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -42,11 +41,10 @@ import kotlin.math.abs
 @Composable
 internal fun progressMotionEnabled(): Boolean {
     val context = LocalContext.current
-    val accessibility = LocalAccessibilityManager.current
     val scale = remember(context) {
         Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
     }
-    return scale > 0f && accessibility?.isTouchExplorationEnabled != true
+    return scale > 0f
 }
 
 @Composable
