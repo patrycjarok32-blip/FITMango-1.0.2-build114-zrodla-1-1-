@@ -17,7 +17,7 @@ import com.example.ui.theme.*
 /** Packaged 3D artwork: one consistent size and soft halo, no network or animation loop. */
 @Composable
 fun MangoSectionArt(resource: Int, accent: Color, size: Dp = 48.dp) {
-    Box(Modifier.size(size).background(Brush.radialGradient(listOf(accent.copy(alpha = .24f), accent.copy(alpha = .07f), Color.Transparent)), CircleShape),
+    Box(Modifier.size(size).background(Brush.radialGradient(listOf(accent.copy(alpha = .30f), MangoPeach.copy(alpha = .11f), Color.Transparent)), CircleShape),
         contentAlignment = Alignment.Center) {
         FitMangoAssetIcon(resource, contentDescription = null, modifier = Modifier.size(size * .82f))
     }
@@ -41,8 +41,10 @@ fun sectionArtwork(id: String): Int = when (id) {
 }
 
 fun sectionArtworkAccent(id: String): Color = when (id) {
-    "water", "tools", "photos" -> WaterAccent
-    "produce", "health", "sport" -> LeafGreen
-    "effects", "weekly_summary", "ai", "gemini", "analysis", "motion" -> DinnerAccent
+    "water" -> WaterAccent
+    "tools", "photos" -> MangoCoral
+    "produce", "health", "sport" -> MangoMint
+    "effects", "weekly_summary", "ai", "gemini", "analysis", "motion" -> MangoLavender
+    "backup", "reminder_settings" -> MangoCoral
     else -> MangoYellow
 }
