@@ -108,7 +108,7 @@ fun WeeklySummaryCard(viewModel: DietaViewModel) {
                 days.any { it.date == d.toString() && it.meals.isNotEmpty() }
             }
             val energyRecorded = completedDays.count { d ->
-                analysisEnergy.any { it.date == d.toString() && it.totalKcal > 0L }
+                analysisEnergy.any { it.date == d.toString() && (it.totalKcal ?: 0.0) > 0.0 }
             }
             Surface(color = com.example.ui.theme.MutedSurface2,
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp)) {
