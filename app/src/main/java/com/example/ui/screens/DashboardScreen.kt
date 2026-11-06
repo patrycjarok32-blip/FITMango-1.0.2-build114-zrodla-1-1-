@@ -503,6 +503,7 @@ fun DashboardScreen(
                                 if (sleepReadMessage.isNotBlank() && activity.sleepLabel == "Sen (ostatni odczyt)") Text(sleepReadMessage, style = MaterialTheme.typography.bodySmall)
                             }
                         }
+                    }
                     HealthConnectInsights(
                         sync = healthSync,
                         eatenCalories = consumedCalories,
@@ -511,7 +512,6 @@ fun DashboardScreen(
                         onSync = { viewModel.healthConnect.sync(force = true) },
                         syncing = refreshing
                     )
-                    }
                 }
             }
 
