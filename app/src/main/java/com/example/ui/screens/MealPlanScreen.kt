@@ -995,7 +995,7 @@ private fun MealCategorySection(
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
             .background(MutedSurface1)
-            .border(1.dp, WarmBrown.copy(alpha = 0.22f), RoundedCornerShape(24.dp))
+            .border(1.dp, WarmBrown.copy(alpha = 0.12f), RoundedCornerShape(24.dp))
             .padding(10.dp)
             .testTag("meal_category_section_${categorySpec.canonicalName}"),
         verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -1274,19 +1274,19 @@ internal fun PlannedMealDetailCard(
     )
 
 
-    MangoCard(
-        isSelected = mealEaten,
+    Card(
         modifier = Modifier
+            .fillMaxWidth()
             .mangoExpand()
             .animateContentSize(animationSpec = tween(if (motion) 240 else 0))
-            .clip(RoundedCornerShape(22.dp))
-            .testTag("planned_meal_card_${meal.id}")
+            .testTag("planned_meal_card_${meal.id}"),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MutedSurface1),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier
-                .background(mealAccent.copy(alpha = .055f))
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(7.dp)
         ) {
             if (isUpcoming) Surface(color = mealCategoryColor(meal.mealType).copy(alpha = .13f), shape = RoundedCornerShape(10.dp)) {
                 Text("Najbliższy posiłek", Modifier.padding(horizontal = 10.dp, vertical = 6.dp).testTag("upcoming_meal_${meal.id}"),
@@ -1347,8 +1347,8 @@ internal fun PlannedMealDetailCard(
                     imageUrl = recipe?.imageUrl.orEmpty(),
                     title = meal.recipeTitle,
                     modifier = Modifier
-                        .size(if (recipe?.imageUrl.isNullOrBlank()) 52.dp else 64.dp)
-                        .clip(RoundedCornerShape(14.dp))
+                        .size(62.dp)
+                        .clip(CircleShape)
                 )
                 Column(
                     modifier = Modifier.weight(1f),
@@ -1362,7 +1362,9 @@ internal fun PlannedMealDetailCard(
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
-                    AnimatedMealNutrition(nutrition, "animated_meal_nutrition_${meal.id}")
+                    Text("${nutrition.calories ?: meal.calories} kcal", color = JuicyOrange,
+                        fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                    if (expanded) AnimatedMealNutrition(nutrition, "animated_meal_nutrition_${meal.id}")
                 }
             }
 
@@ -1370,7 +1372,7 @@ internal fun PlannedMealDetailCard(
                 Text("Gotowe danie: ${MealPlannerSupport.formatQuantityNumber(weight * MealPlannerSupport.safeServings(meal.servings))} g w tej porcji", color = MangoYellow, fontSize = 12.sp)
             }
             if (expanded) nutrition.note?.let { Text(it, color = GoldAccent, fontSize = 12.sp) }
-            NutritionStatusBadge(if (missingIngredients.isEmpty() && !nutrition.isPartial) NutritionStatus.COMPLETE else NutritionStatus.MISSING,
+            if (expanded || missingIngredients.isNotEmpty() || nutrition.isPartial) NutritionStatusBadge(if (missingIngredients.isEmpty() && !nutrition.isPartial) NutritionStatus.COMPLETE else NutritionStatus.MISSING,
                 if (missingIngredients.isEmpty() && !nutrition.isPartial) "Pełne dane kalorii i makro" else "Niepełne dane (${missingIngredients.size})",
                 Modifier.testTag("nutrition_completeness_${meal.id}"))
             if (expanded) Text("Rozpoznane produkty dostają kalorie i makro automatycznie, także po odmianie nazwy. Szacunki z tabeli oraz masy jajek i ząbków są oznaczone. Zapisane przez Ciebie wartości mają pierwszeństwo.", color = GoldAccent, fontSize = 12.sp)
