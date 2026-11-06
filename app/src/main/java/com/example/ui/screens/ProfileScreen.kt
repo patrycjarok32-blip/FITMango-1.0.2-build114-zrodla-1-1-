@@ -49,7 +49,9 @@ fun ProfileScreen(
     viewModel: DietaViewModel,
     onNavigateToMeasurements: (() -> Unit)? = null,
     onNavigateToAiCoach: (() -> Unit)? = null,
-    onNavigateToEffects: (() -> Unit)? = null
+    onNavigateToEffects: (() -> Unit)? = null,
+    onNavigateToRecipes: (() -> Unit)? = null,
+    onNavigateToRecipeImport: (() -> Unit)? = null
 ) {
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
     val weightLogs by viewModel.weightLogs.collectAsStateWithLifecycle()
@@ -218,7 +220,13 @@ fun ProfileScreen(
     ) { padding ->
         if (detail == null) {
             Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
-                ProfileHub(tab, { tab = it }, listStates.getValue(tab), summaries, { openDetail(it) })
+                ProfileHub(tab, { tab = it }, listStates.getValue(tab), summaries, { id ->
+                    when (id) {
+                        "recipes_link" -> onNavigateToRecipes?.invoke()
+                        "recipe_import_link" -> onNavigateToRecipeImport?.invoke()
+                        else -> openDetail(id)
+                    }
+                })
             }
         } else detailStates.SaveableStateProvider("profile_detail_" + detail) {
             CompositionLocalProvider(LocalStandaloneProfileSection provides true) {
