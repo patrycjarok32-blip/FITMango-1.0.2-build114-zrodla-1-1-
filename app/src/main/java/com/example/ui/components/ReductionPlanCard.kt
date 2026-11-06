@@ -1,11 +1,25 @@
 package com.example.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalAccessibilityManager
+import android.provider.Settings
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -21,6 +35,7 @@ import java.time.temporal.ChronoUnit
 @Composable
 fun ReductionPlanCard(saved: ReductionPlan?, today: LocalDate, busy: Boolean, profileCalories: Int?,
     onProfile: () -> Unit, onSave: (ReductionPlan?) -> Unit) {
+    val motion = com.example.ui.screens.progressMotionEnabled()
     var editing by remember { mutableStateOf(false) }
     var showDetails by remember { mutableStateOf(false) }
     var start by remember { mutableStateOf(today.toString()) }
@@ -35,12 +50,16 @@ fun ReductionPlanCard(saved: ReductionPlan?, today: LocalDate, busy: Boolean, pr
     }
     MangoCard(Modifier.fillMaxWidth().testTag("reduction_plan")) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Etapy redukcji", style = MaterialTheme.typography.titleMedium)
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Outlined.Flag, contentDescription = null, tint = LeafGreen)
+                Text("Etapy redukcji", style = MaterialTheme.typography.titleMedium)
+            }
             Text("Twój harmonogram kalorii i terminów korekt.")
             if (saved == null) Text("Przykład: tygodnie 1–3: 1800 kcal → 4–6: 1700 kcal → 7–9: 1600 kcal. Ustaw i zapisz własny plan.")
             saved?.let { plan ->
                 val periods = remember(plan) { ReductionPlanSupport.periods(plan) }
                 val active = periods.indexOfFirst { it.contains(today) }
+                val format = DateTimeFormatter.ofPattern("dd.MM.yyyy")
                 val current = periods.getOrNull(active)
                 Text("Plan: ${periods.size} etapów", style = MaterialTheme.typography.bodySmall)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -63,13 +82,22 @@ fun ReductionPlanCard(saved: ReductionPlan?, today: LocalDate, busy: Boolean, pr
                         else -> "Plan zakończony"
                     }, color = LeafGreen, style = MaterialTheme.typography.titleSmall
                 )
+                current?.let { period ->
+                    val elapsed = ChronoUnit.DAYS.between(period.start, today).toFloat().coerceAtLeast(0f)
+                    val total = ChronoUnit.DAYS.between(period.start, period.endExclusive).toFloat().coerceAtLeast(1f)
+                    val progress by animateFloatAsState((elapsed / total).coerceIn(0f, 1f), animationSpec = tween(if (motion) 550 else 0), label = "stage_progress")
+                    Text("Postęp aktualnego etapu", style = MaterialTheme.typography.labelMedium)
+                    LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth().height(7.dp))
+                }
                 TextButton(onClick = { showDetails = !showDetails }) {
                     Text(if (showDetails) "Ukryj harmonogram" else "Zobacz pełny harmonogram")
                 }
-                if (showDetails) {
+                AnimatedVisibility(visible = showDetails, enter = expandVertically(tween(if (motion) 280 else 0)) + fadeIn(tween(if (motion) 220 else 0)), exit = shrinkVertically(tween(if (motion) 240 else 0)) + fadeOut(tween(if (motion) 180 else 0))) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     ReductionStepChart(plan, today)
                     periods.forEachIndexed { index, period ->
                         Text("Etap ${index + 1}: ${period.stage.calories} kcal • ${period.start.format(format)}–${period.endExclusive.minusDays(1).format(format)}")
+                    }
                     }
                 }
                 when {

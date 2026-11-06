@@ -1,5 +1,18 @@
 package com.example.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalAccessibilityManager
+import android.provider.Settings
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -25,11 +38,26 @@ import com.example.viewmodel.*
 import java.time.LocalDate
 import kotlin.math.abs
 
+/** Honors Android's animator scale and touch-exploration accessibility preference. */
+@Composable
+internal fun progressMotionEnabled(): Boolean {
+    val context = LocalContext.current
+    val accessibility = LocalAccessibilityManager.current
+    val scale = remember(context) {
+        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
+    }
+    return scale > 0f && accessibility?.isTouchExplorationEnabled != true
+}
+
 @Composable
 fun WeightTrendChart(points: List<WeightPoint>) {
     var selected by remember(points) { mutableStateOf<WeightPoint?>(null) }
     if (points.size < 2) { Text("Dodaj pomiary z co najmniej dwóch dat, aby zobaczyć wykres."); return }
     val smooth = remember(points) { EffectsSupport.smoothed(points) }
+    val motion = progressMotionEnabled()
+    var revealed by remember(points) { mutableStateOf(false) }
+    LaunchedEffect(points, motion) { revealed = true }
+    val drawFraction by animateFloatAsState(if (revealed || !motion) 1f else 0f, animationSpec = tween(if (motion) 650 else 0), label = "weight_line_reveal")
     val lo = points.minOf { it.kg } - .5; val hi = points.maxOf { it.kg } + .5
     val from = LocalDate.parse(points.first().date).toEpochDay(); val to = LocalDate.parse(points.last().date).toEpochDay()
     val rawColor = GoldAccent; val trendColor = LeafGreen; val axis = WarmBrown
@@ -50,9 +78,20 @@ fun WeightTrendChart(points: List<WeightPoint>) {
     }) {
         fun position(p: WeightPoint) = Offset(((LocalDate.parse(p.date).toEpochDay() - from).toDouble() / (to - from).coerceAtLeast(1) * size.width).toFloat(), ((hi - p.kg) / (hi - lo) * size.height).toFloat())
         drawLine(axis, Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx())
-        points.zipWithNext().forEach { (a, b) -> drawLine(rawColor.copy(alpha = .4f), position(a), position(b), 1.dp.toPx()) }
-        points.forEach { drawCircle(rawColor, 3.dp.toPx(), position(it)) }
-        smooth.zipWithNext().forEach { (a, b) -> drawLine(trendColor, position(a), position(b), 3.dp.toPx()) }
+        fun animatedSegment(a: WeightPoint, b: WeightPoint, color: androidx.compose.ui.graphics.Color, thickness: Float) {
+            val aX = position(a).x
+            val bX = position(b).x
+            val revealX = size.width * drawFraction
+            if (aX <= revealX) {
+                val fraction = if (bX <= aX) 1f else ((revealX - aX) / (bX - aX)).coerceIn(0f, 1f)
+                val start = position(a)
+                val end = position(b)
+                drawLine(color, start, Offset(start.x + (end.x - start.x) * fraction, start.y + (end.y - start.y) * fraction), thickness)
+            }
+        }
+        points.zipWithNext().forEach { (a, b) -> animatedSegment(a, b, rawColor.copy(alpha = .4f), 1.dp.toPx()) }
+        points.filter { position(it).x <= size.width * drawFraction }.forEach { drawCircle(rawColor, 3.dp.toPx(), position(it)) }
+        smooth.zipWithNext().forEach { (a, b) -> animatedSegment(a, b, trendColor, 3.dp.toPx()) }
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(points.first().date, style = MaterialTheme.typography.bodySmall); Text(points.last().date, style = MaterialTheme.typography.bodySmall) }
     Text("● pomiar • zielona linia: średnia dostępnych pomiarów z ostatnich 7 dni (min. 2). Dotknij punktu.", style = MaterialTheme.typography.bodySmall)
@@ -62,6 +101,7 @@ fun WeightTrendChart(points: List<WeightPoint>) {
 @Composable
 fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -> Unit) {
     val context = LocalContext.current
+    val motion = progressMotionEnabled()
     val weights by viewModel.weightLogs.collectAsStateWithLifecycle()
     val measurements by viewModel.bodyMeasurements.collectAsStateWithLifecycle()
     val days by viewModel.habits.days.collectAsStateWithLifecycle()
@@ -102,8 +142,11 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                 colors = CardDefaults.cardColors(containerColor = com.example.ui.theme.MutedSurface2)
             ) {
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                    Text("Twoje postępy", style = MaterialTheme.typography.headlineSmall,
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Icon(Icons.Outlined.Insights, contentDescription = null, tint = com.example.ui.theme.GoldAccent)
+                        Text("Twoje postępy", style = MaterialTheme.typography.headlineSmall,
                         color = com.example.ui.theme.Cream)
+                    }
                     Text("Każdy krok przybliża Cię do celu",
                         style = MaterialTheme.typography.bodyMedium, color = com.example.ui.theme.GoldAccent)
                 }
@@ -140,21 +183,21 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Card(Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                         Column(Modifier.padding(12.dp)) {
-                            Text("Zmiana wagi", style = MaterialTheme.typography.labelMedium)
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) { Icon(Icons.Outlined.MonitorWeight, contentDescription = null, tint = LeafGreen, modifier = Modifier.size(18.dp)); Text("Zmiana wagi", style = MaterialTheme.typography.labelMedium) }
                             Text(if (r.points.size >= 2) String.format(java.util.Locale.getDefault(), "%+.1f kg", r.points.last().kg - r.points.first().kg) else "—",
                                 style = MaterialTheme.typography.titleLarge)
                         }
                     }
                     Card(Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                         Column(Modifier.padding(12.dp)) {
-                            Text("Trend tygodniowy", style = MaterialTheme.typography.labelMedium)
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) { Icon(Icons.Outlined.ShowChart, contentDescription = null, tint = LeafGreen, modifier = Modifier.size(18.dp)); Text("Trend tygodniowy", style = MaterialTheme.typography.labelMedium) }
                             Text(r.trendKgWeek?.let { String.format(java.util.Locale.getDefault(), "%+.2f kg", it) } ?: "—",
                                 style = MaterialTheme.typography.titleLarge)
                         }
                     }
                 }
                 Text(r.summary, style = MaterialTheme.typography.bodyMedium)
-                Text("Wykres wagi", style = MaterialTheme.typography.titleSmall)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) { Icon(Icons.Outlined.Timeline, contentDescription = null, tint = LeafGreen); Text("Wykres wagi", style = MaterialTheme.typography.titleSmall) }
                 WeightTrendChart(r.points)
                 Text("Talia: ${n(r.waistChange, "cm")} • Pomiary: ${r.points.size}", style = MaterialTheme.typography.bodySmall)
                 Text("Wahania wagi są naturalne. Obserwuj trend, nie pojedynczy pomiar.", style = MaterialTheme.typography.bodySmall)
@@ -210,8 +253,14 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
         item { CollapsibleMangoCard("Opcjonalne wyjaśnienie AI", "effects_ai") {
             Text("Wyślesz do Gemini podsumowanie trendu, jedzenia, treningów i samopoczucia. Raport lokalny działa bez AI. Wyjaśnienie opisuje dane z chwili uruchomienia; po nowych wpisach wygeneruj je ponownie.")
             TextButton(onClick = onProfile) { Text("Ustawienia AI w Profilu") }
-            Button(enabled = !aiBusy && report != null, onClick = { viewModel.runEffectsAiAnalysis(range) }) { Text(if (aiBusy) "Przygotowywanie…" else "Wyjaśnij moje efekty") }
-            if (aiText.isNotBlank()) Text(aiText)
+            val aiPulse by animateFloatAsState(if (aiBusy && motion) 0.72f else 1f, animationSpec = tween(if (motion) 450 else 0), label = "ai_busy_pulse")
+            Button(enabled = !aiBusy && report != null, onClick = { viewModel.runEffectsAiAnalysis(range) }) {
+                Icon(Icons.Outlined.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp).graphicsLayer { alpha = aiPulse })
+                Spacer(Modifier.width(8.dp))
+                Text(if (aiBusy) "Przygotowywanie…" else "Wyjaśnij moje efekty")
+            }
+            if (aiBusy) LinearProgressIndicator(Modifier.fillMaxWidth())
+            AnimatedVisibility(visible = aiText.isNotBlank(), enter = if (motion) fadeIn(tween(280)) else fadeIn(tween(0)), exit = fadeOut(tween(0))) { Text(aiText) }
         } }
     }
     adjustment?.let { (target, delta) -> AlertDialog(onDismissRequest = { if (!busy) adjustment = null }, title = { Text("Zatwierdzić korektę?") },

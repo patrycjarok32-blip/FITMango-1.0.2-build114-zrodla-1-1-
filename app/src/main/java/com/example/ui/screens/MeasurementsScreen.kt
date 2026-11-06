@@ -14,6 +14,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MonitorWeight
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalAccessibilityManager
+import android.provider.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -48,6 +52,17 @@ fun MeasurementsScreen(
     var deletion by remember { mutableStateOf<com.example.data.BodyMeasurementEntity?>(null) }
     var deleting by remember { mutableStateOf(false) }
     var saveErrorMessage by remember { mutableStateOf<String?>(null) }
+    var awaitingSavedMeasurement by remember { mutableStateOf(false) }
+    var saveConfirmation by remember { mutableStateOf(false) }
+    val motion = progressMotionEnabled()
+    LaunchedEffect(bodyMeasurements.size, awaitingSavedMeasurement) {
+        if (awaitingSavedMeasurement && bodyMeasurements.isNotEmpty()) {
+            awaitingSavedMeasurement = false
+            saveConfirmation = true
+            if (motion) kotlinx.coroutines.delay(1800)
+            saveConfirmation = false
+        }
+    }
 
     fun String.parsePolishFloat(): Float? {
         return this.replace(",", ".").trim().toFloatOrNull()
@@ -203,6 +218,12 @@ fun MeasurementsScreen(
                             )
                         }
 
+                        AnimatedVisibility(saveConfirmation, enter = fadeIn(tween(if (motion) 250 else 0)), exit = fadeOut(tween(if (motion) 200 else 0))) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = LeafGreen)
+                                Text("Pomiar zapisany", color = LeafGreen)
+                            }
+                        }
                         saveErrorMessage?.let { err ->
                             Text(err, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
@@ -221,6 +242,7 @@ fun MeasurementsScreen(
                                 val parsedArms = armsInput.parsePolishFloat() ?: 0f
                                 val parsedThighs = thighsInput.parsePolishFloat() ?: 0f
 
+                                awaitingSavedMeasurement = true
                                 viewModel.addBodyMeasurement(
                                     weightKg = parsedWeight,
                                     waist = parsedWaist,
