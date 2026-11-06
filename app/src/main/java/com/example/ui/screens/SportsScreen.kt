@@ -44,6 +44,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
     var showReport by rememberSaveable { mutableStateOf(false) }
     var showExtras by rememberSaveable { mutableStateOf(false) }
+    var showActivityDetails by rememberSaveable { mutableStateOf(false) }
     var showSportNutrition by rememberSaveable { mutableStateOf(false) }
     var editGoal by rememberSaveable { mutableStateOf(false) }
     var feedback by remember { mutableIntStateOf(0) }
@@ -75,16 +76,17 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     LazyColumn(Modifier.fillMaxSize().background(DarkBackground).padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(vertical = 12.dp)) {
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_sport_hero"),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = com.example.ui.theme.MutedSurface2)
-            ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Twoja aktywność", style = MaterialTheme.typography.titleLarge,
-                        color = com.example.ui.theme.Cream)
-                    Text("Kroki • treningi • regeneracja",
-                        style = MaterialTheme.typography.bodyMedium, color = com.example.ui.theme.GoldAccent)
+            Text("Aktywność", style = MaterialTheme.typography.headlineSmall, color = Cream)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("Dziś", "Tydzień", "Miesiąc").forEach { label ->
+                    FilterChip(selected = when (label) {
+                        "Dziś" -> !showReport && !showExtras
+                        "Tydzień" -> showReport
+                        else -> showExtras
+                    }, onClick = {
+                        showReport = label == "Tydzień"
+                        showExtras = label == "Miesiąc"
+                    }, label = { Text(label) }, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -103,11 +105,6 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     HealthPermission.getReadPermission(SleepSessionRecord::class))) }.onFailure { permissionError = "Otwórz uprawnienia Health Connect w Profilu." } },
                 onRefresh = { permissionError = null; sports.refresh { viewModel.usability.changed() } })
         }
-        item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = !showReport && !showExtras, onClick = { showReport = false; showExtras = false }, label = { Text("Aktywność") }, modifier = Modifier.testTag("sport_activity_tab"))
-            FilterChip(selected = showReport && !showExtras, onClick = { showReport = true; showExtras = false }, label = { Text("Raport") }, modifier = Modifier.testTag("sport_report_tab"))
-        } }
-        item { TextButton(onClick = { showExtras = !showExtras; showReport = false }, modifier = Modifier.testTag("sport_personal_progress")) { Text(if (showExtras) "Wróć do aktywności ←" else "Rekordy i porównanie tygodni →") } }
         if (showExtras) {
             item { PersonalProgressCards(viewModel, data, today) }
         } else if (showReport) {
@@ -116,8 +113,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 ?: LinearProgressIndicator(Modifier.fillMaxWidth()) }
         } else {
         item { ActivityTodayCard(data, today, current) }
-        item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
-        item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (showActivityDetails) item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
+        if (showActivityDetails) item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("Twój tydzień • $start – ${start.plusDays(6)}", style = MaterialTheme.typography.labelLarge, color = GoldAccent)
             SportGoalProgress(data, week, completed, previous, today == start)
             TextButton(onClick = { editGoal = !editGoal }) { Text(if (editGoal) "Zwiń ustawienia celu −" else "Zmień cel tygodniowy +") }
@@ -158,11 +155,12 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
         }
         item { Button(onClick = { add = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().testTag("sport_add_activity")) { Text("+ Dodaj wykonaną aktywność") } }
-        item { RecoveryCard(data, today, busy,
+        item { OutlinedButton(onClick = { showActivityDetails = !showActivityDetails }, modifier = Modifier.fillMaxWidth()) { Text(if (showActivityDetails) "Zwiń szczegóły aktywności" else "Wykresy, cele i regeneracja") } }
+        if (showActivityDetails) item { RecoveryCard(data, today, busy,
             onSave = { d, energy, fatigue -> sports.recovery(d, energy, fatigue, ::saved) },
             onRemove = { sports.removeRecovery(it, ::saved) }) }
-        item { SportWellnessCards(data, today) }
-        item { SportInsightsCards(data, today, reportNumbers) }
+        if (showActivityDetails) item { SportWellnessCards(data, today) }
+        if (showActivityDetails) item { SportInsightsCards(data, today, reportNumbers) }
         item {
             MangoCard(Modifier.fillMaxWidth().testTag("sport_nutrition_connection")) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
