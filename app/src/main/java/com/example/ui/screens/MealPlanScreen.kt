@@ -1048,8 +1048,17 @@ private fun MealCategorySection(
         ) {
             Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                androidx.compose.material3.Icon(mealCategoryIcon(categorySpec.canonicalName), null,
-                    tint = mealCategoryColor(categorySpec.canonicalName), modifier = Modifier.size(20.dp))
+                Surface(
+                    color = mealCategoryColor(categorySpec.canonicalName).copy(alpha = .12f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    androidx.compose.material3.Icon(
+                        imageVector = mealCategoryIcon(categorySpec.canonicalName),
+                        contentDescription = null,
+                        tint = mealCategoryColor(categorySpec.canonicalName),
+                        modifier = Modifier.padding(9.dp).size(21.dp)
+                    )
+                }
                 Column(Modifier.weight(1f)) {
                     Text(categorySpec.canonicalName, fontWeight = FontWeight.Bold, fontSize = 15.sp,
                         color = mealCategoryColor(categorySpec.canonicalName))
@@ -1298,9 +1307,16 @@ internal fun PlannedMealDetailCard(
             }) { Text("Zapisz") } },
         dismissButton = { TextButton(onClick = { quantityTarget = null }) { Text("Anuluj") } }) }
     val headerText = MealPlannerSupport.formatMealHeader(meal.recipeTitle, meal.servings)
+    val mealEaten = MealPlannerSupport.completedInCurrentWeek(meal)
+    val mealAccent by androidx.compose.animation.animateColorAsState(
+        targetValue = if (mealEaten) LeafGreen else mealCategoryColor(meal.mealType),
+        animationSpec = tween(if (motion) 240 else 0),
+        label = "meal_accent"
+    )
+
 
     MangoCard(
-        isSelected = MealPlannerSupport.completedInCurrentWeek(meal),
+        isSelected = mealEaten,
         modifier = Modifier
             .mangoExpand()
             .animateContentSize(animationSpec = tween(if (motion) 240 else 0))
@@ -1309,8 +1325,7 @@ internal fun PlannedMealDetailCard(
     ) {
         Column(
             modifier = Modifier
-                .background(mealCategoryColor(meal.mealType).copy(alpha = .035f))
-                .drawBehind { drawRect(mealCategoryColor(meal.mealType), size = androidx.compose.ui.geometry.Size(4.dp.toPx(), size.height)) }
+                .background(mealAccent.copy(alpha = .055f))
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -1329,19 +1344,22 @@ internal fun PlannedMealDetailCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(if (MealPlannerSupport.completedInCurrentWeek(meal)) LeafGreen else mealCategoryColor(meal.mealType))
-                    )
-                    androidx.compose.material3.Icon(mealCategoryIcon(meal.mealType), null,
-                        tint = mealCategoryColor(meal.mealType), modifier = Modifier.size(18.dp))
+                    Surface(
+                        color = mealAccent.copy(alpha = .14f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        androidx.compose.material3.Icon(
+                            imageVector = mealCategoryIcon(meal.mealType),
+                            contentDescription = null,
+                            tint = mealAccent,
+                            modifier = Modifier.padding(9.dp).size(20.dp)
+                        )
+                    }
                     Text(
                         text = "${MealPlannerSupport.normalizeMealType(meal.mealType)} • $timeRange",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (MealPlannerSupport.completedInCurrentWeek(meal)) LeafGreen else mealCategoryColor(meal.mealType)
+                        color = mealAccent
                     )
                 }
                 if (MealPlannerSupport.completedInCurrentWeek(meal)) {
