@@ -170,15 +170,14 @@ fun ShoppingScreen(viewModel: DietaViewModel) {
             HorizontalDivider(color = WarmBrown.copy(alpha = 0.3f))
 
             if (filteredItems.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        MangoGuide(size = 56.dp)
-                        Text(if (categoryItems.any { it.isChecked }) "Wszystko masz — rozwiń Mam, aby odznaczyć produkt." else "Brak produktów w wybranym zakresie dat.", color = Cream.copy(alpha = 0.6f))
-                        TextButton(onClick = { if (categoryItems.any { it.isChecked }) showOwned = true else viewModel.generateShoppingList(currentWeek) }) {
-                            Text(if (categoryItems.any { it.isChecked }) "Pokaż posiadane produkty" else "Generuj z jadłospisu")
-                        }
-                    }
-                }
+                MangoEmptyState(
+                    message = if (categoryItems.any { it.isChecked })
+                        "Wszystkie produkty są już oznaczone jako posiadane."
+                    else "Twoja lista zakupów jest pusta. Utwórz ją na podstawie jadłospisu.",
+                    actionLabel = if (categoryItems.any { it.isChecked }) "Pokaż posiadane produkty" else "Generuj z jadłospisu",
+                    onAction = { if (categoryItems.any { it.isChecked }) showOwned = true else viewModel.generateShoppingList(currentWeek) },
+                    modifier = Modifier.padding(vertical = 18.dp)
+                )
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
