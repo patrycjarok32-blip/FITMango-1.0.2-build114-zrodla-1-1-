@@ -106,6 +106,7 @@ fun DashboardScreen(
         ?: profile?.currentWeightKg
 
 
+    var showAdvancedDashboard by rememberSaveable { mutableStateOf(false) }
     val appearanceContext = LocalContext.current
     Scaffold(
         topBar = {
@@ -167,11 +168,7 @@ fun DashboardScreen(
                 .padding(padding)
                 .consumeWindowInsets(padding)
                 .imePadding()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(DarkBackground, MangoPremiumGlow.copy(alpha = 0.32f), DarkBackground)
-                    )
-                )
+.background(DarkBackground)
                 .verticalScroll(rememberScrollState())
                 .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -218,7 +215,7 @@ fun DashboardScreen(
             }
             Row(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_quick_navigation"),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 FreshMangoDestinationCard("Jadłospis", "Posiłki", Icons.Default.RestaurantMenu,
                     Modifier.weight(1f), onNavigateToMealPlan)
@@ -226,26 +223,6 @@ fun DashboardScreen(
                     Modifier.weight(1f), onNavigateToSport)
                 FreshMangoDestinationCard("Postępy", "Wyniki", Icons.Default.TrendingUp,
                     Modifier.weight(1f), onNavigateToEffects)
-            }
-            Card(
-                modifier = Modifier.fillMaxWidth().testTag("dashboard_import_recipe")
-                    .clickable(onClick = onNavigateToRecipeImport),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MutedSurface2)
-            ) {
-                Row(Modifier.fillMaxWidth().padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    androidx.compose.material3.Icon(Icons.Default.AddCircleOutline, contentDescription = null,
-                        tint = JuicyOrange, modifier = Modifier.size(30.dp))
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Importuj przepis", color = Cream, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
-                        Text("Instagram • Cookidoo • strony WWW • zdjęcia",
-                            color = GoldAccent, fontSize = 12.sp)
-                    }
-                    androidx.compose.material3.Icon(Icons.Default.ChevronRight,
-                        contentDescription = null, tint = JuicyOrange)
-                }
             }
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_meal_preview")
@@ -277,7 +254,41 @@ fun DashboardScreen(
                         contentDescription = null, tint = JuicyOrange)
                 }
             }
-            com.example.ui.components.ReleaseNotesControl(autoShow = true)
+            Text("Szybkie akcje", style = MaterialTheme.typography.titleMedium, color = Cream)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                QuickActionCard("Dodaj posiłek", Icons.Default.AddCircleOutline,
+                    Modifier.weight(1f), onNavigateToMealPlan)
+                QuickActionCard("Zapisz wagę", Icons.Default.MonitorWeight,
+                    Modifier.weight(1f), onNavigateToMeasurements)
+                QuickActionCard("Woda", Icons.Default.WaterDrop,
+                    Modifier.weight(1f), { viewModel.addBeverage(250) })
+            }
+            OutlinedButton(onClick = { showAdvancedDashboard = !showAdvancedDashboard },
+                modifier = Modifier.fillMaxWidth().testTag("dashboard_more_tools")) {
+                Text(if (showAdvancedDashboard) "Zwiń dodatkowe funkcje" else "Więcej narzędzi i podsumowań")
+            }
+            if (showAdvancedDashboard) {
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("dashboard_import_recipe")
+                    .clickable(onClick = onNavigateToRecipeImport),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MutedSurface2)
+            ) {
+                Row(Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    androidx.compose.material3.Icon(Icons.Default.AddCircleOutline, contentDescription = null,
+                        tint = JuicyOrange, modifier = Modifier.size(30.dp))
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Importuj przepis", color = Cream, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                        Text("Instagram • Cookidoo • strony WWW • zdjęcia",
+                            color = GoldAccent, fontSize = 12.sp)
+                    }
+                    androidx.compose.material3.Icon(Icons.Default.ChevronRight,
+                        contentDescription = null, tint = JuicyOrange)
+                }
+            }
+            com.example.ui.components.ReleaseNotesControl(autoShow = false)
             com.example.ui.components.MealUndoCard(viewModel)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(MealPlannerSupport.weekDays(today)[today.dayOfWeek.value - 1].displayWithDate,
@@ -655,6 +666,7 @@ fun DashboardScreen(
                 }
             }
             DashboardCustomization(viewModel)
+            }
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = OrangeInk)
@@ -669,7 +681,7 @@ fun DashboardScreen(
 fun QuickActionCard(title: String, icon: ImageVector, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Card(
         modifier = modifier
-            .height(96.dp)
+            .height(74.dp)
             .pressScaleEffect()
             .clickable { onClick() }
             .border(1.dp, WarmBrown.copy(alpha = 0.3f), RoundedCornerShape(20.dp)),
@@ -689,7 +701,7 @@ fun QuickActionCard(title: String, icon: ImageVector, modifier: Modifier = Modif
                 tint = MangoYellow,
                 modifier = Modifier.size(24.dp)
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = title,
                 fontSize = 12.sp,
