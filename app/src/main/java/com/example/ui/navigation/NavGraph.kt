@@ -283,7 +283,9 @@ fun MainNavigation(viewModel: DietaViewModel) {
                     onNavigateToMeasurements = { navController.navigate("measurements") },
                     onNavigateToDocuments = { navController.navigate(Screen.Documents.route) },
                     onNavigateToSport = { navController.navigate("sport") },
-                    onNavigateToEffects = { navController.navigate("effects") }
+                    onNavigateToEffects = { navController.navigate("effects") },
+                    onNavigateToRecipes = { navController.navigate(Screen.Recipes.route) },
+                    onNavigateToRecipeImport = { navController.navigate("recipe_import") }
                 )
             }
             composable(Screen.MealPlan.route) {
