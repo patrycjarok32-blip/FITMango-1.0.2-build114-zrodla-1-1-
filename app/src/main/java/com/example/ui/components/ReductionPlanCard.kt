@@ -22,6 +22,7 @@ import java.time.temporal.ChronoUnit
 fun ReductionPlanCard(saved: ReductionPlan?, today: LocalDate, busy: Boolean, profileCalories: Int?,
     onProfile: () -> Unit, onSave: (ReductionPlan?) -> Unit) {
     var editing by remember { mutableStateOf(false) }
+    var showDetails by remember { mutableStateOf(false) }
     var start by remember { mutableStateOf(today.toString()) }
     var rows by remember { mutableStateOf(listOf("1800" to "3", "1700" to "3", "1600" to "3")) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -40,19 +41,43 @@ fun ReductionPlanCard(saved: ReductionPlan?, today: LocalDate, busy: Boolean, pr
             saved?.let { plan ->
                 val periods = remember(plan) { ReductionPlanSupport.periods(plan) }
                 val active = periods.indexOfFirst { it.contains(today) }
-                ReductionStepChart(plan, today)
-                val format = DateTimeFormatter.ofPattern("dd.MM.yyyy")
-                periods.forEachIndexed { i, p ->
-                    Text("${if (i == active) "● Teraz: " else ""}Etap ${i + 1}: ${p.stage.calories} kcal • ${p.stage.weeks} tyg.\n" +
-                        "Tygodnie ${p.firstWeek}–${p.firstWeek + p.stage.weeks - 1} • ${p.start.format(format)}–${p.endExclusive.minusDays(1).format(format)}",
-                        color = if (i == active) LeafGreen else MaterialTheme.colorScheme.onSurface)
+                val current = periods.getOrNull(active)
+                Text("Plan: ${periods.size} etapów", style = MaterialTheme.typography.bodySmall)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    periods.forEachIndexed { index, period ->
+                        Card(Modifier.weight(1f), colors = CardDefaults.cardColors(
+                            containerColor = if (index == active) LeafGreen.copy(alpha = 0.16f) else MaterialTheme.colorScheme.surfaceVariant
+                        )) {
+                            Column(Modifier.padding(7.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text("Etap ${index + 1}", style = MaterialTheme.typography.labelSmall)
+                                Text("${period.stage.calories} kcal", style = MaterialTheme.typography.labelMedium)
+                                Text("${period.stage.weeks} tyg.", style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
+                }
+                Text(
+                    when {
+                        current != null -> "Teraz: ${current.stage.calories} kcal • pozostało ${current.daysRemaining(today)} dni"
+                        today < periods.first().start -> "Plan rozpocznie się ${periods.first().start.format(format)}"
+                        else -> "Plan zakończony"
+                    }, color = LeafGreen, style = MaterialTheme.typography.titleSmall
+                )
+                TextButton(onClick = { showDetails = !showDetails }) {
+                    Text(if (showDetails) "Ukryj harmonogram" else "Zobacz pełny harmonogram")
+                }
+                if (showDetails) {
+                    ReductionStepChart(plan, today)
+                    periods.forEachIndexed { index, period ->
+                        Text("Etap ${index + 1}: ${period.stage.calories} kcal • ${period.start.format(format)}–${period.endExclusive.minusDays(1).format(format)}")
+                    }
                 }
                 when {
                     today < periods.first().start -> Text("Start za ${ChronoUnit.DAYS.between(today, periods.first().start)} dni.")
                     active >= 0 -> {
                         val p = periods[active]
                         val next = periods.getOrNull(active + 1)
-                        Text(if (next != null) "Kolejna korekta za ${p.daysRemaining(today)} dni (${p.endExclusive.format(format)}): ${next.stage.calories} kcal."
+                        Text(if (next != null) "Przegląd celu za ${p.daysRemaining(today)} dni (${p.endExclusive.format(format)}). Kolejny zapisany etap: ${next.stage.calories} kcal; zmiana nie jest automatyczna."
                             else "Do końca ostatniego etapu: ${p.daysRemaining(today)} dni. Potem oceń dalszy plan.")
                         profileCalories?.takeIf { it != p.stage.calories }?.let {
                             Text("Cel w Profilu: $it kcal. Plan na dziś: ${p.stage.calories} kcal.")

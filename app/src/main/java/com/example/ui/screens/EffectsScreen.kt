@@ -78,6 +78,7 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
     var message by remember { mutableStateOf<String?>(null) }
     var feedback by remember { mutableIntStateOf(0) }
     var adjustment by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    var showGoalPicker by rememberSaveable { mutableStateOf(false) }
     val settings by produceState(EffectsSettings(), revision) { value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { EffectsSupport.read(context) }.getOrDefault(EffectsSettings()) } }
     val sports by produceState(SportsData(), revision) { value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { SportsSupport.read(context) }.getOrDefault(SportsData()) } }
     val energySettings = remember(revision) { runCatching { EnergyCalculatorSupport.read(context) }.getOrNull() }
@@ -113,23 +114,55 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
             SuccessFeedback(feedback, "Zapisano")
             message?.let { Text(it, color = ErrorInk) }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { listOf(14, 30, 90).forEach { value -> FilterChip(range == value, { range = value }, label = { Text("$value dni") }) } }
-            Column {
-                listOf("Redukcja", "Utrzymanie", "Budowanie masy").forEach { goal -> FilterChip(profile?.goal == goal, { busy = true; viewModel.setEffectsGoal(goal, ::completed) }, enabled = !busy, label = { Text(goal) }) }
-                Text("Wybierz cel. Proponowaną korektę kalorii zatwierdzisz osobno.", style = MaterialTheme.typography.bodySmall)
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Text("Cel: ${profile?.goal ?: "nieustawiony"}", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                TextButton(onClick = { showGoalPicker = !showGoalPicker }) { Text(if (showGoalPicker) "Zamknij" else "Zmień cel") }
+            }
+            if (showGoalPicker) {
+                Column {
+                    listOf("Redukcja", "Utrzymanie", "Budowanie masy").forEach { goal ->
+                        FilterChip(profile?.goal == goal, {
+                            busy = true
+                            viewModel.setEffectsGoal(goal) { error ->
+                                completed(error)
+                                if (error == null) showGoalPicker = false
+                            }
+                        }, enabled = !busy, label = { Text(goal) })
+                    }
+                    Text("Zmiana celu kalorii wymaga osobnego zatwierdzenia.", style = MaterialTheme.typography.bodySmall)
+                }
             }
         }
+        val r = report
+        if (r != null) {
+            item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Twoje wyniki • ostatnie $range dni", style = MaterialTheme.typography.titleMedium)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Card(Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                        Column(Modifier.padding(12.dp)) {
+                            Text("Zmiana wagi", style = MaterialTheme.typography.labelMedium)
+                            Text(if (r.points.size >= 2) String.format(java.util.Locale.getDefault(), "%+.1f kg", r.points.last().kg - r.points.first().kg) else "—",
+                                style = MaterialTheme.typography.titleLarge)
+                        }
+                    }
+                    Card(Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                        Column(Modifier.padding(12.dp)) {
+                            Text("Trend tygodniowy", style = MaterialTheme.typography.labelMedium)
+                            Text(r.trendKgWeek?.let { String.format(java.util.Locale.getDefault(), "%+.2f kg", it) } ?: "—",
+                                style = MaterialTheme.typography.titleLarge)
+                        }
+                    }
+                }
+                Text(r.summary, style = MaterialTheme.typography.bodyMedium)
+                Text("Wykres wagi", style = MaterialTheme.typography.titleSmall)
+                WeightTrendChart(r.points)
+                Text("Talia: ${n(r.waistChange, "cm")} • Pomiary: ${r.points.size}", style = MaterialTheme.typography.bodySmall)
+                Text("Wahania wagi są naturalne. Obserwuj trend, nie pojedynczy pomiar.", style = MaterialTheme.typography.bodySmall)
+            } } }
         item { ReductionPlanCard(settings.reductionPlan, today, busy, profile?.targetCalories, onProfile) { plan ->
             busy = true
             viewModel.saveEffectsSettings(settings.copy(reductionPlan = plan), ::completed)
         } }
-        val r = report
-        if (r != null) {
-            item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(r.summary, style = MaterialTheme.typography.titleMedium)
-                WeightTrendChart(r.points)
-                Text("Trend obserwowany: ${n(r.trendKgWeek, "kg/tydzień")} • Talia: ${n(r.waistChange, "cm")}")
-                Text("Zmiana masy nie określa oddzielnie tłuszczu, mięśni ani wody. Mierz się w podobnych warunkach.", style = MaterialTheme.typography.bodySmall)
-            } } }
             item { CollapsibleMangoCard("Jakość danych", "effects_quality") {
                 Text("Zakończone dni w okresie: ${r.periodDays}. Dni z jedzeniem: ${r.loggedDays}. Z aktualnym zatwierdzeniem: ${r.confirmedDays}. Pełny zapis potwierdzony przez Ciebie: ${r.completeDays}.")
                 Text("Szacunkowe wartości składników: ${r.partialDays} dni. Pomiary wagi: ${r.points.size}. Dzisiejszy dzień jedzenia nie jest analizowany.")
