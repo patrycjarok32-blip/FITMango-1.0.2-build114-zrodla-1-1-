@@ -515,6 +515,32 @@ fun ProfileScreen(
                             )
                         }
 
+                        Text("Uprawnienia do danych zdrowotnych", style = MaterialTheme.typography.titleSmall, color = MangoMint)
+                        val permissionTypes = listOf(
+                            "Kroki" to androidx.health.connect.client.records.StepsRecord::class,
+                            "Kalorie aktywne" to androidx.health.connect.client.records.ActiveCaloriesBurnedRecord::class,
+                            "Kalorie całkowite" to androidx.health.connect.client.records.TotalCaloriesBurnedRecord::class,
+                            "Waga" to androidx.health.connect.client.records.WeightRecord::class,
+                            "Sen" to androidx.health.connect.client.records.SleepSessionRecord::class,
+                            "Treningi" to androidx.health.connect.client.records.ExerciseSessionRecord::class,
+                            "Dystans" to androidx.health.connect.client.records.DistanceRecord::class
+                        )
+                        permissionTypes.forEach { (label, type) ->
+                            val permission = androidx.health.connect.client.permission.HealthPermission.getReadPermission(type)
+                            val granted = permission in healthGrantedPermissions
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                                Text(if (granted) "Dozwolone" else "Brak zgody",
+                                    color = if (granted) MangoMint else GoldAccent,
+                                    style = MaterialTheme.typography.labelSmall)
+                                if (!granted && isConnected) TextButton(onClick = {
+                                    healthPermissionsLauncher.launch(setOf(permission))
+                                }) { Text("Zezwól") }
+                            }
+                        }
+                        Text("Każdą zgodę możesz cofnąć w ustawieniach Health Connect. FITMango nie udostępnia tych danych AI bez osobnej zgody.",
+                            style = MaterialTheme.typography.bodySmall, color = GoldAccent)
                         if (sleepReadMessage.isNotBlank()) Text(sleepReadMessage, style = MaterialTheme.typography.bodySmall)
                         if (isConnected && androidx.health.connect.client.permission.HealthPermission.getReadPermission(
                             androidx.health.connect.client.records.SleepSessionRecord::class) !in healthGrantedPermissions) {
