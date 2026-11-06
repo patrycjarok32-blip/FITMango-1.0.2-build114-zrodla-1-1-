@@ -204,13 +204,18 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
 
     var showQuickAdd by remember { mutableStateOf(false) }
     var quickAddCategory by remember { mutableStateOf<MealCategorySpec?>(null) }
+    var quickAddProduct by remember { mutableStateOf(false) }
     if (showQuickAdd) {
         AlertDialog(
             onDismissRequest = { showQuickAdd = false },
             title = { Text("Dodaj posiłek", fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Wybierz porę dnia. Następnie dodasz przepis lub produkt.")
+                    Text("Wybierz porę dnia i sposób dodawania.")
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(selected = !quickAddProduct, onClick = { quickAddProduct = false }, label = { Text("Przepis") })
+                        FilterChip(selected = quickAddProduct, onClick = { quickAddProduct = true }, label = { Text("Produkt") })
+                    }
                     mealCategories.forEach { category ->
                         OutlinedButton(onClick = {
                             quickAddCategory = category
@@ -226,7 +231,10 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
         )
     }
     LaunchedEffect(quickAddCategory) {
-        quickAddCategory?.let { slotToAddRecipe = it; quickAddCategory = null }
+        quickAddCategory?.let {
+            if (quickAddProduct) slotToAddProduct = it else slotToAddRecipe = it
+            quickAddCategory = null
+        }
     }
 
     Scaffold(
