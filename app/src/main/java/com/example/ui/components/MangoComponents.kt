@@ -314,7 +314,7 @@ fun MangoRecipeCard(
             .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MutedSurface1),
-        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         Column {
             Box(Modifier.fillMaxWidth()) {
@@ -324,7 +324,7 @@ fun MangoRecipeCard(
                     title = title,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(172.dp)
+                        .height(192.dp)
                         .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
                     onChoosePhoto = onPhotoClick
                 )
@@ -335,21 +335,21 @@ fun MangoRecipeCard(
                         .size(32.dp)
                         .clickable { onPhotoClick() },
                     shape = CircleShape,
-                    color = MutedSurface1.copy(alpha = 0.95f),
+                    color = MutedSurface2.copy(alpha = 0.95f),
                     shadowElevation = 2.dp
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             Icons.Default.CameraAlt,
                             contentDescription = if (imageUrl.isBlank()) "Dodaj zdjęcie" else "Zmień zdjęcie",
-                            tint = LeafGreen,
+                            tint = MangoCoral,
                             modifier = Modifier.size(17.dp)
                         )
                     }
                 }
                 Surface(Modifier.align(Alignment.BottomEnd).padding(8.dp), shape = RoundedCornerShape(8.dp), color = SurfaceDark.copy(alpha = .90f)) {
                     Text((preparationMinutes?.let { "$it min • " } ?: "") + "$calories kcal",
-                        color = MangoYellow, fontWeight = FontWeight.Bold, fontSize = 12.sp,
+                        color = MangoPeach, fontWeight = FontWeight.Bold, fontSize = 12.sp,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp))
                 }
                 onFavoriteClick?.let { action ->
