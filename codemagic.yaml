@@ -15,7 +15,7 @@ workflows:
           echo "FITMango commit: $(git rev-parse HEAD)"
           echo "FITMango version from app/build.gradle.kts:"
           grep -E 'versionCode|versionName' app/build.gradle.kts
-          test "$CM_BRANCH" = "fresh-mango-ui-build125" || { echo 'BŁĄD: wybrano niewłaściwą gałąź'; exit 1; }
+          test "$CM_BRANCH" = "fitmango-modern-fresh-redesign" || { echo 'BŁĄD: ten workflow jest przeznaczony dla gałęzi Modern Fresh'; exit 1; }
           grep -q 'fun DashboardScreen(' app/src/main/java/com/example/ui/screens/DashboardScreen.kt || { echo 'BŁĄD: brakuje ekranu pulpitu'; exit 1; }
           grep -q 'fresh_mango_quick_add' app/src/main/java/com/example/ui/screens/MealPlanScreen.kt || { echo 'BŁĄD: brakuje interfejsu Fresh Mango'; exit 1; }
 
@@ -42,8 +42,8 @@ workflows:
         script: |
           ./gradlew :app:assembleDebug --stacktrace
           mkdir -p build-artifacts
-          cp app/build/outputs/apk/debug/app-debug.apk "build-artifacts/FITMango-Premium-build125-$(git rev-parse --short HEAD).apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "build-artifacts/FITMango-Modern-Fresh-$(git rev-parse --short HEAD).apk"
           echo "APK przygotowane z commita $(git rev-parse HEAD)"
 
     artifacts:
-      - build-artifacts/FITMango-Premium-*.apk
+      - build-artifacts/FITMango-Modern-Fresh-*.apk
