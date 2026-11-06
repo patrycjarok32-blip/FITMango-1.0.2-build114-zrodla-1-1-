@@ -77,18 +77,9 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(vertical = 12.dp)) {
         item {
             Text("Aktywność", style = MaterialTheme.typography.headlineSmall, color = Cream)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("Dziś", "Tydzień", "Miesiąc").forEach { label ->
-                    FilterChip(selected = when (label) {
-                        "Dziś" -> !showReport && !showExtras
-                        "Tydzień" -> showReport
-                        else -> showExtras
-                    }, onClick = {
-                        showReport = label == "Tydzień"
-                        showExtras = label == "Miesiąc"
-                    }, label = { Text(label) }, modifier = Modifier.weight(1f))
-                }
-            }
+            FreshMangoTabs(listOf("Dziś", "Tydzień", "Miesiąc"),
+                when { showReport -> "Tydzień"; showExtras -> "Miesiąc"; else -> "Dziś" },
+                onSelected = { showReport = it == "Tydzień"; showExtras = it == "Miesiąc" })
         }
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
