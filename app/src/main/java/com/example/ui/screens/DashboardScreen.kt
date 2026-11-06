@@ -123,7 +123,7 @@ fun DashboardScreen(
                                 fontSize = 18.sp,
                                 color = MangoYellow
                             )
-                            Text("Twój dzień, Twoja energia ✨", fontSize = 11.sp, color = GoldAccent)
+                            Text("Twój dzień, Twoja energia", fontSize = 11.sp, color = GoldAccent)
                         }
                     }
                 },
@@ -183,24 +183,24 @@ fun DashboardScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(9.dp)
                 ) {
-                    Text("Bilans dnia", color = Cream, fontSize = 18.sp,
+                    Text("Bilans dnia", color = Cream, fontSize = 15.sp,
                         fontWeight = FontWeight.ExtraBold)
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(132.dp)) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(116.dp)) {
                         CircularProgressIndicator(
                             progress = { calorieFraction },
                             modifier = Modifier.fillMaxSize(),
                             color = LeafGreen,
                             trackColor = MutedSurface2,
-                            strokeWidth = 10.dp
+                            strokeWidth = 8.dp
                         )
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("$animatedCalories kcal", color = Cream, fontSize = 26.sp,
+                            Text("$animatedCalories", color = Cream, fontSize = 28.sp,
                                 fontWeight = FontWeight.Black)
-                            Text("/ $targetCalories kcal", color = GoldAccent, fontSize = 14.sp)
+                            Text("/ $targetCalories kcal", color = GoldAccent, fontSize = 12.sp)
                         }
                     }
                     Row(
@@ -268,9 +268,9 @@ fun DashboardScreen(
                             modifier = Modifier.size(28.dp))
                     }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text("Dzisiejsze posiłki", fontWeight = FontWeight.ExtraBold,
+                        Text("Następny posiłek", fontWeight = FontWeight.ExtraBold,
                             fontSize = 16.sp, color = Cream)
-                        Text("Otwórz jadłospis i zaplanuj swój dzień",
+                        Text("Otwórz jadłospis i sprawdź posiłki",
                             fontSize = 12.sp, color = GoldAccent)
                     }
                     androidx.compose.material3.Icon(Icons.Default.ChevronRight,
