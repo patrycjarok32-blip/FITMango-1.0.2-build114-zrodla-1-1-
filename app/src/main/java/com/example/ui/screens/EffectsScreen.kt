@@ -104,7 +104,7 @@ fun WeightTrendChart(points: List<WeightPoint>) {
         smooth.zipWithNext().forEach { (a, b) -> animatedSegment(a, b, trendColor, 3.dp.toPx()) }
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(points.first().date, style = MaterialTheme.typography.bodySmall); Text(points.last().date, style = MaterialTheme.typography.bodySmall) }
-    Text("● pomiar • zielona linia: średnia dostępnych pomiarów z ostatnich 7 dni (min. 2). Dotknij punktu.", style = MaterialTheme.typography.bodySmall)
+    Text("Zielona linia pokazuje trend. Dotknij wykresu, aby sprawdzić pomiar.", style = MaterialTheme.typography.bodySmall)
     selected?.let { Text("${it.date}: ${it.kg} kg", color = LeafGreen) }
 }
 
@@ -188,8 +188,10 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
         }
         val r = report
         if (r != null) {
-            if (progressTab == "Waga") item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Podsumowanie • ostatnie $range dni", style = MaterialTheme.typography.titleMedium)
+            if (progressTab == "Waga") item { FreshMangoPanel(Modifier.fillMaxWidth()) { Column(Modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Aktualna waga", style = MaterialTheme.typography.labelLarge, color = GoldAccent)
+                Text(r.points.lastOrNull()?.kg?.let { String.format(java.util.Locale.getDefault(), "%.1f kg", it) } ?: "Brak pomiaru", style = MaterialTheme.typography.headlineMedium, color = Cream)
+                Text("Bilans • ostatnie $range dni", style = MaterialTheme.typography.titleMedium)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Card(Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                         Column(Modifier.padding(12.dp)) {
