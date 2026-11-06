@@ -77,11 +77,11 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         item {
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_sport_hero"),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(26.dp),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = com.example.ui.theme.MutedSurface2)
             ) {
-                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                    Text("Twój ruch, Twoja energia", style = MaterialTheme.typography.headlineSmall,
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Twój ruch, Twoja energia", style = MaterialTheme.typography.titleLarge,
                         color = com.example.ui.theme.Cream)
                     Text("Treningi, kroki i regeneracja w jednym miejscu",
                         style = MaterialTheme.typography.bodyMedium, color = com.example.ui.theme.GoldAccent)
