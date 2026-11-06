@@ -117,7 +117,7 @@ fun DashboardScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        MangoGuide(size = 34.dp)
+                        MangoGuide(size = 30.dp)
                         Column {
                             Text(
                                 text = "FITMango",
@@ -125,7 +125,7 @@ fun DashboardScreen(
                                 fontSize = 18.sp,
                                 color = MangoYellow
                             )
-                            Text("Twój dzień, Twoja energia", fontSize = 11.sp, color = GoldAccent)
+                            Text(java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMMM", java.util.Locale("pl", "PL")).format(today).replaceFirstChar { it.titlecase() }, fontSize = 10.sp, color = GoldAccent)
                         }
                     }
                 },
@@ -220,7 +220,7 @@ fun DashboardScreen(
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_meal_preview")
                     .clickable(onClick = onNavigateToMealPlan),
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(22.dp),
                 colors = CardDefaults.cardColors(containerColor = MutedSurface1)
             ) {
                 Row(
@@ -247,7 +247,7 @@ fun DashboardScreen(
                         contentDescription = null, tint = JuicyOrange)
                 }
             }
-            Text("Szybkie akcje", style = MaterialTheme.typography.titleMedium, color = Cream)
+            Text("Szybkie akcje", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Cream)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 QuickActionCard("Dodaj posiłek", Icons.Default.AddCircleOutline,
                     Modifier.weight(1f), onNavigateToMealPlan)
