@@ -23,11 +23,12 @@ fun BackupSettingsCard(viewModel: DietaViewModel) {
     val message by backup.message.collectAsStateWithLifecycle()
     val preview by backup.preview.collectAsStateWithLifecycle()
     val hasRecovery by backup.hasRecovery.collectAsStateWithLifecycle()
+    var backupPassword by remember { mutableStateOf("") }
     val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
-        uri?.let { backup.export(it) }
+        uri?.let { backup.export(it, backupPassword) }
     }
     val load = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let { backup.prepare(it) }
+        uri?.let { backup.prepare(it, backupPassword) }
     }
     val saveRecovery = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
         uri?.let { backup.exportRecovery(it) }
@@ -46,8 +47,10 @@ fun BackupSettingsCard(viewModel: DietaViewModel) {
             if (backupStatus.lastAutomatic > 0) {
                 OutlinedButton(onClick = { backup.prepareAutomatic() }, enabled = !busy) { Text("Przywróć kopię automatyczną") }
             }
-            Text("Zapisz przepisy, ulubione, jadłospis, zakupy, pomiary, napoje, kreatynę i profil. Dołączamy dostępne zdjęcia i PDF-y. Zdjęcia internetowe zachowują swoje linki.")
-            Button(onClick = { save.launch("FITMango-kopia-${java.time.LocalDate.now()}.zip") }, enabled = !busy,
+            Text("Zapisz przepisy, ulubione, jadłospis, zakupy, pomiary, napoje, kreatynę, profil, lokalne zdjęcia oraz klucze API w szyfrowanej kopii. Zdjęcia internetowe zachowują swoje linki.")
+            OutlinedTextField(value = backupPassword, onValueChange = { backupPassword = it }, label = { Text("Hasło kopii (minimum 8 znaków)") }, visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
+            Text("Zachowaj hasło: bez niego nie odzyskasz danych z zaszyfrowanej kopii. Kopię zapisz poza aplikacją.", style = MaterialTheme.typography.bodySmall)
+            Button(onClick = { save.launch("FITMango-kopia-${java.time.LocalDate.now()}.zip") }, enabled = !busy && backupPassword.length >= 8,
                 modifier = Modifier.fillMaxWidth().testTag("backup_export")) { Text("Zapisz kopię") }
             OutlinedButton(onClick = { load.launch(arrayOf("application/zip", "application/octet-stream", "application/x-zip-compressed")) }, enabled = !busy,
                 modifier = Modifier.fillMaxWidth().testTag("backup_import")) { Text("Przywróć z pliku") }
@@ -56,7 +59,7 @@ fun BackupSettingsCard(viewModel: DietaViewModel) {
             }
             if (busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text("Przetwarzanie kopii…") }
             message?.let { Text(it, modifier = Modifier.testTag("backup_result")) }
-            Text("Kopia zawiera Twoje dane osobiste i nie jest szyfrowana. Klucze API nie są kopiowane. Po przeniesieniu na inny telefon wpisz je ponownie i połącz Health Connect.", style = MaterialTheme.typography.bodySmall)
+            Text("Eksport do pliku jest szyfrowany hasłem i zawiera klucze Gemini, Pixabay oraz zdjęcia zapisane lokalnie. Automatyczna kopia lokalna nie zawiera kluczy. Health Connect wymaga ponownego połączenia.", style = MaterialTheme.typography.bodySmall)
         }
     }
     preview?.let { prepared ->
