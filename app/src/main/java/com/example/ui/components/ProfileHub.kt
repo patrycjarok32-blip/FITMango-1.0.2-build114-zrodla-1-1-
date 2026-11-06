@@ -1,6 +1,8 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.ui.theme.MutedSurface1
 import com.example.ui.theme.MutedSurface2
@@ -63,23 +65,27 @@ fun ProfileHub(tab: String, onTab: (String) -> Unit, listState: LazyListState,
         verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {
         item {
-            Text("Wszystko w jednym miejscu", style = MaterialTheme.typography.bodyMedium,
-                color = LeafGreen, modifier = Modifier.padding(bottom = 6.dp))
+            Text("Więcej", style = MaterialTheme.typography.headlineSmall,
+                color = com.example.ui.theme.Cream, modifier = Modifier.padding(bottom = 6.dp))
         }
         items(featured, key = { "featured_" + it.first }) { (id, label) ->
             val section = ProfileHubCatalog.sections.first { it.id == id }
             Card(onClick = { onOpen(id) },
                 colors = CardDefaults.cardColors(containerColor = MutedSurface1),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(18.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 modifier = Modifier.fillMaxWidth().testTag("profile_tile_$id")) {
-                Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 13.dp),
+                Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 11.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    MangoSectionArt(sectionArtwork(section.artwork), sectionArtworkAccent(section.artwork), size = 32.dp)
+                    Box(Modifier.size(42.dp).background(MutedSurface2, RoundedCornerShape(13.dp)),
+                        contentAlignment = Alignment.Center) {
+                        MangoSectionArt(sectionArtwork(section.artwork), sectionArtworkAccent(section.artwork), size = 28.dp)
+                    }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(label, style = MaterialTheme.typography.titleSmall)
-                        Text(summaries[id].orEmpty().ifBlank { section.title },
-                            style = MaterialTheme.typography.bodySmall)
+                        val detail = summaries[id].orEmpty()
+                        if (detail.isNotBlank()) Text(detail, style = MaterialTheme.typography.bodySmall)
                     }
                     Text("›", style = MaterialTheme.typography.headlineSmall, color = JuicyOrange)
                 }
