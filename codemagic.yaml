@@ -16,7 +16,8 @@ workflows:
           echo "FITMango version from app/build.gradle.kts:"
           grep -E 'versionCode|versionName' app/build.gradle.kts
           test "$CM_BRANCH" = "fresh-mango-ui-build125" || { echo 'BŁĄD: wybrano niewłaściwą gałąź'; exit 1; }
-          grep -q 'PREMIUM UI • build 125' app/src/main/java/com/example/ui/screens/DashboardScreen.kt || { echo 'BŁĄD: brakuje ekranu Premium'; exit 1; }
+          grep -q 'fun DashboardScreen(' app/src/main/java/com/example/ui/screens/DashboardScreen.kt || { echo 'BŁĄD: brakuje ekranu pulpitu'; exit 1; }
+          grep -q 'fresh_mango_quick_add' app/src/main/java/com/example/ui/screens/MealPlanScreen.kt || { echo 'BŁĄD: brakuje interfejsu Fresh Mango'; exit 1; }
 
       - name: Przygotowanie Gradle
         script: |
