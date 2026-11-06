@@ -148,16 +148,16 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
         item {
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_progress_hero"),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(26.dp),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
                 colors = CardDefaults.cardColors(containerColor = com.example.ui.theme.MutedSurface2)
             ) {
-                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Icon(Icons.Outlined.Insights, contentDescription = null, tint = com.example.ui.theme.GoldAccent)
-                        Text("Twoje postępy", style = MaterialTheme.typography.headlineSmall,
+                        Text("Twoje postępy", style = MaterialTheme.typography.titleLarge,
                         color = com.example.ui.theme.Cream)
                     }
-                    Text("Każdy krok przybliża Cię do celu",
+                    Text("Twoja waga, pomiary i cele",
                         style = MaterialTheme.typography.bodyMedium, color = com.example.ui.theme.GoldAccent)
                 }
             }
