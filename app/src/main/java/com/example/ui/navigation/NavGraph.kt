@@ -48,7 +48,7 @@ import com.example.ui.theme.*
 import com.example.viewmodel.DietaViewModel
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Dashboard : Screen("dashboard", "Dieta", Icons.Outlined.RamenDining)
+    object Dashboard : Screen("dashboard", "Dieta", Icons.Outlined.RestaurantMenu)
     object MealPlan : Screen("meal_plan", "Jadłospis", Icons.Outlined.CalendarMonth)
     object Documents : Screen("documents", "Dokumenty", Icons.Outlined.PictureAsPdf)
     object AiCoach : Screen("ai_coach", "AI", Icons.Outlined.SmartToy)
@@ -76,8 +76,8 @@ fun MangoBottomNav(
     Surface(
         color = MutedSurface1,
         tonalElevation = 0.dp,
-        shadowElevation = 14.dp,
-        shape = RoundedCornerShape(30.dp),
+        shadowElevation = 5.dp,
+        shape = RoundedCornerShape(24.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 10.dp, vertical = 5.dp)
@@ -154,7 +154,7 @@ fun MangoBottomNav(
                             contentDescription = screen.title,
                             tint = iconColor,
                             modifier = Modifier.size(24.dp),
-                            colorful = isSelected
+                            colorful = false
                         )
                     }
                     Spacer(modifier = Modifier.height(2.dp))
