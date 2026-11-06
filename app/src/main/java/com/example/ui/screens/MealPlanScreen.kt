@@ -358,32 +358,6 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 }
             }
 
-            Card(
-                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_planner_summary"),
-                shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(containerColor = MutedSurface2)
-            ) {
-                Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
-                    verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Text("Twój plan na dziś", fontSize = 15.sp,
-                        fontWeight = FontWeight.ExtraBold, color = Cream)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Zaplanowane: ${dayMeals.size}", fontSize = 12.sp, color = GoldAccent)
-                        Text("Do zjedzenia: ${remainingMeals.size}", fontSize = 12.sp, color = GoldAccent)
-                        Text("Zjedzone: ${eatenMeals.size}", fontSize = 12.sp, color = LeafGreen)
-                    }
-                    val completion by animateFloatAsState(
-                        targetValue = if (dayMeals.isEmpty()) 0f else (eatenMeals.size.toFloat() / dayMeals.size).coerceIn(0f, 1f),
-                        animationSpec = tween(if (motion) 450 else 0), label = "planner_completion")
-                    LinearProgressIndicator(progress = { completion },
-                        modifier = Modifier.fillMaxWidth().height(4.dp)
-                            .clip(RoundedCornerShape(6.dp)),
-                        color = LeafGreen,
-                        trackColor = MutedSurface1
-                    )
-                }
-            }
-
             // Daily summary header + AI generate button
             val dailyNutrition = remember(dayMeals, recipes, recipeIngredients) {
                 IngredientSubstitutionSupport.totalMealNutrition(dayMeals, recipes, recipeIngredients)
@@ -391,15 +365,15 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
 
             Surface(
                 modifier = Modifier.fillMaxWidth().testTag("modern_fresh_daily_nutrition"),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(22.dp),
                 color = MutedSurface1,
-                tonalElevation = 1.dp
+                tonalElevation = 0.dp
             ) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = JuicyOrange, modifier = Modifier.size(20.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Bilans dnia", color = Cream, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        Text("🔥 Bilans dnia", color = Cream, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                         Text("${dayMeals.size} posiłków", color = GoldAccent, style = MaterialTheme.typography.labelMedium)
                     }
                     if (dayMeals.isEmpty()) {
