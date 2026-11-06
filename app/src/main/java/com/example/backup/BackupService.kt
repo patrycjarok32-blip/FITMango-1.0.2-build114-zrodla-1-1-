@@ -13,6 +13,14 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import javax.crypto.Cipher
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.PBEKeySpec
+import javax.crypto.spec.SecretKeySpec
+import java.security.SecureRandom
 import java.security.MessageDigest
 import java.util.UUID
 import java.util.zip.ZipEntry
@@ -28,7 +36,8 @@ data class BackupArchive(
     val habitsDiary: String = "",
     val mealSets: String = "[]",
     val reminders: String = "",
-    val usability: String = ""
+    val usability: String = "",
+    val geminiKey: String = "", val pixabayKey: String = "", val photoAiKey: String = ""
 )
 data class PreparedBackup(val archive: BackupArchive, val directory: File) {
     fun dispose() { directory.deleteRecursively() }
@@ -53,12 +62,13 @@ class BackupService(private val context: Context, private val database: AppDatab
             ?: error("Nie można zapisać pliku.")
     }
 
-    suspend fun export(uri: Uri): String = withContext(Dispatchers.IO) {
+    suspend fun export(uri: Uri, password: String): String = withContext(Dispatchers.IO) {
+        require(password.length >= 8) { "Hasło kopii musi mieć co najmniej 8 znaków." }
         val temp = File.createTempFile("fitmango-backup-", ".zip", context.cacheDir)
         try {
-            val missing = temp.outputStream().use { writeArchive(it) }
+            val missing = temp.outputStream().use { writeArchive(it, includeKeys = true) }
             context.contentResolver.openOutputStream(uri, "wt")?.use { output ->
-                temp.inputStream().use { it.copyTo(output) }
+                encryptArchive(temp.readBytes(), password).let { output.write(it) }
             } ?: error("Nie można zapisać pliku w wybranym miejscu.")
             if (missing == 0) "Kopia zapisana. Przechowuj ją w bezpiecznym miejscu."
             else "Kopia zapisana. Niedostępne pliki: $missing. Ich tekst i pozostałe dane zachowano."
@@ -66,11 +76,11 @@ class BackupService(private val context: Context, private val database: AppDatab
     }
 
     // Also used before a restore, so the previous data can be recovered locally.
-    internal suspend fun writeArchive(output: OutputStream): Int {
+    internal suspend fun writeArchive(output: OutputStream, includeKeys: Boolean = false): Int {
         val data = database.backupDao().snapshot()
         val uris = (data.recipes.map { it.imageUrl } + data.documents.map { it.uriString } +
             data.photos.flatMap { listOf(it.frontUri, it.sideUri, it.backUri) })
-            .filter { it.startsWith("content://") || it.startsWith("file://") && !it.startsWith("file:///android_asset/") }
+            .filter { it.startsWith("content://") || it.startsWith("file://") && !it.startsWith("file:///android_asset/") || it.startsWith(context.filesDir.absolutePath + "/") }
             .distinct()
         require(uris.size < 20_000) { "Za dużo zdjęć i dokumentów do jednej kopii." }
         val assets = linkedMapOf<String, BackupAsset>()
@@ -81,7 +91,8 @@ class BackupService(private val context: Context, private val database: AppDatab
                 val staged = File.createTempFile("backup-asset-", ".bin", context.cacheDir)
                 try {
                     try {
-                        val input = if (source.startsWith("file://")) File(Uri.parse(source).path ?: "").inputStream()
+                        val input = if (source.startsWith(context.filesDir.absolutePath + "/")) File(source).inputStream()
+                            else if (source.startsWith("file://")) File(Uri.parse(source).path ?: "").inputStream()
                             else context.contentResolver.openInputStream(Uri.parse(source)) ?: error("Niedostępny plik")
                         input.use { stream -> staged.outputStream().use { copyLimited(stream, it, MAX_ASSET) } }
                     } catch (e: CancellationException) { throw e }
@@ -96,7 +107,10 @@ class BackupService(private val context: Context, private val database: AppDatab
                 } finally { staged.delete() }
             }
             val archive = BackupArchive("FITMango", 1, 9, java.time.Instant.now().toString(), data,
-                context.getSharedPreferences("RecipePhotoSettings", Context.MODE_PRIVATE).getBoolean("enabled", true), assets, missing, HabitsDiary.export(context), com.example.viewmodel.MealConvenienceSupport.export(context), com.example.reminders.ReminderSupport.export(context), com.example.viewmodel.UsabilityPreferences.export(context))
+                context.getSharedPreferences("RecipePhotoSettings", Context.MODE_PRIVATE).getBoolean("enabled", true), assets, missing, HabitsDiary.export(context), com.example.viewmodel.MealConvenienceSupport.export(context), com.example.reminders.ReminderSupport.export(context), com.example.viewmodel.UsabilityPreferences.export(context),
+                if (includeKeys) com.example.ai.SecureKeyStorage.getKey().orEmpty() else "",
+                if (includeKeys) com.example.viewmodel.RecipePhotoSettings(context).token("pixabay") else "",
+                if (includeKeys) com.example.viewmodel.RecipePhotoSettings(context).token("hf") else "")
             validate(archive)
             val json = adapter.toJson(archive).toByteArray(Charsets.UTF_8)
             require(json.size <= MAX_MANIFEST && total + json.size <= MAX_TOTAL) { "Dane przekraczają limit kopii." }
@@ -105,12 +119,14 @@ class BackupService(private val context: Context, private val database: AppDatab
         return missing.size
     }
 
-    suspend fun prepare(uri: Uri): PreparedBackup = withContext(Dispatchers.IO) {
+    suspend fun prepare(uri: Uri, password: String = ""): PreparedBackup = withContext(Dispatchers.IO) {
         val directory = File(context.cacheDir, "backup-preview-${UUID.randomUUID()}").apply { mkdirs() }
         try {
             var total = 0L
             val names = mutableSetOf<String>()
-            val input = context.contentResolver.openInputStream(uri) ?: error("Nie można otworzyć kopii.")
+            val raw = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: error("Nie można otworzyć kopii.")
+            require(raw.size <= MAX_TOTAL + 1024) { "Plik kopii jest zbyt duży." }
+            val input = ByteArrayInputStream(if (raw.take(4).toByteArray().contentEquals(MAGIC)) decryptArchive(raw, password) else raw)
             ZipInputStream(input).use { zip ->
                 while (true) {
                     val entry = zip.nextEntry ?: break
@@ -179,8 +195,12 @@ class BackupService(private val context: Context, private val database: AppDatab
                 HabitsDiary.restore(context, prepared.archive.habitsDiary)
                 com.example.viewmodel.MealConvenienceSupport.restore(context, prepared.archive.mealSets)
                 com.example.reminders.ReminderSupport.save(context, com.example.reminders.ReminderSupport.decode(prepared.archive.reminders))
+                if (prepared.archive.geminiKey.isNotBlank()) com.example.ai.SecureKeyStorage.saveKey(prepared.archive.geminiKey)
+                val photoSettings = com.example.viewmodel.RecipePhotoSettings(context)
+                if (prepared.archive.pixabayKey.isNotBlank()) photoSettings.saveToken("pixabay", prepared.archive.pixabayKey)
+                if (prepared.archive.photoAiKey.isNotBlank()) photoSettings.saveToken("hf", prepared.archive.photoAiKey)
             }
-            "Przywrócono dane. Klucze API pozostają na tym telefonie. Health Connect połącz ponownie w Profilu."
+            "Przywrócono dane, zdjęcia i klucze API zawarte w kopii. Health Connect połącz ponownie w Profilu."
         } finally {
             previous.delete()
             if (!committed) target.deleteRecursively()
@@ -194,6 +214,28 @@ class BackupService(private val context: Context, private val database: AppDatab
     }
 
     companion object {
+        private val MAGIC = byteArrayOf(70, 77, 66, 50)
+        private fun derivedKey(password: String, salt: ByteArray): SecretKeySpec {
+            val spec = PBEKeySpec(password.toCharArray(), salt, 210_000, 256)
+            return try { SecretKeySpec(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).encoded, "AES") }
+            finally { spec.clearPassword() }
+        }
+        private fun encryptArchive(plain: ByteArray, password: String): ByteArray {
+            val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
+            val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(Cipher.ENCRYPT_MODE, derivedKey(password, salt), GCMParameterSpec(128, nonce))
+            return MAGIC + salt + nonce + cipher.doFinal(plain)
+        }
+        private fun decryptArchive(bytes: ByteArray, password: String): ByteArray {
+            require(password.isNotEmpty()) { "Podaj hasło zaszyfrowanej kopii." }
+            require(bytes.size >= 48) { "Uszkodzona kopia." }
+            return try {
+                val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+                cipher.init(Cipher.DECRYPT_MODE, derivedKey(password, bytes.copyOfRange(4, 20)), GCMParameterSpec(128, bytes.copyOfRange(20, 32)))
+                cipher.doFinal(bytes.copyOfRange(32, bytes.size))
+            } catch (_: javax.crypto.AEADBadTagException) { error("Nieprawidłowe hasło lub uszkodzona kopia.") }
+        }
         private const val MAX_MANIFEST = 16 * 1024 * 1024
         private const val MAX_ASSET = 64L * 1024 * 1024
         private const val MAX_TOTAL = 256L * 1024 * 1024
