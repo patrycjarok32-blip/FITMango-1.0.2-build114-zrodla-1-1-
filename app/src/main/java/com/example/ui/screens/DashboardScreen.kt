@@ -181,9 +181,9 @@ fun DashboardScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(9.dp)
+                    verticalArrangement = Arrangement.spacedBy(7.dp)
                 ) {
                     Text("Dzisiejszy bilans", color = Cream, fontSize = 15.sp,
                         fontWeight = FontWeight.ExtraBold)
@@ -191,7 +191,7 @@ fun DashboardScreen(
                         value = calorieFraction,
                         center = "$animatedCalories kcal",
                         subtitle = "z $targetCalories kcal",
-                        diameter = 144.dp
+                        diameter = 116.dp
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -721,21 +721,21 @@ private fun FreshMangoDestinationCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 9.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Box(
-                modifier = Modifier.size(42.dp).clip(RoundedCornerShape(14.dp))
+                modifier = Modifier.size(36.dp).clip(RoundedCornerShape(12.dp))
                     .background(JuicyOrange.copy(alpha = 0.14f)),
                 contentAlignment = Alignment.Center
             ) {
                 androidx.compose.material3.Icon(imageVector, contentDescription = null,
-                    tint = JuicyOrange, modifier = Modifier.size(25.dp))
+                    tint = JuicyOrange, modifier = Modifier.size(21.dp))
             }
             Text(title, color = Cream, fontWeight = FontWeight.Bold, fontSize = 12.sp,
                 maxLines = 1)
-            Text(subtitle, color = GoldAccent, fontSize = 10.sp, maxLines = 1)
+            // Compact navigation: subtitle available for accessibility via title, not repeated visually.
         }
     }
 }
@@ -750,14 +750,14 @@ private fun FreshMangoMacroTile(
 ) {
     Surface(modifier = modifier, shape = RoundedCornerShape(18.dp), color = MutedSurface2) {
         Column(
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 5.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(5.dp)
+            verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             Box(Modifier.size(9.dp).clip(CircleShape).background(accent))
-            Text(label, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Cream,
+            Text(label, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Cream,
                 maxLines = 1)
-            Text("$value g", fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = Cream)
+            Text("$value g", fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, color = Cream)
             Text("cel $target g", fontSize = 10.sp, color = GoldAccent)
         }
     }
