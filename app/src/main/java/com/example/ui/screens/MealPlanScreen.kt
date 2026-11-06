@@ -203,7 +203,6 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
     var swapError by remember { mutableStateOf<String?>(null) }
 
     var showQuickAdd by remember { mutableStateOf(false) }
-    var quickAddCategory by remember { mutableStateOf<MealCategorySpec?>(null) }
     var quickAddProduct by remember { mutableStateOf(false) }
     if (showQuickAdd) {
         AlertDialog(
@@ -218,7 +217,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     }
                     mealCategories.forEach { category ->
                         OutlinedButton(onClick = {
-                            quickAddCategory = category
+                            if (quickAddProduct) slotToAddProduct = category else slotToAddRecipe = category
                             showQuickAdd = false
                         }, modifier = Modifier.fillMaxWidth()) {
                             Text(category.canonicalName)
@@ -230,13 +229,6 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
             dismissButton = { TextButton(onClick = { showQuickAdd = false }) { Text("Anuluj") } }
         )
     }
-    LaunchedEffect(quickAddCategory) {
-        quickAddCategory?.let {
-            if (quickAddProduct) slotToAddProduct = it else slotToAddRecipe = it
-            quickAddCategory = null
-        }
-    }
-
     Scaffold(
         floatingActionButton = {
             ExtendedFloatingActionButton(
