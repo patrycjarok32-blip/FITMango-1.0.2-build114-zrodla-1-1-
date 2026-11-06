@@ -50,17 +50,17 @@ fun MangoMotionProvider(content: @Composable () -> Unit) {
 }
 
 @Composable fun mangoFloat(target: Float): Float {
-    val value by animateFloatAsState(target, tween(if (LocalReducedMangoMotion.current) 0 else 240), label = "mango_progress")
+    val value by animateFloatAsState(target, tween(if (LocalReducedMangoMotion.current) 0 else 300), label = "mango_progress")
     return value
 }
 
 @Composable fun mangoNumber(target: Int): Int {
-    val value by animateIntAsState(target, tween(if (LocalReducedMangoMotion.current) 0 else 450), label = "mango_number")
+    val value by animateIntAsState(target, tween(if (LocalReducedMangoMotion.current) 0 else 500), label = "mango_number")
     return value
 }
 
 @Composable fun Modifier.mangoExpand(): Modifier = if (LocalReducedMangoMotion.current) this
-    else animateContentSize(animationSpec = tween(220))
+    else animateContentSize(animationSpec = tween(240))
 
 /** One finite movement after an increase; entering the screen never starts a loop. */
 @Composable
@@ -71,12 +71,12 @@ fun MangoIncreaseMotion(value: Int, drop: Boolean = false, content: @Composable 
     LaunchedEffect(value, reduced) {
         val increased = value > previous
         previous = value
-        if (increased && !reduced) { phase.snapTo(0f); phase.animateTo(1f, tween(480)) }
+        if (increased && !reduced) { phase.snapTo(0f); phase.animateTo(1f, tween(420)) }
         else phase.snapTo(1f)
     }
     Box(Modifier.graphicsLayer {
         val wave = kotlin.math.sin(phase.value * Math.PI).toFloat()
-        scaleX = if (reduced) 1f else 1f + wave * 0.14f
+        scaleX = if (reduced) 1f else 1f + wave * 0.08f
         scaleY = scaleX
         translationY = if (reduced) 0f else if (drop) -28f * (1f - phase.value) else -10f * wave
     }) { content() }
@@ -90,7 +90,7 @@ fun MangoBadge(name: String, earned: Boolean) {
     LaunchedEffect(name, earned, reduced) {
         if (earned && !prefs.getBoolean("badge_$name", false)) {
             prefs.edit().putBoolean("badge_$name", true).apply()
-            if (!reduced) { phase.snapTo(0f); phase.animateTo(1f, tween(800)) }
+            if (!reduced) { phase.snapTo(0f); phase.animateTo(1f, tween(650)) }
         }
         if (reduced) phase.snapTo(1f)
     }
@@ -143,8 +143,8 @@ fun MangoBadge(name: String, earned: Boolean) {
         if (increased) {
             runCatching { view.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP) }
             show = true
-            if (!reduced) { phase.snapTo(0f); phase.animateTo(1f, tween(350)) }
-            delay(2200); show = false
+            if (!reduced) { phase.snapTo(0f); phase.animateTo(1f, tween(280)) }
+            delay(1800); show = false
         }
     }
     if (show) Text("✓ $message", color = LeafGreen, modifier = Modifier.testTag("import_saved_feedback").graphicsLayer {
