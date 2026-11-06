@@ -51,6 +51,8 @@ fun ProfileHub(tab: String, onTab: (String) -> Unit, listState: LazyListState,
     val featured = listOf(
         "calculator" to "Mój profil",
         "health" to "Health Connect",
+        "recipes_link" to "Moje przepisy",
+        "recipe_import_link" to "Importer przepisów",
         "measurements" to "Pomiary ciała",
         "effects" to "Moje postępy",
         "backup" to "Kopia danych",
@@ -64,12 +66,9 @@ fun ProfileHub(tab: String, onTab: (String) -> Unit, listState: LazyListState,
         contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 30.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {
-        item {
-            Text("Więcej", style = MaterialTheme.typography.headlineSmall,
-                color = com.example.ui.theme.Cream, modifier = Modifier.padding(bottom = 6.dp))
-        }
         items(featured, key = { "featured_" + it.first }) { (id, label) ->
-            val section = ProfileHubCatalog.sections.first { it.id == id }
+            val section = ProfileHubCatalog.sections.find { it.id == id }
+                ?: ProfileHubSection(id, label, "profile", "photos")
             Card(onClick = { onOpen(id) },
                 colors = CardDefaults.cardColors(containerColor = MutedSurface1),
                 shape = RoundedCornerShape(18.dp),
