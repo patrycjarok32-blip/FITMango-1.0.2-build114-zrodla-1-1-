@@ -48,14 +48,14 @@ import com.example.ui.theme.*
 import com.example.viewmodel.DietaViewModel
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Dashboard : Screen("dashboard", "Dieta", Icons.Outlined.RestaurantMenu)
+    object Dashboard : Screen("dashboard", "Dieta", Icons.Outlined.Restaurant)
     object MealPlan : Screen("meal_plan", "Jadłospis", Icons.Outlined.CalendarMonth)
     object Documents : Screen("documents", "Dokumenty", Icons.Outlined.PictureAsPdf)
     object AiCoach : Screen("ai_coach", "AI", Icons.Outlined.SmartToy)
     object Recipes : Screen("recipes", "Przepisy", Icons.Outlined.RestaurantMenu)
     object Shopping : Screen("shopping", "Zakupy", Icons.Outlined.ShoppingCart)
     object Progress : Screen("effects", "Postępy", Icons.Outlined.ShowChart)
-    object Sport : Screen("sport", "Aktywność", Icons.Outlined.FitnessCenter)
+    object Sport : Screen("sport", "Aktywność", Icons.Outlined.DirectionsRun)
     object Profile : Screen("profile", "Więcej", Icons.Outlined.MoreHoriz)
 }
 
@@ -76,19 +76,13 @@ fun MangoBottomNav(
     Surface(
         color = MutedSurface1,
         tonalElevation = 0.dp,
-        shadowElevation = 2.dp,
-        shape = RoundedCornerShape(24.dp),
+        shadowElevation = 0.dp,
+        shape = RoundedCornerShape(0.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 10.dp, vertical = 5.dp)
-            .border(
-                width = 1.dp,
-                color = WarmBrown.copy(alpha = 0.12f),
-                shape = RoundedCornerShape(30.dp)
-            )
-            .clip(RoundedCornerShape(30.dp))
+            .border(width = 1.dp, color = WarmBrown.copy(alpha = 0.12f), shape = RoundedCornerShape(0.dp))
     ) {
-        BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPadding().padding(vertical = 4.dp, horizontal = 2.dp)
+        BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPadding().padding(vertical = 2.dp, horizontal = 2.dp)
             .pointerInput(currentRoute, items) {
                 var drag = 0f
                 detectHorizontalDragGestures(
@@ -112,8 +106,8 @@ fun MangoBottomNav(
             val selectedIndex = items.indexOfFirst { it.route == currentRoute }
             val indicator by animateDpAsState(targetValue = slot * selectedIndex.coerceAtLeast(0),
                 animationSpec = tween(if (reduced) 0 else 220), label = "nav_indicator")
-            if (selectedIndex >= 0) Box(Modifier.offset(x = indicator, y = 4.dp).width(slot).height(36.dp)
-                .padding(horizontal = 5.dp).clip(RoundedCornerShape(20.dp)).background(accent(items[selectedIndex].route).copy(alpha = .17f)))
+            if (selectedIndex >= 0) Box(Modifier.offset(x = indicator, y = 3.dp).width(slot).height(32.dp)
+                .padding(horizontal = 12.dp).clip(RoundedCornerShape(18.dp)).background(accent(items[selectedIndex].route).copy(alpha = .14f)))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
             items.forEach { screen ->
                 val isSelected = currentRoute == screen.route
@@ -138,7 +132,7 @@ fun MangoBottomNav(
                         .scale(scale)
                         .clip(RoundedCornerShape(12.dp))
                         .selectable(selected = isSelected, role = Role.Tab, onClick = { onNavigate(screen) })
-                        .heightIn(min = 60.dp)
+                        .heightIn(min = 52.dp)
                         .padding(vertical = 4.dp)
                         .testTag("nav_tab_${screen.route}")
                 ) {
@@ -153,7 +147,7 @@ fun MangoBottomNav(
                             imageVector = screen.icon,
                             contentDescription = screen.title,
                             tint = iconColor,
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(20.dp),
                             colorful = false
                         )
                     }
