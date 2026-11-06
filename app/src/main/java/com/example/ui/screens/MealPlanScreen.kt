@@ -202,7 +202,44 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
     var swapSaving by remember { mutableStateOf(false) }
     var swapError by remember { mutableStateOf<String?>(null) }
 
+    var showQuickAdd by remember { mutableStateOf(false) }
+    var quickAddCategory by remember { mutableStateOf<MealCategorySpec?>(null) }
+    if (showQuickAdd) {
+        AlertDialog(
+            onDismissRequest = { showQuickAdd = false },
+            title = { Text("Dodaj posiłek", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Wybierz porę dnia. Następnie dodasz przepis lub produkt.")
+                    mealCategories.forEach { category ->
+                        OutlinedButton(onClick = {
+                            quickAddCategory = category
+                            showQuickAdd = false
+                        }, modifier = Modifier.fillMaxWidth()) {
+                            Text(category.canonicalName)
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = { TextButton(onClick = { showQuickAdd = false }) { Text("Anuluj") } }
+        )
+    }
+    LaunchedEffect(quickAddCategory) {
+        quickAddCategory?.let { slotToAddRecipe = it; quickAddCategory = null }
+    }
+
     Scaffold(
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = { showQuickAdd = true },
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text("Dodaj posiłek") },
+                containerColor = JuicyOrange,
+                contentColor = MangoButtonInk,
+                modifier = Modifier.testTag("fresh_mango_quick_add")
+            )
+        },
         topBar = {
             TopAppBar(
                 title = {
@@ -253,7 +290,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
             Surface(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_planner_header"),
                 color = MutedSurface2,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(22.dp)
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
@@ -265,7 +302,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text("Zaplanuj dzień", fontSize = 14.sp,
                             fontWeight = FontWeight.ExtraBold, color = Cream)
-                        Text("Wybierz datę i dodaj posiłki",
+                        Text("Twój plan na dziś • smacznie i kolorowo",
                             fontSize = 12.sp, color = GoldAccent)
                     }
                 }
