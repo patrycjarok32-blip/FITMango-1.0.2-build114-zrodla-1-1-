@@ -91,7 +91,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = onBack) { Text("Wróć") }
-                Text("Aktywność i regeneracja", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                Text("Dzisiaj", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
             }
             SuccessFeedback(feedback, "Zapisano")
             message?.let { Text(it, color = GoldAccent) }
@@ -115,23 +115,6 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             item { reportNumbers?.let { numbers -> SportsWeeklyReport(numbers, profile, aiReport, aiBusy) { viewModel.runWeeklyAiAnalysis() } }
                 ?: LinearProgressIndicator(Modifier.fillMaxWidth()) }
         } else {
-        item {
-            MangoCard(Modifier.fillMaxWidth().testTag("health_connect_training_diary")) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Dziennik treningów • ostatnie 30 dni",
-                        style = MaterialTheme.typography.titleMedium, color = MangoMint)
-                    Text("Zapisane aktywności: ${visible.size}",
-                        style = MaterialTheme.typography.bodyMedium)
-                    Text("Treningi importowane z Health Connect i dodane ręcznie są prezentowane przez istniejącą historię. Powtórzone wpisy są filtrowane przed wyświetleniem.",
-                        style = MaterialTheme.typography.bodySmall, color = GoldAccent)
-                    OutlinedButton(onClick = { showHistory = true }, modifier = Modifier.fillMaxWidth()) {
-                        Text("Otwórz historię treningów")
-                    }
-                    if (duplicates.isNotEmpty()) Text("Wykryte powtórzone wpisy: ${duplicates.size}",
-                        style = MaterialTheme.typography.bodySmall, color = GoldAccent)
-                }
-            }
-        }
         item { ActivityTodayCard(data, today, current) }
         item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
         item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -157,6 +140,23 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
             }
         } } }
+        item {
+            MangoCard(Modifier.fillMaxWidth().testTag("health_connect_training_diary")) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Ostatnie aktywności",
+                        style = MaterialTheme.typography.titleMedium, color = MangoMint)
+                    Text("Zapisane aktywności: ${visible.size}",
+                        style = MaterialTheme.typography.bodyMedium)
+                    Text("Treningi z Health Connect i wpisy ręczne — bez duplikatów.",
+                        style = MaterialTheme.typography.bodySmall, color = GoldAccent)
+                    OutlinedButton(onClick = { showHistory = true }, modifier = Modifier.fillMaxWidth()) {
+                        Text("Otwórz historię treningów")
+                    }
+                    if (duplicates.isNotEmpty()) Text("Wykryte powtórzone wpisy: ${duplicates.size}",
+                        style = MaterialTheme.typography.bodySmall, color = GoldAccent)
+                }
+            }
+        }
         item { Button(onClick = { add = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().testTag("sport_add_activity")) { Text("+ Dodaj wykonaną aktywność") } }
         item { RecoveryCard(data, today, busy,
             onSave = { d, energy, fatigue -> sports.recovery(d, energy, fatigue, ::saved) },
