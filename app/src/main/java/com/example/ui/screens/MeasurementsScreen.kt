@@ -52,12 +52,12 @@ fun MeasurementsScreen(
     var deletion by remember { mutableStateOf<com.example.data.BodyMeasurementEntity?>(null) }
     var deleting by remember { mutableStateOf(false) }
     var saveErrorMessage by remember { mutableStateOf<String?>(null) }
-    var awaitingSavedMeasurement by remember { mutableStateOf(false) }
+    var pendingMeasurementCount by remember { mutableIntStateOf(-1) }
     var saveConfirmation by remember { mutableStateOf(false) }
     val motion = progressMotionEnabled()
-    LaunchedEffect(bodyMeasurements.size, awaitingSavedMeasurement) {
-        if (awaitingSavedMeasurement && bodyMeasurements.isNotEmpty()) {
-            awaitingSavedMeasurement = false
+    LaunchedEffect(bodyMeasurements.size) {
+        if (pendingMeasurementCount >= 0 && bodyMeasurements.size > pendingMeasurementCount) {
+            pendingMeasurementCount = -1
             saveConfirmation = true
             if (motion) kotlinx.coroutines.delay(1800)
             saveConfirmation = false
@@ -242,7 +242,7 @@ fun MeasurementsScreen(
                                 val parsedArms = armsInput.parsePolishFloat() ?: 0f
                                 val parsedThighs = thighsInput.parsePolishFloat() ?: 0f
 
-                                awaitingSavedMeasurement = true
+                                pendingMeasurementCount = bodyMeasurements.size
                                 viewModel.addBodyMeasurement(
                                     weightKg = parsedWeight,
                                     waist = parsedWaist,
