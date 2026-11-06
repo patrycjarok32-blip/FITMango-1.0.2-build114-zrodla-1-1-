@@ -290,28 +290,8 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 16.dp, vertical = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Surface(
-                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_planner_header"),
-                color = MutedSurface2,
-                shape = RoundedCornerShape(22.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Icon(Icons.Default.CalendarMonth, contentDescription = null,
-                        tint = LeafGreen, modifier = Modifier.size(22.dp))
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Zaplanuj dzień", fontSize = 14.sp,
-                            fontWeight = FontWeight.ExtraBold, color = Cream)
-                        Text("Twój plan na dziś • smacznie i kolorowo",
-                            fontSize = 12.sp, color = GoldAccent)
-                    }
-                }
-            }
             MealUndoCard(viewModel)
             SuccessFeedback(actionFeedback)
             SuccessFeedback(motionFeedback, motionMessage, tag = "meal_status_feedback")
@@ -380,7 +360,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
 
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_planner_summary"),
-                shape = RoundedCornerShape(18.dp),
+                shape = RoundedCornerShape(22.dp),
                 colors = CardDefaults.cardColors(containerColor = MutedSurface2)
             ) {
                 Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
@@ -419,7 +399,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = JuicyOrange, modifier = Modifier.size(20.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Bilans wybranego dnia", color = Cream, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        Text("Bilans dnia", color = Cream, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                         Text("${dayMeals.size} posiłków", color = GoldAccent, style = MaterialTheme.typography.labelMedium)
                     }
                     if (dayMeals.isEmpty()) {
