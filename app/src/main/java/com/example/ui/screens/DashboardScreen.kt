@@ -209,22 +209,22 @@ fun DashboardScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(20.dp),
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("✦ TWÓJ DZISIEJSZY BALANS", color = Cream, fontSize = 20.sp,
+                    Text("Dzisiejszy bilans", color = Cream, fontSize = 18.sp,
                         fontWeight = FontWeight.ExtraBold)
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(174.dp)) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(132.dp)) {
                         CircularProgressIndicator(
                             progress = { calorieFraction },
                             modifier = Modifier.fillMaxSize(),
                             color = JuicyOrange,
                             trackColor = MutedSurface2,
-                            strokeWidth = 15.dp
+                            strokeWidth = 10.dp
                         )
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("$animatedCalories", color = Cream, fontSize = 35.sp,
+                            Text("$animatedCalories", color = Cream, fontSize = 30.sp,
                                 fontWeight = FontWeight.Black)
                             Text("/ $targetCalories kcal", color = GoldAccent, fontSize = 14.sp)
                         }
