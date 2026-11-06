@@ -70,14 +70,14 @@ class BackupCoordinator(
         catch (e: Exception) { _message.value = "Nie udało się wykonać operacji: ${e.message ?: "spróbuj ponownie"}" }
         finally { _busy.value = false; _hasRecovery.value = service.recoveryFile.isFile; mutex.unlock() }
     }
-    fun export(uri: Uri) = operation { _message.value = service.export(uri); status.exported() }
+    fun export(uri: Uri, password: String) = operation { _message.value = service.export(uri, password); status.exported() }
     fun saveAutomaticNow() = operation { service.saveAutomatic(); status.savedAutomatic(); _message.value = "Zapisano kopię na telefonie." }
     fun exportAutomatic(uri: Uri) = operation { service.exportAutomatic(uri); _message.value = "Zapisano plik kopii automatycznej." }
     fun prepareAutomatic() = prepare(Uri.fromFile(service.automaticFile))
-    fun prepare(uri: Uri) = operation {
+    fun prepare(uri: Uri, password: String = "") = operation {
         val old = _preview.value; _preview.value = null
         withContext(Dispatchers.IO) { old?.dispose() }
-        _preview.value = service.prepare(uri)
+        _preview.value = service.prepare(uri, password)
     }
     fun cancelPreview() { if (!_busy.value) { val old = _preview.value; _preview.value = null; scope.launch(Dispatchers.IO) { old?.dispose() } } }
     fun restore() = operation {
