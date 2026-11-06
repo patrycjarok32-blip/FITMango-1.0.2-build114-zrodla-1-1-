@@ -189,8 +189,8 @@ fun DashboardScreen(
                 ) {
                     MangoGuide(size = 52.dp, event = consumedCalories + waterTotal)
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Twój dzień, Twój balans", fontWeight = FontWeight.ExtraBold,
-                            fontSize = 20.sp, color = Cream)
+                        Text("Twój dzień, Twój balans", fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp, color = Cream)
                         Text("Małe kroki. Wielka zmiana. 🥭", fontSize = 12.sp, color = GoldAccent)
                     }
                 }
@@ -204,9 +204,9 @@ fun DashboardScreen(
             )
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_calorie_hero"),
-                shape = RoundedCornerShape(28.dp),
+                shape = RoundedCornerShape(22.dp),
                 colors = CardDefaults.cardColors(containerColor = MutedSurface1),
-                elevation = CardDefaults.cardElevation(defaultElevation = 9.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(20.dp),
