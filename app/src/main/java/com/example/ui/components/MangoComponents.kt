@@ -82,11 +82,11 @@ fun MangoPrimaryButton(
     Box(
         modifier = modifier
             .scale(scale)
-            .shadow(if (enabled) 1.dp else 0.dp, RoundedCornerShape(12.dp), clip = false)
-            .clip(RoundedCornerShape(12.dp))
+            .shadow(if (enabled) 1.dp else 0.dp, RoundedCornerShape(18.dp), clip = false)
+            .clip(RoundedCornerShape(18.dp))
             .background(
                 Brush.verticalGradient(
-                    colors = if (enabled) listOf(RipeYellow, JuicyOrange, Color(0xFFF39717))
+                    colors = if (enabled) listOf(RipeYellow, MangoPeach, JuicyOrange)
                         else listOf(WarmBrown, WarmBrown)
                 )
             )
@@ -129,7 +129,7 @@ fun MangoSecondaryButton(
         modifier = modifier
             .scale(scale)
             .shadow(if (enabled) 1.dp else 0.dp, RoundedCornerShape(12.dp), clip = false)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(18.dp))
             .border(1.5.dp, if (enabled) JuicyOrange else GoldAccent, CircleShape)
             .background(Brush.verticalGradient(listOf(MutedSurface1, MutedSurface2)))
             .clickable(
@@ -163,14 +163,14 @@ fun MangoCard(
             .fillMaxWidth()
             .border(
                 width = if (isSelected) 1.5.dp else 1.dp,
-                color = if (isSelected) JuicyOrange else WarmBrown.copy(alpha = 0.35f),
-                shape = RoundedCornerShape(18.dp)
+                color = if (isSelected) MangoCoral else MangoPeach.copy(alpha = 0.50f),
+                shape = RoundedCornerShape(24.dp)
             ),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MutedSurface1
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         content = content
     )
 }
@@ -212,7 +212,7 @@ fun MangoMealCard(
                         text = "$mealType • $timeRange",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isCompleted) LeafGreen else OrangeInk
+                        color = if (isCompleted) MangoMint else MangoCoral
                     )
                 }
                 if (isCompleted) {
@@ -440,7 +440,7 @@ fun MangoProgressBar(
         modifier = modifier
             .fillMaxWidth()
             .height(10.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(18.dp))
             .background(trackColor)
     ) {
         Box(
@@ -467,7 +467,7 @@ fun MangoChip(
     Box(
         modifier = Modifier
             .pressScaleEffect()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(18.dp))
             .background(if (selected) JuicyOrange else MutedSurface1)
             .border(1.dp, if (selected) MangoYellow else WarmBrown.copy(alpha = 0.35f), CircleShape)
             .clickable { onClick() }
