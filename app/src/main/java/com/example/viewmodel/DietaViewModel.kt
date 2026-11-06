@@ -856,12 +856,11 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                     return@launch
                 }
 
-                val extractedText = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    inputStream.use { stream -> PdfRecipeExtractor.extractFullTextFromPdf(stream) }
-                }
+                inputStream.close()
+                val extractedText = HybridPdfTextReader.extract(context, uri)
 
                 if (!PdfRecipeExtractor.hasExtractablePdfText(extractedText)) {
-                    onResult(false, "Nie udało się odczytać tekstu z tego PDF. Dokument może być skanem i wymaga OCR.")
+                    onResult(false, "Nie udało się odczytać tekstu z tego PDF. Nie znaleziono czytelnego tekstu nawet po rozpoznawaniu OCR.")
                     _isLoadingAi.value = false
                     return@launch
                 }
