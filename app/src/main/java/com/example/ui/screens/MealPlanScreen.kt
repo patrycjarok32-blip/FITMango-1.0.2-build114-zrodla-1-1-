@@ -259,7 +259,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         )
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text("Jadłospis", fontWeight = FontWeight.ExtraBold,
-                                fontSize = 20.sp, color = Cream)
+                                fontSize = 21.sp, color = Cream)
                             Text(selectedDaySpec.displayWithDate, fontSize = 11.sp,
                                 color = GoldAccent)
                         }
@@ -294,7 +294,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
             SuccessFeedback(actionFeedback)
             SuccessFeedback(motionFeedback, motionMessage, tag = "meal_status_feedback")
             actionError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            com.example.ui.components.LegacyPlanRepairCard(mealPlans, viewModel) { selectedDayName = it }
+            // Legacy plan recovery remains available below the primary meal list.
             Row(Modifier.fillMaxWidth().swipePlannerDays(selectedDayName) { selectedDayName = it }
                 .testTag("planner_day_gesture"), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween) {
@@ -385,7 +385,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 color = MutedSurface1,
                 tonalElevation = 0.dp
             ) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = JuicyOrange, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
@@ -398,7 +398,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         AnimatedMealNutrition(dailyNutrition, "modern_fresh_nutrition_values", prefix = "")
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Zaplanowane: ${dayMeals.size}", color = GoldAccent, fontSize = 12.sp)
+                        Text("Zaplanowane: ${dayMeals.size}", color = GoldAccent, fontSize = 11.sp)
                         Text("Zjedzone: ${eatenMeals.size}", color = LeafGreen, fontSize = 12.sp)
                     }
                 }
@@ -486,6 +486,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     .testTag("meal_plan_lazy_column"),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                item { com.example.ui.components.LegacyPlanRepairCard(mealPlans, viewModel) { selectedDayName = it } }
                 item {
                     var toolsExpanded by rememberSaveable { mutableStateOf(false) }
                     Surface(color = MutedSurface1, shape = RoundedCornerShape(20.dp), tonalElevation = 1.dp) {
