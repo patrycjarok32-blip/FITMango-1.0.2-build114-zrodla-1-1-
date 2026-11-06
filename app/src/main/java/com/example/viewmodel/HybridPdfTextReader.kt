@@ -25,7 +25,7 @@ internal object HybridPdfTextReader {
                 PdfRecipeExtractor.extractFullTextFromPdf(it)
             } ?: error("Nie można otworzyć pliku PDF.")
         }
-        val pages = Regex("""(?m)^=== STRONA (\\d+) ===\\s*$""")
+        val pages = Regex("""(?m)^=== STRONA (\d+) ===\s*$""")
             .findAll(embedded).toList()
         val embeddedByPage = pages.mapIndexed { index, match ->
             val number = match.groupValues[1].toInt()
@@ -68,8 +68,8 @@ internal object HybridPdfTextReader {
                             }
                         }
                         if (pageText.isNotBlank()) {
-                            result.append("=== STRONA ").append(pageNumber).append(" ===\\n")
-                                .append(pageText).append("\\n\\n")
+                            result.append("=== STRONA ").append(pageNumber).append(" ===\n")
+                                .append(pageText).append("\n\n")
                         }
                     }
                     result.toString().trim()
