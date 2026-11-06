@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -45,36 +46,76 @@ object ProfileHubCatalog {
 @Composable
 fun ProfileHub(tab: String, onTab: (String) -> Unit, listState: LazyListState,
     summaries: Map<String, String>, onOpen: (String) -> Unit) {
-    val keys = ProfileHubCatalog.tabs.keys.toList()
-    Column(Modifier.fillMaxSize()) {
-        Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MutedSurface2)) {
-            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Twoje centrum FITMango", style = MaterialTheme.typography.titleLarge, color = LeafGreen)
-                Text("Zdrowie, postępy i ustawienia w jednym miejscu", style = MaterialTheme.typography.bodyMedium)
+    var expanded by remember { mutableStateOf(false) }
+    val featured = listOf(
+        "calculator" to "Mój profil",
+        "health" to "Health Connect",
+        "measurements" to "Pomiary ciała",
+        "effects" to "Moje postępy",
+        "backup" to "Kopia danych",
+        "appearance" to "Ustawienia aplikacji",
+        "about" to "O aplikacji"
+    )
+    val featuredIds = featured.map { it.first }.toSet()
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxSize().testTag("profile_content"),
+        contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 30.dp),
+        verticalArrangement = Arrangement.spacedBy(9.dp)
+    ) {
+        item {
+            Text("Wszystko w jednym miejscu", style = MaterialTheme.typography.bodyMedium,
+                color = LeafGreen, modifier = Modifier.padding(bottom = 6.dp))
+        }
+        items(featured, key = { "featured_" + it.first }) { (id, label) ->
+            val section = ProfileHubCatalog.sections.first { it.id == id }
+            Card(onClick = { onOpen(id) },
+                colors = CardDefaults.cardColors(containerColor = MutedSurface1),
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.fillMaxWidth().testTag("profile_tile_$id")) {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    MangoSectionArt(sectionArtwork(section.artwork), sectionArtworkAccent(section.artwork), size = 32.dp)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(label, style = MaterialTheme.typography.titleSmall)
+                        Text(summaries[id].orEmpty().ifBlank { section.title },
+                            style = MaterialTheme.typography.bodySmall)
+                    }
+                    Text("›", style = MaterialTheme.typography.headlineSmall, color = JuicyOrange)
+                }
             }
         }
-        TabRow(selectedTabIndex = keys.indexOf(tab).coerceAtLeast(0)) {
-            ProfileHubCatalog.tabs.forEach { (id, label) ->
-                Tab(selected = tab == id, onClick = { onTab(id) }, modifier = Modifier.testTag("profile_tab_$id"), text = { Text(label) })
+        item {
+            OutlinedButton(onClick = { expanded = !expanded },
+                modifier = Modifier.fillMaxWidth().testTag("profile_more_sections")) {
+                Text(if (expanded) "Zwiń pozostałe funkcje" else "Wszystkie pozostałe funkcje")
             }
         }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("measurements" to "Dodaj pomiar", "body_photos_new" to "Dodaj zdjęcia", "effects" to "Zobacz postępy").forEach { (id, label) ->
-                OutlinedButton(onClick = { onOpen(id) }, modifier = Modifier.weight(1f).heightIn(min = 60.dp).testTag("profile_quick_$id"),
-                    contentPadding = PaddingValues(6.dp)) { Text(label, style = MaterialTheme.typography.labelMedium) }
+        if (expanded) {
+            item {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    ProfileHubCatalog.tabs.forEach { (id, label) ->
+                        FilterChip(selected = tab == id, onClick = { onTab(id) },
+                            label = { Text(label) })
+                    }
+                }
             }
-        }
-        LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("profile_content"),
-            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(ProfileHubCatalog.sections.filter { it.tab == tab }, key = { it.id }) { section ->
-                Card(onClick = { onOpen(section.id) }, colors = CardDefaults.cardColors(containerColor = MutedSurface1), shape = RoundedCornerShape(24.dp), modifier = Modifier.fillMaxWidth().testTag("profile_tile_${section.id}")) {
-                    Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        MangoSectionArt(sectionArtwork(section.artwork), sectionArtworkAccent(section.artwork), size = 32.dp)
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            items(ProfileHubCatalog.sections.filter { it.id !in featuredIds && it.tab == tab },
+                key = { "extra_" + it.id }) { section ->
+                Card(onClick = { onOpen(section.id) },
+                    colors = CardDefaults.cardColors(containerColor = MutedSurface1),
+                    shape = RoundedCornerShape(18.dp),
+                    modifier = Modifier.fillMaxWidth().testTag("profile_tile_${section.id}")) {
+                    Row(Modifier.fillMaxWidth().padding(13.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        MangoSectionArt(sectionArtwork(section.artwork), sectionArtworkAccent(section.artwork), size = 28.dp)
+                        Column(Modifier.weight(1f)) {
                             Text(section.title, style = MaterialTheme.typography.titleSmall)
                             Text(summaries[section.id].orEmpty(), style = MaterialTheme.typography.bodySmall)
                         }
-                        Text("›", style = MaterialTheme.typography.headlineSmall, color = JuicyOrange)
+                        Text("›", color = JuicyOrange)
                     }
                 }
             }
