@@ -2,7 +2,6 @@ package com.example.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -33,6 +32,7 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
     var reps by rememberSaveable { mutableStateOf("10") }
     var weight by rememberSaveable { mutableStateOf("0") }
     var showEditor by rememberSaveable { mutableStateOf(false) }
+    var showSetEditor by rememberSaveable { mutableStateOf(false) }
     val weekStart = SportsSupport.week(today)
     val plans = remember(data.plans, weekStart) {
         (0L..6L).map { weekStart.plusDays(it) to data.plans.firstOrNull { p -> p.date == weekStart.plusDays(it).toString() } }
@@ -63,11 +63,14 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                 }
                 val valid = runCatching { LocalDate.parse(planDay) }.getOrNull() != null &&
                     (rest || planTitle.isNotBlank())
-                Button(onClick = { onPlan(planDay, planTitle, rest); showEditor = false },
+                Button(onClick = { onPlan(planDay, planTitle, rest) },
                     enabled = valid && !busy, modifier = Modifier.fillMaxWidth()) { Text("Zapisz plan") }
             }
             HorizontalDivider()
-            Text("Zapisz serię siłową", style = MaterialTheme.typography.titleSmall)
+            TextButton(onClick = { showSetEditor = !showSetEditor }) {
+                Text(if (showSetEditor) "Zwiń zapis serii −" else "Zapisz serię siłową +")
+            }
+            if (showSetEditor) {
             OutlinedTextField(exercise, { exercise = it.take(120) }, label = { Text("Ćwiczenie") },
                 singleLine = true, modifier = Modifier.fillMaxWidth())
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -78,10 +81,11 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
             }
             val count = reps.toIntOrNull()
             val kg = weight.replace(',', '.').toDoubleOrNull()
-            Button(onClick = { onAddSet(today.toString(), exercise.trim(), count!!, kg!!); exercise = "" },
+            Button(onClick = { if (count != null && kg != null) onAddSet(today.toString(), exercise.trim(), count, kg) },
                 enabled = !busy && exercise.isNotBlank() && count != null && count in 1..1000 &&
                     kg != null && kg.isFinite() && kg in 0.0..2000.0,
                 modifier = Modifier.fillMaxWidth().testTag("sport_profile_add_set")) { Text("Zapisz serię") }
+            }
         }
     }
     val recent = remember(data.sets, today) {
@@ -91,9 +95,9 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
     MangoCard(Modifier.fillMaxWidth().testTag("sport_strength_progress")) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             SportHeading(Icons.Outlined.TrendingUp, "Siła i rekordy osobiste")
-            if (recent.isEmpty()) Text("Zapisz serię z ciężarem, aby zobaczyć postępy z 12 tygodni.")
+            if (recent.none { it.kg > 0.0 }) Text("Zapisz serię z ciężarem, aby zobaczyć postępy z 12 tygodni.")
             else {
-                val exercises = recent.groupBy { it.exercise.trim().lowercase(Locale.ROOT) }
+                val exercises = recent.filter { it.kg > 0.0 }.groupBy { it.exercise.trim().lowercase(Locale.ROOT) }
                 exercises.entries.sortedByDescending { it.value.size }.take(5).forEach { (_, sets) ->
                     val best = sets.maxByOrNull { it.kg }!!
                     val volume = sets.sumOf { it.kg * it.reps }
@@ -123,7 +127,7 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
     }
     MangoCard(Modifier.fillMaxWidth().testTag("sport_recovery_guidance")) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            SportHeading(Icons.Outlined.AutoAwesome, "Asystent treningowy")
+            SportHeading(Icons.Outlined.AutoAwesome, "Wskazówki treningowe")
             val check = data.recovery.firstOrNull { it.date == today.toString() }
             val sleep = data.daily.firstOrNull { it.date == today.toString() }?.sleepMinutes
             val tip = when {
