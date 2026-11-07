@@ -308,7 +308,8 @@ fun MangoRecipeCard(
     preparationMinutes: Int? = null,
     protein: Int? = null,
     onAddToPlanClick: (() -> Unit)? = null,
-    photoNeedsReview: Boolean = false
+    photoNeedsReview: Boolean = false,
+    onReviewPhotoClick: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier.fillMaxWidth().pressScaleEffect().clickable(onClick = onClick),
@@ -359,6 +360,11 @@ fun MangoRecipeCard(
                     color = OrangeInk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Text(preparationMinutes?.let { "$it min" } ?: "Czas niepodany",
                     color = GoldAccent, fontSize = 11.sp)
+                onReviewPhotoClick?.let { action ->
+                    TextButton(onClick = action, modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(2.dp)) {
+                        Text("Sprawdź zdjęcie AI", fontSize = 11.sp)
+                    }
+                }
                 onAddToPlanClick?.let { action ->
                     OutlinedButton(onClick = action, modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)) {
