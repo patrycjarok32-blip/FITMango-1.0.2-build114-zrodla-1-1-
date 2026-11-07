@@ -777,7 +777,7 @@ fun ProfileScreen(
             if (detail == "body_photos" || detail == "body_photos_new") item {
                 CollapsibleMangoCard(title = "Zdjęcia sylwetki", sectionId = "body_photos") {
                     BodyPhotosCard(bodyPhotos,
-                        onSave = { front, side, back, done -> viewModel.addBodyPhoto(front, side, back, done) },
+                        onSave = { front, side, back, date, done -> viewModel.addBodyPhoto(front, side, back, date, done) },
                         onReplace = { id, angle, uri, done -> viewModel.replaceBodyPhoto(id, angle, uri, done) },
                         onDelete = { id, done -> viewModel.deleteBodyPhoto(id, done) },
                         onSecureLegacy = { viewModel.secureLegacyBodyPhotos() }, newFirst = detail == "body_photos_new")
