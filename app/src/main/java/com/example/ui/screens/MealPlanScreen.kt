@@ -255,12 +255,12 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         Icon(
                             imageVector = Icons.Default.CalendarMonth,
                             contentDescription = null,
-                            tint = MangoYellow,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text("Jadłospis", fontWeight = FontWeight.ExtraBold,
-                                fontSize = 20.sp, color = Cream)
+                                fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurface)
                             Text(selectedDaySpec.displayWithDate, fontSize = 11.sp,
                                 color = GoldAccent)
                         }
@@ -276,12 +276,12 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = Cream
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
         },
-        containerColor = DarkBackground
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         androidx.compose.material3.pulltorefresh.PullToRefreshBox(isRefreshing = refreshing,
             onRefresh = { viewModel.refreshCurrentDate(); viewModel.healthConnect.sync(force = true) }, modifier = Modifier.fillMaxSize()) {
@@ -306,7 +306,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         tint = LeafGreen, modifier = Modifier.size(22.dp))
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text("Zaplanuj dzień", fontSize = 14.sp,
-                            fontWeight = FontWeight.ExtraBold, color = Cream)
+                            fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface)
                         Text("Twój plan na dziś • smacznie i kolorowo",
                             fontSize = 12.sp, color = GoldAccent)
                     }
@@ -386,7 +386,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
                     verticalArrangement = Arrangement.spacedBy(5.dp)) {
                     Text("Twój plan na dziś", fontSize = 15.sp,
-                        fontWeight = FontWeight.ExtraBold, color = Cream)
+                        fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("Zaplanowane: ${dayMeals.size}", fontSize = 12.sp, color = GoldAccent)
                         Text("Do zjedzenia: ${remainingMeals.size}", fontSize = 12.sp, color = GoldAccent)
@@ -419,7 +419,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = JuicyOrange, modifier = Modifier.size(20.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Bilans wybranego dnia", color = Cream, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        Text("Bilans wybranego dnia", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                         Text("${dayMeals.size} posiłków", color = GoldAccent, style = MaterialTheme.typography.labelMedium)
                     }
                     if (dayMeals.isEmpty()) {
@@ -526,7 +526,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                             ) {
                                 Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = JuicyOrange)
                                 Spacer(Modifier.width(10.dp))
-                                Text("Skróty i narzędzia", modifier = Modifier.weight(1f), color = Cream, fontWeight = FontWeight.SemiBold)
+                                Text("Skróty i narzędzia", modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
                                 Text(if (toolsExpanded) "Zwiń" else "Rozwiń", color = LeafGreen)
                             }
                             AnimatedVisibility(
@@ -672,12 +672,12 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 mealToChangeRecipe = null
                 slotToAddRecipe = null
             },
-            containerColor = MutedSurface1,
+            containerColor = MaterialTheme.colorScheme.surface,
             title = {
                 Text(
                     text = if (editingMeal != null) "Zmień przepis (${editingMeal.mealType})"
                     else "Dodaj przepis do: ${targetSlot?.canonicalName.orEmpty()}",
-                    color = Cream,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )
@@ -694,8 +694,8 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         onValueChange = { recipePickerSearch = it },
                         modifier = Modifier.fillMaxWidth().testTag("planner_recipe_search"),
                         singleLine = true,
-                        placeholder = { Text("Szukaj w zapisanych przepisach...", color = Cream.copy(alpha = 0.5f), fontSize = 12.sp) },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MangoYellow) },
+                        placeholder = { Text("Szukaj w zapisanych przepisach...", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), fontSize = 12.sp) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                         shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = JuicyOrange,
@@ -718,7 +718,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         "Brakujący czas wpiszesz w przepisie: Czas i sposób przygotowania.", style = MaterialTheme.typography.bodySmall)
                     if (filteredRecipes.isEmpty()) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Brak pasujących przepisów.", color = Cream.copy(alpha = 0.6f), fontSize = 13.sp)
+                            Text("Brak pasujących przepisów.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 13.sp)
                         }
                     } else {
                         LazyColumn(
@@ -758,7 +758,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                                             text = candidate.title,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 14.sp,
-                                            color = Cream
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                         val minutes = viewModel.usability.minutes(candidate)
                                         Text(com.example.viewmodel.RecipeCategories.categories(candidate.category).joinToString(" / ") {
@@ -768,7 +768,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                                         Text(
                                             text = "Źródło: ${candidate.source} • ${candidate.calories} kcal (B: ${candidate.protein}g W: ${candidate.carbs}g T: ${candidate.fat}g)",
                                             fontSize = 11.sp,
-                                            color = MangoYellow
+                                            color = MaterialTheme.colorScheme.primary
                                         )
                                     }
                                 }
@@ -795,15 +795,15 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
     mealToMove?.let { meal ->
         com.example.ui.components.MangoEditSheet(
             onDismissRequest = { mealToMove = null },
-            containerColor = MutedSurface1,
-            title = { Text("Przenieś posiłek", color = Cream, fontWeight = FontWeight.Bold) },
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text("Przenieś posiłek", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         text = meal.recipeTitle,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
-                        color = MangoYellow
+                        color = MaterialTheme.colorScheme.primary
                     )
 
                     com.example.ui.components.PlanDateSelector(targetMoveDay, { targetMoveDay = it }, "move_to_day")
@@ -847,11 +847,11 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
     mealToEditServings?.let { meal ->
         com.example.ui.components.MangoEditSheet(
             onDismissRequest = { mealToEditServings = null },
-            containerColor = MutedSurface1,
-            title = { Text("Zmień liczbę porcji", color = Cream, fontWeight = FontWeight.Bold) },
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text("Zmień liczbę porcji", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(meal.recipeTitle, fontWeight = FontWeight.Bold, color = MangoYellow, fontSize = 14.sp)
+                    Text(meal.recipeTitle, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 14.sp)
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         items(listOf("0.5", "1", "1.5", "2", "3", "4")) { preset ->
                             FilterChip(
@@ -915,11 +915,11 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
 
         AlertDialog(
             onDismissRequest = { mealForInstructions = null },
-            containerColor = MutedSurface1,
+            containerColor = MaterialTheme.colorScheme.surface,
             title = {
                 Text(
                     text = MealPlannerSupport.formatMealHeader(meal.recipeTitle, meal.servings),
-                    color = Cream,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Black,
                     fontSize = 16.sp,
                     maxLines = 2,
@@ -932,22 +932,22 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     if (matchedRecipe != null && matchedRecipe.source.isNotBlank()) item {
                         Text("Źródło: ${matchedRecipe.source}", color = GoldAccent, fontSize = 11.sp)
                     }
-                    item { Text(buildNutritionDisplayLine(nutrition), color = MangoYellow) }
-                    item { Text("Składniki (${MealPlannerSupport.formatServingsLabel(meal.servings)}):", color = Cream, fontWeight = FontWeight.Bold) }
+                    item { Text(buildNutritionDisplayLine(nutrition), color = MaterialTheme.colorScheme.primary) }
+                    item { Text("Składniki (${MealPlannerSupport.formatServingsLabel(meal.servings)}):", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) }
                     items(resolvedIngredients) { ingredient ->
                         Column {
-                            Text("- ${ingredient.displayLine}", color = Cream, fontSize = 12.sp)
+                            Text("- ${ingredient.displayLine}", color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp)
                             Text(IngredientSubstitutionSupport.ingredientEnergyLabel(ingredient.ingredientName, ingredient.quantityForMeal,
                                 ingredient.unit, recipeIngredients.filter { it.recipeId == matchedRecipe?.id }, ingredient.substitution),
-                                color = MangoYellow, fontSize = 11.sp)
+                                color = MaterialTheme.colorScheme.primary, fontSize = 11.sp)
                         }
                     }
                     if (matchedRecipe != null) item {
                         Button(onClick = { cookingRecipe = matchedRecipe; cookingMeal = meal; mealForInstructions = null }, modifier = Modifier.testTag("meal_start_cooking")) { Text("Gotuj krok po kroku") }
                     }
-                    item { Text("Pełna instrukcja przygotowania:", color = Cream, fontWeight = FontWeight.Bold) }
+                    item { Text("Pełna instrukcja przygotowania:", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) }
                     item { Text(matchedRecipe?.instructions?.takeIf { it.isNotBlank() }
-                        ?: "Brak zapisanej instrukcji przygotowania dla tego posiłku.", color = Cream, fontSize = 12.sp) }
+                        ?: "Brak zapisanej instrukcji przygotowania dla tego posiłku.", color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp) }
                 }
             },
             confirmButton = {
@@ -1097,7 +1097,7 @@ private fun MealCategorySection(
                     Text(
                         text = "Zaplanuj ${categorySpec.canonicalName.lowercase()} na ten dzień",
                         fontSize = 12.sp,
-                        color = Cream.copy(alpha = 0.55f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
                     )
                     Text(
                         text = "Wybierz →",
@@ -1399,7 +1399,7 @@ internal fun PlannedMealDetailCard(
                         text = headerText,
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 16.sp,
-                        color = Cream,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -1408,7 +1408,7 @@ internal fun PlannedMealDetailCard(
             }
 
             if (expanded) MealConvenienceSupport.batchPortionWeight(meal.id, recipeIngredients)?.let { weight ->
-                Text("Gotowe danie: ${MealPlannerSupport.formatQuantityNumber(weight * MealPlannerSupport.safeServings(meal.servings))} g w tej porcji", color = MangoYellow, fontSize = 12.sp)
+                Text("Gotowe danie: ${MealPlannerSupport.formatQuantityNumber(weight * MealPlannerSupport.safeServings(meal.servings))} g w tej porcji", color = MaterialTheme.colorScheme.primary, fontSize = 12.sp)
             }
             if (expanded) nutrition.note?.let { Text(it, color = GoldAccent, fontSize = 12.sp) }
             NutritionStatusBadge(if (missingIngredients.isEmpty() && !nutrition.isPartial) NutritionStatus.COMPLETE else NutritionStatus.MISSING,
@@ -1430,7 +1430,7 @@ internal fun PlannedMealDetailCard(
                 }
             }
             TextButton(enabled = interactionsEnabled, onClick = { expanded = !expanded }, modifier = Modifier.fillMaxWidth().testTag("toggle_meal_details_${meal.id}")) {
-                Text(if (expanded) "Ukryj szczegóły" else "Pokaż składniki i szczegóły", color = MangoYellow)
+                Text(if (expanded) "Ukryj szczegóły" else "Pokaż składniki i szczegóły", color = MaterialTheme.colorScheme.primary)
                 Icon(if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, contentDescription = null)
             }
             if (expanded) {
@@ -1452,7 +1452,7 @@ internal fun PlannedMealDetailCard(
                         text = "Porcje posiłku:",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Cream.copy(alpha = 0.85f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
                     )
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -1468,7 +1468,7 @@ internal fun PlannedMealDetailCard(
                             Icon(
                                 imageVector = Icons.Default.Remove,
                                 contentDescription = "Zmniejsz porcje",
-                                tint = MangoYellow,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -1477,7 +1477,7 @@ internal fun PlannedMealDetailCard(
                             text = MealPlannerSupport.formatServingsLabel(meal.servings),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            color = Cream,
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .clickable { onEditServingsClick() }
                                 .testTag("servings_badge_${meal.id}")
@@ -1502,7 +1502,7 @@ internal fun PlannedMealDetailCard(
                 }
             }
 
-            ingredientError?.let { Text(it, color = MangoYellow) }
+            ingredientError?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
             // Individual Ingredients with Scaled Quantities & Units + "Zamień" Button
             if (resolvedIngredients.isNotEmpty()) {
                 Surface(
@@ -1534,14 +1534,14 @@ internal fun PlannedMealDetailCard(
                                             fontWeight = if (ing.substitution != null) FontWeight.Bold else FontWeight.Normal)
                                         Text(IngredientSubstitutionSupport.ingredientEnergyLabel(ing.ingredientName, ing.quantityForMeal, ing.unit,
                                             recipeIngredients.filter { it.recipeId == recipe?.id }, ing.substitution),
-                                            fontSize = 11.sp, color = MangoYellow)
+                                            fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
                                     }
                                     if (viewModel != null) IconButton(modifier = Modifier.testTag("remove_meal_ingredient_${meal.id}_${ing.originalIngredientName}"),
                                         onClick = { removingIngredient = ing; ingredientError = null }) {
-                                        Icon(Icons.Default.DeleteOutline, contentDescription = "Usuń składnik ${ing.ingredientName}", tint = MangoYellow)
+                                        Icon(Icons.Default.DeleteOutline, contentDescription = "Usuń składnik ${ing.ingredientName}", tint = MaterialTheme.colorScheme.primary)
                                     }
                                     if (onIngredientQuantityChange != null) IconButton(modifier = Modifier.testTag("edit_ingredient_quantity_${meal.id}_${ing.originalIngredientName}"), onClick = { quantityTarget = ing; quantityText = ing.quantityForMeal?.let { IngredientSubstitutionSupport.quantityInGramsOrMl(ing.ingredientName, it, ing.unit, recipeIngredients.filter { row -> row.recipeId == recipe?.id }) }?.toString().orEmpty() }) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Zmień gramaturę", tint = MangoYellow)
+                                        Icon(Icons.Default.Edit, contentDescription = "Zmień gramaturę", tint = MaterialTheme.colorScheme.primary)
                                     }
                                     TextButton(
                                         onClick = { onSwapIngredientClick("${ing.originalIngredientName} — ${MealPlannerSupport.formatQuantityNumber((ing.originalBaseQuantity ?: 1f) * meal.servings)} ${ing.originalUnit}") },
@@ -1554,17 +1554,17 @@ internal fun PlannedMealDetailCard(
                                             imageVector = Icons.Default.SwapHoriz,
                                             contentDescription = "Zamień",
                                             modifier = Modifier.size(13.dp),
-                                            tint = MangoYellow
+                                            tint = MaterialTheme.colorScheme.primary
                                         )
                                         Spacer(modifier = Modifier.width(2.dp))
-                                        Text("Zamień", fontSize = 11.sp, color = MangoYellow, fontWeight = FontWeight.SemiBold)
+                                        Text("Zamień", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                                     }
                                 }
                                 if (ing.substitution != null && !IngredientSubstitutionSupport.isExtra(ing.substitution)) {
                                     Text(
                                         text = "Oryginał: ${ing.substitution.formatOriginalForServings(meal.servings)}",
                                         fontSize = 10.sp,
-                                        color = Cream.copy(alpha = 0.6f),
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                         modifier = Modifier.padding(start = 10.dp)
                                     )
                                 }
