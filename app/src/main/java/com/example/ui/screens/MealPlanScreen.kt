@@ -480,9 +480,29 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     }
                 }
                 item {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(if (remainingMeals.isEmpty() && eatenMeals.isNotEmpty()) "Wszystkie zaplanowane posiłki zjedzone ✓" else "Do zjedzenia: ${remainingMeals.size}", modifier = Modifier.weight(1f))
-                        if (eatenMeals.isNotEmpty()) TextButton(onClick = { showEatenHistory = true }, modifier = Modifier.testTag("show_eaten_history")) { Text("Zjedzone (${eatenMeals.size})") }
+                    if (remainingMeals.isEmpty() && eatenMeals.isNotEmpty()) {
+                        Card(Modifier.fillMaxWidth().testTag("meal_completed_day_summary"),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = LeafGreen)
+                                    Text("Wszystkie zaplanowane posiłki zjedzone",
+                                        style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                }
+                                AnimatedMealNutrition(dailyNutrition, "completed_day_nutrition", prefix = "Bilans dnia: ")
+                                Text("Zjedzone posiłki: ${eatenMeals.size} • możesz dodać kolejny posiłek.",
+                                    style = MaterialTheme.typography.bodySmall)
+                                TextButton(onClick = { showEatenHistory = true }, modifier = Modifier.testTag("show_eaten_history")) {
+                                    Text("Zobacz zjedzone (${eatenMeals.size})")
+                                }
+                            }
+                        }
+                    } else {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Do zjedzenia: ${remainingMeals.size}", modifier = Modifier.weight(1f))
+                            if (eatenMeals.isNotEmpty()) TextButton(onClick = { showEatenHistory = true },
+                                modifier = Modifier.testTag("show_eaten_history")) { Text("Zjedzone (${eatenMeals.size})") }
+                        }
                     }
                 }
                 items(displayedCategories, key = { it.canonicalName }) { categorySpec ->
