@@ -20,8 +20,7 @@ object LocalFourMealPlanner {
         val used = mutableMapOf<Long, Int>()
         for (offset in 0 until days) {
             val date = start.plusDays(offset.toLong()).toString()
-            val scheduled = existing.filter { MealPlannerSupport.matchesDay(it.dayOfWeek, date) } +
-                added.filter { it.dayOfWeek == date }
+            val scheduled = existing.filter { MealPlannerSupport.matchesDay(it.dayOfWeek, date) }.toMutableList()
             for ((index, slot) in SLOTS.withIndex()) {
                 if (scheduled.any { MealPlannerSupport.normalizeMealType(it.mealType) == slot }) continue
                 val preferred = available.filter { matchesSlot(it.category, slot) }
@@ -31,8 +30,10 @@ object LocalFourMealPlanner {
                     // Prefer recipes not used on this day; reuse across days only when necessary.
                     if (scheduled.any { meal -> meal.recipeId == it.id }) 1 else 0
                 }.thenBy { used[it.id] ?: 0 }.thenBy { abs(it.calories - ideal) }.thenBy { it.id })!!
-                added += MealPlanEntity(dayOfWeek = date, mealType = slot, recipeId = recipe.id,
+                val meal = MealPlanEntity(dayOfWeek = date, mealType = slot, recipeId = recipe.id,
                     recipeTitle = recipe.title, servings = 1f, calories = recipe.calories)
+                added += meal
+                scheduled += meal
                 used[recipe.id] = (used[recipe.id] ?: 0) + 1
             }
         }
