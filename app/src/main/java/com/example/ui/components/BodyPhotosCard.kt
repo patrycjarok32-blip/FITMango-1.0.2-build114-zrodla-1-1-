@@ -1,6 +1,9 @@
 package com.example.ui.components
 
+import android.app.DatePickerDialog
 import android.content.Intent
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,7 +31,7 @@ import com.example.viewmodel.photo
 
 @Composable
 fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
-    onSave: (String, String, String, (String?) -> Unit) -> Unit,
+    onSave: (String, String, String, String, (String?) -> Unit) -> Unit,
     onReplace: (Long, BodyPhotoAngle, String, (String?) -> Unit) -> Unit,
     onDelete: (Long, (String?) -> Unit) -> Unit,
     onSecureLegacy: () -> Unit, newFirst: Boolean = false) {
@@ -36,6 +39,7 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
     var front by rememberSaveable { mutableStateOf("") }
     var side by rememberSaveable { mutableStateOf("") }
     var back by rememberSaveable { mutableStateOf("") }
+    var photoDate by rememberSaveable { mutableStateOf(LocalDate.now().toString()) }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var angleName by rememberSaveable { mutableStateOf(BodyPhotoAngle.FRONT.name) }
@@ -70,7 +74,17 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
         picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
     }
     val composer: @Composable () -> Unit = {
-        Text("Nowy zestaw • dzisiaj", style = MaterialTheme.typography.titleSmall)
+        Text("Nowy zestaw zdjęć sylwetki", style = MaterialTheme.typography.titleSmall)
+        val selectedDate = runCatching { LocalDate.parse(photoDate) }.getOrDefault(LocalDate.now())
+        OutlinedButton(enabled = !busy, onClick = {
+            DatePickerDialog(context, { _, year, month, day ->
+                photoDate = LocalDate.of(year, month + 1, day).toString()
+            }, selectedDate.year, selectedDate.monthValue - 1, selectedDate.dayOfMonth).apply {
+                datePicker.maxDate = System.currentTimeMillis()
+            }.show()
+        }, modifier = Modifier.fillMaxWidth().testTag("body_photo_date_picker")) {
+            Text("Data zdjęć: " + selectedDate.format(DateTimeFormatter.ofPattern("dd.MM.uuuu")) + " • Zmień")
+        }
         Text("Możesz zapisać jeden, dwa lub trzy widoki. Zdjęcia zostaną skopiowane do pamięci aplikacji.", style = MaterialTheme.typography.bodySmall)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             BodyPhotoAngle.entries.forEach { angle ->
@@ -87,9 +101,9 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
         if (listOf(front, side, back).any { it.isNotBlank() }) {
             Button(enabled = !busy, modifier = Modifier.fillMaxWidth().testTag("body_photos_save"), onClick = {
                 busy = true; message = null
-                onSave(front, side, back) { error ->
+                onSave(front, side, back, photoDate) { error ->
                     busy = false
-                    if (error == null) { front = ""; side = ""; back = ""; visible = maxOf(visible, 4) }
+                    if (error == null) { front = ""; side = ""; back = ""; photoDate = LocalDate.now().toString(); visible = maxOf(visible, 4) }
                     message = error ?: "Zestaw zapisany w historii zdjęć."
                 }
             }) { Text(if (busy) "Zapisywanie…" else "Zapisz zestaw zdjęć") }
@@ -173,7 +187,7 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
 @Composable
 private fun BodyPhotoViewer(title: String, onClose: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Column(Modifier.fillMaxSize().background(DarkBackground).systemBarsPadding().padding(16.dp).verticalScroll(rememberScrollState()),
+        Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).systemBarsPadding().padding(16.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             TextButton(onClick = onClose) { Text("Zamknij") }
             Text(title, style = MaterialTheme.typography.titleLarge)
