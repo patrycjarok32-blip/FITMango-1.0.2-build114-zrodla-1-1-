@@ -149,8 +149,9 @@ fun FitMangoIcon(imageVector: ImageVector, contentDescription: String?, modifier
     val freshTint = when (imageVector.name.substringAfterLast('.')) {
         "Home", "HomeFilled", "Dashboard", "Favorite", "FavoriteBorder" -> MangoCoral
         "CalendarMonth", "CalendarToday", "DateRange", "RestaurantMenu", "MenuBook" -> JuicyOrange
-        "FitnessCenter", "DirectionsWalk", "DirectionsRun", "WaterDrop", "ShoppingCart" -> MangoMint
-        "TrendingUp", "ShowChart", "BarChart", "SmartToy", "AutoAwesome", "Psychology" -> MangoLavender
+        "FitnessCenter", "DirectionsWalk", "DirectionsRun", "WaterDrop", "ShoppingCart", "MonitorWeight", "Scale" -> MangoMint
+        "TrendingUp", "ShowChart", "BarChart" -> MangoMint
+        "SmartToy", "AutoAwesome", "Psychology" -> MangoCoral
         else -> tint
     }
     if (resource != null && colorful) {
