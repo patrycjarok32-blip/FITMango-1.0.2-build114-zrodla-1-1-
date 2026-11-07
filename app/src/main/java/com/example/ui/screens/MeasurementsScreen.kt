@@ -83,16 +83,16 @@ fun MeasurementsScreen(
                 title = { Text("Pomiary & Progres", fontWeight = FontWeight.Black) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Wstecz", tint = MangoYellow)
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Wstecz", tint = MaterialTheme.colorScheme.primary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = Cream
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
         },
-        containerColor = DarkBackground
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -114,7 +114,7 @@ fun MeasurementsScreen(
                         Text(
                             text = "Twoje postępy",
                             fontWeight = FontWeight.Bold,
-                            color = MangoYellow,
+                            color = MaterialTheme.colorScheme.primary,
                             fontSize = 16.sp
                         )
 
@@ -125,12 +125,12 @@ fun MeasurementsScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
-                                    Text("Ostatnia waga", fontSize = 12.sp, color = Cream.copy(alpha = 0.6f))
-                                    Text("${latestMeasurement.weightKg} kg", fontSize = 24.sp, fontWeight = FontWeight.Black, color = Cream)
+                                    Text("Ostatnia waga", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                                    Text("${latestMeasurement.weightKg} kg", fontSize = 24.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
                                 }
                                 if (weightChange != null) {
                                     Column(horizontalAlignment = Alignment.End) {
-                                        Text("Zmiana", fontSize = 12.sp, color = Cream.copy(alpha = 0.6f))
+                                        Text("Zmiana", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                                         val changeText = if (weightChange > 0) "+${String.format("%.1f", weightChange)} kg 📈" else "${String.format("%.1f", weightChange)} kg 📉"
                                         val changeColor = if (weightChange > 0) JuicyOrange else LeafGreen
                                         Text(changeText, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = changeColor)
@@ -138,7 +138,7 @@ fun MeasurementsScreen(
                                 }
                             }
                         } else {
-                            Text("Brak wprowadzonych pomiarów. Dodaj swój pierwszy pomiar poniżej!", color = Cream.copy(alpha = 0.8f), fontSize = 13.sp)
+                            Text("Brak wprowadzonych pomiarów. Dodaj swój pierwszy pomiar poniżej!", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), fontSize = 13.sp)
                         }
 
                         val firstWeight = bodyMeasurements.lastOrNull()?.weightKg
@@ -164,7 +164,7 @@ fun MeasurementsScreen(
                         Text(
                             text = "Nowy Pomiar Ciała",
                             fontWeight = FontWeight.Bold,
-                            color = MangoYellow,
+                            color = MaterialTheme.colorScheme.primary,
                             fontSize = 16.sp
                         )
 
@@ -276,7 +276,7 @@ fun MeasurementsScreen(
 
             if (bodyMeasurements.isEmpty()) {
                 item {
-                    Text("Brak zapisanych pomiarów.", color = Cream.copy(alpha = 0.5f), fontSize = 13.sp)
+                    Text("Brak zapisanych pomiarów.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), fontSize = 13.sp)
                 }
             } else {
                 items(bodyMeasurements) { m ->
@@ -291,7 +291,7 @@ fun MeasurementsScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Text(m.date, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Cream)
+                                    Text(m.date, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
                                     if (m.source == "HEALTH_CONNECT") {
                                         Surface(
                                             color = LeafGreen.copy(alpha = 0.2f),
@@ -325,7 +325,7 @@ fun MeasurementsScreen(
                                             Text(
                                                 text = "Ręczny",
                                                 fontSize = 10.sp,
-                                                color = Cream.copy(alpha = 0.6f),
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                                 fontWeight = FontWeight.Medium,
                                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                             )
@@ -336,19 +336,19 @@ fun MeasurementsScreen(
                                     Text(
                                         text = "Talia: ${m.waistCm}cm | Biodra: ${m.hipsCm}cm | Klatka: ${m.chestCm}cm",
                                         fontSize = 11.sp,
-                                        color = Cream.copy(alpha = 0.7f)
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                                     )
                                 }
                                 if (m.armsCm > 0 || m.thighsCm > 0) {
                                     Text(
                                         text = "Ramię: ${m.armsCm}cm | Udo: ${m.thighsCm}cm",
                                         fontSize = 11.sp,
-                                        color = Cream.copy(alpha = 0.7f)
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                                     )
                                 }
                             }
                             Column(horizontalAlignment = Alignment.End) {
-                                Text("${m.weightKg} kg", fontSize = 18.sp, fontWeight = FontWeight.Black, color = MangoYellow)
+                                Text("${m.weightKg} kg", fontSize = 18.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
                                 TextButton(enabled = !deleting, onClick = { deletion = m }, modifier = Modifier.testTag("delete_measurement_${m.id}")) { Text("Usuń") }
                             }
                         }
@@ -380,7 +380,7 @@ fun WeightTrendChart(weights: List<Float>, dates: List<String>) {
         ) {
             Text(
                 "Dodaj co najmniej 2 pomiary wagi, aby zobaczyć wykres trendu.",
-                color = Cream.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 fontSize = 11.sp,
                 modifier = Modifier.padding(12.dp)
             )
@@ -432,7 +432,7 @@ fun WeightTrendChart(weights: List<Float>, dates: List<String>) {
         // Draw glow and points
         points.forEach { pt ->
             drawCircle(
-                color = MangoYellow,
+                color = MaterialTheme.colorScheme.primary,
                 radius = 5.dp.toPx(),
                 center = pt
             )
