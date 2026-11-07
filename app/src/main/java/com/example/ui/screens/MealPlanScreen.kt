@@ -1037,7 +1037,7 @@ private fun MealCategorySection(
             Box {
                 TextButton(onClick = { addMenuOpen = true }, modifier = Modifier.testTag("add_to_slot_${categorySpec.canonicalName}")) {
                     Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Text("Dodaj", color = JuicyOrange)
+                    Text(if (meals.isEmpty()) "Dodaj" else "+", color = JuicyOrange)
                 }
                 DropdownMenu(expanded = addMenuOpen, onDismissRequest = { addMenuOpen = false }) {
                     DropdownMenuItem(text = { Text("Dodaj przepis") }, onClick = { addMenuOpen = false; onAddRecipeToSlot() })
@@ -1294,8 +1294,8 @@ internal fun PlannedMealDetailCard(
         Column(
             modifier = Modifier
                 .background(mealAccent.copy(alpha = .055f))
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             if (isUpcoming) Surface(color = mealCategoryColor(meal.mealType).copy(alpha = .13f), shape = RoundedCornerShape(10.dp)) {
                 Text("Najbliższy posiłek", Modifier.padding(horizontal = 10.dp, vertical = 6.dp).testTag("upcoming_meal_${meal.id}"),
@@ -1356,7 +1356,7 @@ internal fun PlannedMealDetailCard(
                     imageUrl = recipe?.imageUrl.orEmpty(),
                     title = meal.recipeTitle,
                     modifier = Modifier
-                        .size(if (recipe?.imageUrl.isNullOrBlank()) 52.dp else 64.dp)
+                        .size(64.dp)
                         .clip(RoundedCornerShape(14.dp))
                 )
                 Column(
@@ -1379,9 +1379,11 @@ internal fun PlannedMealDetailCard(
                 Text("Gotowe danie: ${MealPlannerSupport.formatQuantityNumber(weight * MealPlannerSupport.safeServings(meal.servings))} g w tej porcji", color = MaterialTheme.colorScheme.primary, fontSize = 12.sp)
             }
             if (expanded) nutrition.note?.let { Text(it, color = GoldAccent, fontSize = 12.sp) }
-            NutritionStatusBadge(if (missingIngredients.isEmpty() && !nutrition.isPartial) NutritionStatus.COMPLETE else NutritionStatus.MISSING,
-                if (missingIngredients.isEmpty() && !nutrition.isPartial) "Pełne dane kalorii i makro" else "Niepełne dane (${missingIngredients.size})",
-                Modifier.testTag("nutrition_completeness_${meal.id}"))
+            if (expanded || missingIngredients.isNotEmpty() || nutrition.isPartial) {
+                NutritionStatusBadge(if (missingIngredients.isEmpty() && !nutrition.isPartial) NutritionStatus.COMPLETE else NutritionStatus.MISSING,
+                    if (missingIngredients.isEmpty() && !nutrition.isPartial) "Pełne dane kalorii i makro" else "Niepełne dane (${missingIngredients.size})",
+                    Modifier.testTag("nutrition_completeness_${meal.id}"))
+            }
             if (expanded) Text("Rozpoznane produkty dostają kalorie i makro automatycznie, także po odmianie nazwy. Szacunki z tabeli oraz masy jajek i ząbków są oznaczone. Zapisane przez Ciebie wartości mają pierwszeństwo.", color = GoldAccent, fontSize = 12.sp)
             if (expanded && missingIngredients.isNotEmpty()) {
                 TextButton(onClick = { showMissing = !showMissing; expanded = true }, modifier = Modifier.testTag("repair_nutrition_${meal.id}")) { Text(if (showMissing) "Zwiń brakujące dane" else "Uzupełnij brakujące dane (${missingIngredients.size})") }
@@ -1546,6 +1548,19 @@ internal fun PlannedMealDetailCard(
 
             }
 
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                OutlinedButton(onClick = onChangeRecipeClick, enabled = interactionsEnabled,
+                    contentPadding = PaddingValues(horizontal = 12.dp),
+                    modifier = Modifier.testTag("quick_change_recipe_${meal.id}")) {
+                    Icon(Icons.Outlined.SwapHoriz, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Zmień")
+                }
+                TextButton(onClick = onViewInstructionsClick, enabled = interactionsEnabled,
+                    modifier = Modifier.weight(1f).testTag("quick_cook_recipe_${meal.id}")) {
+                    Text("Przepis")
+                }
+            }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box {
                     OutlinedButton(enabled = interactionsEnabled, onClick = { actionsOpen = true }, modifier = Modifier.testTag("meal_options_${meal.id}")) {
