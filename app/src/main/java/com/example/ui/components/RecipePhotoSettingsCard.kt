@@ -19,7 +19,6 @@ fun RecipePhotoSettingsCard(viewModel: DietaViewModel) {
     val settings = remember(context) { RecipePhotoSettings(context) }
     var enabled by remember { mutableStateOf(settings.enabled) }
     var pixabay by remember { mutableStateOf(settings.token("pixabay")) }
-    var hf by remember { mutableStateOf(settings.token("hf")) }
     var notice by remember { mutableStateOf(settings.prefs.getString("status", "Zdjęcia są dobierane automatycznie po imporcie.").orEmpty()) }
     DisposableEffect(settings) {
         val listener = SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
@@ -38,26 +37,21 @@ fun RecipePhotoSettingsCard(viewModel: DietaViewModel) {
                     if (it) viewModel.fillMissingRecipePhotos(context) else viewModel.cancelRecipePhotoFill()
                 })
             }
-            Text("Najpierw szukamy pasującego zdjęcia w Pixabay. Jeśli go nie ma, generujemy ilustrację AI w darmowym limicie. Zdjęcia dodane przez Ciebie i pobrane z przepisu zachowujemy.")
+            Text("Najpierw szukamy w Wikimedia Commons (bez klucza). Pixabay jest opcjonalnym źródłem zapasowym. Zapisane zdjęcia pozostają na telefonie i nie są pobierane ponownie. Gdy nie znajdziemy odpowiedniego zdjęcia, wyświetlamy grafikę zastępczą.")
             OutlinedTextField(pixabay, onValueChange = { pixabay = it }, label = { Text("Darmowy klucz Pixabay") },
                 visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
             TextButton(onClick = { links.openUri("https://pixabay.com/api/docs/") }) { Text("Uzyskaj darmowy klucz Pixabay") }
-            OutlinedTextField(hf, onValueChange = { hf = it }, label = { Text("Token Hugging Face — opcjonalnie") },
-                visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
-            Text("AI działa też bez tokenu, ze wspólnym limitem. Własny token daje limit Twojego konta. Nie korzystamy z płatnej usługi.")
-            TextButton(onClick = { links.openUri("https://huggingface.co/settings/tokens") }) { Text("Ustawienia tokenu Hugging Face") }
             Button(onClick = {
                 try {
                     // Saving unchanged credentials must not reset the provider's rate limit.
                     if (settings.token("pixabay") != pixabay.trim()) settings.saveToken("pixabay", pixabay)
-                    if (settings.token("hf") != hf.trim()) settings.saveToken("hf", hf)
                     settings.enabled = enabled
                     if (enabled) viewModel.fillMissingRecipePhotos(context)
                     settings.status("Zapisano ustawienia. Klucze są przechowywane tylko na telefonie.")
                 } catch (_: Exception) { notice = "Nie udało się bezpiecznie zapisać klucza. Spróbuj ponownie." }
             }) { Text("Zapisz i uzupełnij zdjęcia") }
             Text(notice, style = MaterialTheme.typography.bodySmall)
-            TextButton(onClick = { links.openUri("https://pixabay.com") }) { Text("Zdjęcia: Pixabay i autorzy") }
+            TextButton(onClick = { links.openUri("https://commons.wikimedia.org") }) { Text("Zdjęcia: Wikimedia Commons i autorzy") }
         }
     }
 }
