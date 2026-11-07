@@ -193,16 +193,32 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                         }
                     }
                 }
-                Text(r.summary, style = MaterialTheme.typography.bodyMedium)
+                Text(r.summary, style = MaterialTheme.typography.bodySmall)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) { Icon(Icons.Outlined.Timeline, contentDescription = null, tint = LeafGreen); Text("Wykres wagi", style = MaterialTheme.typography.titleSmall) }
                 WeightTrendChart(r.points)
                 Text("Talia: ${n(r.waistChange, "cm")} • Pomiary: ${r.points.size}", style = MaterialTheme.typography.bodySmall)
-                Text("Wahania wagi są naturalne. Obserwuj trend, nie pojedynczy pomiar.", style = MaterialTheme.typography.bodySmall)
+
             } } }
-        item { ReductionPlanCard(settings.reductionPlan, today, busy, profile?.targetCalories, onProfile) { plan ->
-            busy = true
-            viewModel.saveEffectsSettings(settings.copy(reductionPlan = plan), ::completed)
-        } }
+        item {
+            var planExpanded by rememberSaveable { mutableStateOf(false) }
+            MangoCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text("Etapy redukcji", style = MaterialTheme.typography.titleMedium,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.weight(1f))
+                        TextButton(onClick = { planExpanded = !planExpanded }) {
+                            Text(if (planExpanded) "Zwiń −" else "Szczegóły +")
+                        }
+                    }
+                    if (planExpanded) {
+                        ReductionPlanCard(settings.reductionPlan, today, busy, profile?.targetCalories, onProfile) { plan ->
+                            busy = true
+                            viewModel.saveEffectsSettings(settings.copy(reductionPlan = plan), ::completed)
+                        }
+                    }
+                }
+            }
+        }
             item { CollapsibleMangoCard("Jakość danych", "effects_quality") {
                 Text("Zakończone dni w okresie: ${r.periodDays}. Dni z jedzeniem: ${r.loggedDays}. Z aktualnym zatwierdzeniem: ${r.confirmedDays}. Pełny zapis potwierdzony przez Ciebie: ${r.completeDays}.")
                 Text("Szacunkowe wartości składników: ${r.partialDays} dni. Pomiary wagi: ${r.points.size}. Dzisiejszy dzień jedzenia nie jest analizowany.")
