@@ -1003,12 +1003,30 @@ private fun MealCategorySection(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(MutedSurface1)
-            .border(1.dp, WarmBrown.copy(alpha = 0.16f), RoundedCornerShape(20.dp))
+            .background(if (meals.isNotEmpty() && meals.all { MealPlannerSupport.completedInCurrentWeek(it) }) LeafGreen.copy(alpha = .07f) else MutedSurface1)
+            .border(1.dp, if (meals.isNotEmpty() && meals.all { MealPlannerSupport.completedInCurrentWeek(it) }) LeafGreen.copy(alpha = .55f) else WarmBrown.copy(alpha = 0.16f), RoundedCornerShape(20.dp))
             .padding(10.dp)
             .testTag("meal_category_section_${categorySpec.canonicalName}"),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
+        // Timeline marker for each meal slot; completed meals show a green check.
+        Row(verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(Modifier.size(24.dp).clip(CircleShape)
+                    .background(if (meals.isNotEmpty() && meals.all { MealPlannerSupport.completedInCurrentWeek(it) }) LeafGreen else LeafGreen.copy(alpha = .13f)),
+                    contentAlignment = Alignment.Center) {
+                    if (meals.isNotEmpty() && meals.all { MealPlannerSupport.completedInCurrentWeek(it) })
+                        Icon(Icons.Outlined.Check, contentDescription = "Posiłek zjedzony", tint = Color.White, modifier = Modifier.size(15.dp))
+                    else Box(Modifier.size(9.dp).clip(CircleShape).background(LeafGreen))
+                }
+                Box(Modifier.width(2.dp).height(12.dp).background(LeafGreen.copy(alpha = .35f)))
+            }
+            Text(categorySpec.timeRange, color = LeafGreen, fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold)
+            if (meals.isNotEmpty() && meals.all { MealPlannerSupport.completedInCurrentWeek(it) })
+                Text("Zjedzone", color = LeafGreen, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
