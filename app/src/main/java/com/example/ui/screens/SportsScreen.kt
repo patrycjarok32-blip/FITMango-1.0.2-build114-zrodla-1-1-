@@ -75,23 +75,9 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     LazyColumn(Modifier.fillMaxSize().background(DarkBackground).padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(vertical = 12.dp)) {
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_sport_hero"),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = com.example.ui.theme.MutedSurface2)
-            ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Twój ruch, Twoja energia", style = MaterialTheme.typography.titleLarge,
-                        color = com.example.ui.theme.Cream)
-                    Text("Treningi, kroki i regeneracja w jednym miejscu",
-                        style = MaterialTheme.typography.bodyMedium, color = com.example.ui.theme.GoldAccent)
-                }
-            }
-        }
-        item {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = onBack) { Text("Wróć") }
-                Text("Aktywność i regeneracja", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                Text("Aktywność", style = MaterialTheme.typography.headlineSmall, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.weight(1f))
             }
             SuccessFeedback(feedback, "Zapisano")
             message?.let { Text(it, color = GoldAccent) }
@@ -115,6 +101,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             item { reportNumbers?.let { numbers -> SportsWeeklyReport(numbers, profile, aiReport, aiBusy) { viewModel.runWeeklyAiAnalysis() } }
                 ?: LinearProgressIndicator(Modifier.fillMaxWidth()) }
         } else {
+        item { ActivityTodayCard(data, today, current) }
         item {
             MangoCard(Modifier.fillMaxWidth().testTag("health_connect_training_diary")) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -122,8 +109,6 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         style = MaterialTheme.typography.titleMedium, color = MangoMint)
                     Text("Zapisane aktywności: ${visible.size}",
                         style = MaterialTheme.typography.bodyMedium)
-                    Text("Treningi importowane z Health Connect i dodane ręcznie są prezentowane przez istniejącą historię. Powtórzone wpisy są filtrowane przed wyświetleniem.",
-                        style = MaterialTheme.typography.bodySmall, color = GoldAccent)
                     OutlinedButton(onClick = { showHistory = true }, modifier = Modifier.fillMaxWidth()) {
                         Text("Otwórz historię treningów")
                     }
@@ -132,7 +117,6 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 }
             }
         }
-        item { ActivityTodayCard(data, today, current) }
         item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
         item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("Twój tydzień • $start – ${start.plusDays(6)}", style = MaterialTheme.typography.labelLarge, color = GoldAccent)
