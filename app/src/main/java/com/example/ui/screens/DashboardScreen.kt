@@ -125,7 +125,7 @@ fun DashboardScreen(
                                 fontSize = 18.sp,
                                 color = MaterialTheme.colorScheme.primary
                             )
-                            Text("Twój dzień, Twoja energia ✨", fontSize = 11.sp, color = GoldAccent)
+                            Text("Dieta • aktywność • postępy", fontSize = 11.sp, color = GoldAccent)
                         }
                     }
                 },
@@ -178,15 +178,16 @@ fun DashboardScreen(
                 .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Cześć! 👋", fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = MaterialTheme.colorScheme.onBackground)
-                    Text("Twój dzień, Twoja energia", color = GoldAccent, fontSize = 13.sp)
+                    Text("Sprawdź bilans i zaplanuj posiłki", color = GoldAccent, fontSize = 13.sp)
                 }
-                MangoGuide(size = 38.dp, event = consumedCalories + waterTotal)
+
             }
             var showDailyGreeting by rememberSaveable { mutableStateOf(false) }
             TextButton(onClick = { showDailyGreeting = !showDailyGreeting },
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                 modifier = Modifier.testTag("dashboard_daily_greeting_toggle")) {
                 Text(if (showDailyGreeting) "Ukryj motywację −" else "Motywacja dnia +")
             }
@@ -733,7 +734,8 @@ private fun FreshMangoDestinationCard(
     onClick: () -> Unit
 ) {
     Card(
-        modifier = modifier.clickable(onClick = onClick),
+        onClick = onClick,
+        modifier = modifier,
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
