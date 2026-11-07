@@ -176,24 +176,12 @@ fun DashboardScreen(
                 .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Surface(
-                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_welcome"),
-                shape = RoundedCornerShape(24.dp),
-                color = MutedSurface2,
-                shadowElevation = 7.dp
-            ) {
-                Row(
-                    modifier = Modifier.padding(18.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    MangoGuide(size = 52.dp, event = consumedCalories + waterTotal)
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Twój dzień, Twój balans", fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
-                        Text("Małe kroki. Wielka zmiana. 🥭", fontSize = 12.sp, color = GoldAccent)
-                    }
+            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Cześć! 👋", fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = MaterialTheme.colorScheme.onBackground)
+                    Text("Twój dzień, Twoja energia", color = GoldAccent, fontSize = 13.sp)
                 }
+                MangoGuide(size = 38.dp, event = consumedCalories + waterTotal)
             }
             MangoDailyGreeting(
                 today = today,
@@ -208,37 +196,39 @@ fun DashboardScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
             ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text("Dzisiejszy bilans", color = MaterialTheme.colorScheme.onSurface, fontSize = 18.sp,
-                        fontWeight = FontWeight.ExtraBold)
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(132.dp)) {
-                        CircularProgressIndicator(
-                            progress = { calorieFraction },
-                            modifier = Modifier.fillMaxSize(),
-                            color = JuicyOrange,
-                            trackColor = MutedSurface2,
-                            strokeWidth = 10.dp
-                        )
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("$animatedCalories", color = MaterialTheme.colorScheme.onSurface, fontSize = 30.sp,
-                                fontWeight = FontWeight.Black)
-                            Text("/ $targetCalories kcal", color = GoldAccent, fontSize = 14.sp)
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(144.dp)) {
+                            CircularProgressIndicator(progress = { calorieFraction }, modifier = Modifier.fillMaxSize(),
+                                color = JuicyOrange, trackColor = MutedSurface2, strokeWidth = 10.dp)
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("$animatedCalories", fontSize = 28.sp, fontWeight = FontWeight.Black,
+                                    color = MaterialTheme.colorScheme.onSurface)
+                                Text("/ $targetCalories kcal", fontSize = 12.sp, color = GoldAccent)
+                            }
+                        }
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Surface(shape = RoundedCornerShape(16.dp), color = MutedSurface2) {
+                                Column(Modifier.fillMaxWidth().padding(12.dp)) {
+                                    Text("🔥 Pozostało", fontSize = 12.sp, color = GoldAccent)
+                                    Text("${(targetCalories - consumedCalories).coerceAtLeast(0)} kcal",
+                                        fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                            Surface(shape = RoundedCornerShape(16.dp), color = MutedSurface2) {
+                                Column(Modifier.fillMaxWidth().padding(12.dp)) {
+                                    Text("🎯 Cel", fontSize = 12.sp, color = GoldAccent)
+                                    Text(profile?.goal ?: "Twój cel", fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp, maxLines = 1)
+                                }
+                            }
                         }
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        FreshMangoMacroTile("Białko", consumedProtein, targetProtein, LeafGreen,
-                            Modifier.weight(1f))
-                        FreshMangoMacroTile("Tłuszcze", consumedFat, targetFat, JuicyOrange,
-                            Modifier.weight(1f))
-                        FreshMangoMacroTile("Węglowodany", consumedCarbs, targetCarbs, MangoYellow,
-                            Modifier.weight(1f))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FreshMangoMacroTile("Białko", consumedProtein, targetProtein, LeafGreen, Modifier.weight(1f))
+                        FreshMangoMacroTile("Tłuszcze", consumedFat, targetFat, JuicyOrange, Modifier.weight(1f))
+                        FreshMangoMacroTile("Węglowodany", consumedCarbs, targetCarbs, MangoYellow, Modifier.weight(1f))
                     }
                 }
             }
