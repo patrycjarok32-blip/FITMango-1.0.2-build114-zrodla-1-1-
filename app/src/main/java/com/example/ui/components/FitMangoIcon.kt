@@ -147,11 +147,13 @@ fun FitMangoIcon(imageVector: ImageVector, contentDescription: String?, modifier
     tint: Color = LocalContentColor.current, colorful: Boolean = false) {
     val resource = fitMangoIconResource(imageVector.name)
     val freshTint = when (imageVector.name.substringAfterLast('.')) {
-        "Home", "HomeFilled", "Dashboard", "Favorite", "FavoriteBorder" -> MangoCoral
+        "Home", "HomeFilled", "Dashboard" -> JuicyOrange
+        "Favorite", "FavoriteBorder" -> com.example.ui.theme.LeafGreen
         "CalendarMonth", "CalendarToday", "DateRange", "RestaurantMenu", "MenuBook" -> JuicyOrange
-        "FitnessCenter", "DirectionsWalk", "DirectionsRun", "WaterDrop", "ShoppingCart", "MonitorWeight", "Scale" -> MangoMint
-        "TrendingUp", "ShowChart", "BarChart" -> MangoMint
-        "SmartToy", "AutoAwesome", "Psychology" -> MangoCoral
+        "FitnessCenter", "DirectionsWalk", "DirectionsRun", "ShoppingCart", "MonitorWeight", "Scale" -> com.example.ui.theme.LeafGreen
+        "WaterDrop" -> com.example.ui.theme.WaterAccent
+        "TrendingUp", "ShowChart", "BarChart" -> com.example.ui.theme.LeafGreen
+        "SmartToy", "AutoAwesome", "Psychology" -> JuicyOrange
         else -> tint
     }
     if (resource != null && colorful) {
@@ -188,6 +190,9 @@ fun FitMangoIcon(imageVector: ImageVector, contentDescription: String?, modifier
 /** Unified line icons for all functional cards. Decorative mango artwork is kept in MangoGuide. */
 private fun fitMangoLineIcon(resource: Int): ImageVector = when (resource) {
     R.drawable.fit_icon_calendar -> Icons.Outlined.CalendarMonth
+    R.drawable.fit_icon_close -> Icons.Outlined.Close
+    R.drawable.fit_icon_mango -> Icons.Outlined.RestaurantMenu
+    R.drawable.fit_icon_fasting -> Icons.Outlined.Schedule
     R.drawable.fit_icon_home -> Icons.Outlined.Home
     R.drawable.fit_icon_recipes, R.drawable.fit_icon_meal, R.drawable.fit_icon_breakfast,
     R.drawable.fit_icon_dinner, R.drawable.fit_icon_snack -> Icons.Outlined.RestaurantMenu
@@ -213,6 +218,17 @@ private fun fitMangoLineIcon(resource: Int): ImageVector = when (resource) {
     R.drawable.fit_icon_vegetable, R.drawable.fit_icon_protein,
     R.drawable.fit_icon_carbs, R.drawable.fit_icon_fat, R.drawable.fit_icon_dairy -> Icons.Outlined.RestaurantMenu
     R.drawable.fit_icon_goal -> Icons.Outlined.Flag
+    R.drawable.fit_clay_add -> Icons.Outlined.Add
+    R.drawable.fit_clay_ai -> Icons.Outlined.AutoAwesome
+    R.drawable.fit_clay_balance -> Icons.Outlined.TrendingUp
+    R.drawable.fit_clay_bell -> Icons.Outlined.Notifications
+    R.drawable.fit_clay_calendar -> Icons.Outlined.CalendarMonth
+    R.drawable.fit_clay_camera -> Icons.Outlined.CameraAlt
+    R.drawable.fit_clay_creatine -> Icons.Outlined.FitnessCenter
+    R.drawable.fit_clay_health -> Icons.Outlined.FavoriteBorder
+    R.drawable.fit_clay_progress -> Icons.Outlined.TrendingUp
+    R.drawable.fit_clay_water -> Icons.Outlined.WaterDrop
+    R.drawable.fit_clay_weight -> Icons.Outlined.MonitorWeight
     R.drawable.fit_icon_warning -> Icons.Outlined.Warning
     R.drawable.fit_icon_bell -> Icons.Outlined.Notifications
     R.drawable.fit_icon_fire -> Icons.Outlined.LocalFireDepartment
@@ -221,7 +237,7 @@ private fun fitMangoLineIcon(resource: Int): ImageVector = when (resource) {
     R.drawable.fit_clay_walk -> Icons.Outlined.DirectionsWalk
     R.drawable.fit_clay_sleep -> Icons.Outlined.Bedtime
     R.drawable.fit_clay_medal -> Icons.Outlined.EmojiEvents
-    else -> Icons.Outlined.StarOutline
+    else -> Icons.Outlined.HelpOutline
 }
 
 @Composable
