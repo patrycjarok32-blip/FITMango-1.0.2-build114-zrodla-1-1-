@@ -27,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -81,7 +83,9 @@ fun WeightTrendChart(points: List<WeightPoint>) {
     }
     Text("Liczba pomiarów: ${points.size} • zakres: ${points.first().date} – ${points.last().date}",
         style = MaterialTheme.typography.labelSmall)
-    Canvas(Modifier.fillMaxWidth().height(170.dp).padding(8.dp).testTag("effects_weight_chart").pointerInput(points) {
+    Canvas(Modifier.fillMaxWidth().height(170.dp).padding(8.dp)
+        .semantics { contentDescription = "Wykres wagi: ${points.size} pomiarów. Średnia ${String.format(java.util.Locale.getDefault(), "%.1f", averageWeight)} kilogramów. Zmiana $changeLabel. Zakres ${points.first().date} do ${points.last().date}." }
+        .testTag("effects_weight_chart").pointerInput(points) {
         detectTapGestures { tap ->
             selected = points.minByOrNull { abs((LocalDate.parse(it.date).toEpochDay() - from).toFloat() / (to - from).coerceAtLeast(1) * size.width - tap.x) }
         }
@@ -105,7 +109,7 @@ fun WeightTrendChart(points: List<WeightPoint>) {
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(points.first().date, style = MaterialTheme.typography.bodySmall); Text(points.last().date, style = MaterialTheme.typography.bodySmall) }
     Text("● pomiar • zielona linia: średnia dostępnych pomiarów z ostatnich 7 dni (min. 2). Dotknij punktu.", style = MaterialTheme.typography.bodySmall)
-    selected?.let { Text("${it.date}: ${it.kg} kg", color = LeafGreen) }
+    selected?.let { Text("${it.date}: ${it.kg} kg", color = LeafGreen, style = MaterialTheme.typography.titleSmall) }
 }
 
 @Composable
