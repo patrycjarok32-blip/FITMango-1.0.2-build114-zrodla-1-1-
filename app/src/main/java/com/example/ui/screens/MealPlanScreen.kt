@@ -450,7 +450,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 item {
                     var toolsExpanded by rememberSaveable { mutableStateOf(false) }
                     Surface(color = MutedSurface1, shape = RoundedCornerShape(14.dp), tonalElevation = 0.dp) {
-                        Column(Modifier.fillMaxWidth().animateContentSize()) {
+                        Column(Modifier.fillMaxWidth().mangoExpand()) {
                             Row(
                                 modifier = Modifier.fillMaxWidth().clickable { toolsExpanded = !toolsExpanded }.padding(horizontal = 12.dp, vertical = 9.dp),
                                 verticalAlignment = Alignment.CenterVertically
