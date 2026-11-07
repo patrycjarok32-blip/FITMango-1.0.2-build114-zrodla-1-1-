@@ -123,6 +123,14 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 ?: LinearProgressIndicator(Modifier.fillMaxWidth()) }
         } else {
         if (activitySection == "profile") item {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Twój profil sportowy", style = MaterialTheme.typography.titleLarge,
+                    color = LeafGreen, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                Text("Plan treningów, zapisane serie i rekordy. Dane pozostają w FITMango.",
+                    style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        if (activitySection == "profile") item {
             SportProfileCards(data, today, busy,
                 onPlan = { day, title, rest -> sports.plan(day, title, rest) { saved() } },
                 onRemovePlan = { day -> sports.removePlan(day) { saved() } },
