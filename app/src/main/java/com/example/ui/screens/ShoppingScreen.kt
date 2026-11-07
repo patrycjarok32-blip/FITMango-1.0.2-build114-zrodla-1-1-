@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -86,7 +87,7 @@ fun ShoppingScreen(viewModel: DietaViewModel) {
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.pressScaleEffect()
                     ) {
-                        Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Outlined.ShoppingCart, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Generuj z jadłospisu", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
@@ -105,7 +106,7 @@ fun ShoppingScreen(viewModel: DietaViewModel) {
                 shape = CircleShape,
                 modifier = Modifier.pressScaleEffect()
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Dodaj produkt", modifier = Modifier.size(24.dp))
+                Icon(Icons.Outlined.Add, contentDescription = "Dodaj produkt", modifier = Modifier.size(24.dp))
             }
         },
         containerColor = DarkBackground
