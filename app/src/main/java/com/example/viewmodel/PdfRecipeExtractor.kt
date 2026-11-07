@@ -155,19 +155,19 @@ internal object PdfRecipeExtractor {
 
     /** Extract complete recipes even when a title, ingredients and steps occupy separate pages. */
     fun extractPageSpanningRecipes(text: String, source: String): List<ParsedRecipe> {
-        val pages = Regex("""(?m)^=== STRONA (\\d+) ===\\s*$""").split(text)
+        val pages = Regex("""(?m)^=== STRONA (\d+) ===\s*$""").split(text)
         val found = mutableListOf<ParsedRecipe>()
-        val titleRegex = Regex("""^[A-ZĄĆĘŁŃÓŚŹŻ0-9][A-ZĄĆĘŁŃÓŚŹŻ0-9\\s,()'’:\\-–]+$""")
+        val titleRegex = Regex("""^[A-ZĄĆĘŁŃÓŚŹŻ0-9][A-ZĄĆĘŁŃÓŚŹŻ0-9\s,()'’:\-–]+$""")
         for (i in 1 until pages.size) {
             val rawTitle = pages[i].trim()
             val titleLines = rawTitle.lines().map { it.trim() }.filter { it.isNotBlank() }
             if (titleLines.isEmpty() || titleLines.size > 5 || rawTitle.length !in 5..150 ||
                 titleLines.any { !titleRegex.matches(it) } ||
                 rawTitle.startsWith("PRZEPISY ", true) || rawTitle.startsWith("BAZA:", true).not() && rawTitle.startsWith("SŁOWO ", true)) continue
-            val title = titleLines.joinToString(" ").replace(Regex("""\\s+"""), " ").trim()
-            val content = pages.drop(i + 1).take(3).joinToString("\\n")
-            val ingredientStart = Regex("""(?im)^\\s*Składniki\\s*$""").find(content) ?: continue
-            val preparationStart = Regex("""(?im)^\\s*Przygotowanie\\s*$""").find(content) ?: continue
+            val title = titleLines.joinToString(" ").replace(Regex("""\s+"""), " ").trim()
+            val content = pages.drop(i + 1).take(3).joinToString("\n")
+            val ingredientStart = Regex("""(?im)^\s*Składniki\s*$""").find(content) ?: continue
+            val preparationStart = Regex("""(?im)^\s*Przygotowanie\s*$""").find(content) ?: continue
             if (preparationStart.range.first <= ingredientStart.range.last) continue
             val ingredientSection = content.substring(ingredientStart.range.last + 1, preparationStart.range.first)
                 .substringBefore("Sugerowana liczba porcji", missingDelimiterValue = content.substring(ingredientStart.range.last + 1, preparationStart.range.first))
@@ -176,21 +176,21 @@ internal object PdfRecipeExtractor {
                 .map { it.removePrefix("•").removePrefix("-").removePrefix("॰").trim() }
                 .filter { it.isNotBlank() }
             val preparation = content.substring(preparationStart.range.last + 1)
-            val steps = Regex("""(?m)^\\s*(\\d+)[.)]\\s+(.+?)(?=\\n\\s*\\d+[.)]\\s+|\\n\\s*Cały przepis:|\\z)""", RegexOption.DOT_MATCHES_ALL)
-                .findAll(preparation).map { match -> match.groupValues[2].trim().replace(Regex("""\\s+"""), " ") }.toList()
+            val steps = Regex("""(?m)^\s*(\d+)[.)]\s+(.+?)(?=\n\s*\d+[.)]\s+|\n\s*Cały przepis:|\z)""", RegexOption.DOT_MATCHES_ALL)
+                .findAll(preparation).map { match -> match.groupValues[2].trim().replace(Regex("""\s+"""), " ") }.toList()
             if (ingredients.size < 2 || steps.isEmpty()) continue
-            val servings = Regex("""Sugerowana liczba porcji:\\s*(\\d+)""", RegexOption.IGNORE_CASE)
+            val servings = Regex("""Sugerowana liczba porcji:\s*(\d+)""", RegexOption.IGNORE_CASE)
                 .find(content)?.groupValues?.get(1) ?: "1"
             // Prefer per-serving nutrition where present; otherwise leave missing fields unset.
             val perServing = preparation.substringAfter("Jedna porcja:", "")
             fun macro(label: String): Int {
-                val number = Regex("""(?i)\\b$label\\s*:\\s*(\\d+(?:[,.]\\d+)?)""")
+                val number = Regex("""(?i)\b$label\s*:\s*(\d+(?:[,.]\d+)?)""")
                     .find(perServing)?.groupValues?.get(1)?.replace(',', '.')?.toDoubleOrNull()
                 return number?.toInt() ?: 0
             }
             found.add(ParsedRecipe(title = title, servings = servings,
-                ingredients = ingredients.joinToString("\\n"),
-                instructions = steps.mapIndexed { index, step -> "${index + 1}. $step" }.joinToString("\\n"),
+                ingredients = ingredients.joinToString("\n"),
+                instructions = steps.mapIndexed { index, step -> "${index + 1}. $step" }.joinToString("\n"),
                 calories = macro("Kalorie"), protein = macro("Białko"),
                 carbs = macro("Węglowodany"), fat = macro("Tłuszcze"),
                 source = source, sourcePageOrChunk = "PDF, strona ${i + 1}"))
