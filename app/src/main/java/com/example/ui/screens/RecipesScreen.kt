@@ -85,7 +85,10 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
     val isLoading by viewModel.isLoadingAi.collectAsStateWithLifecycle()
 
     var searchQuery by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf("Wszystkie") }
+    var selectedCategory by rememberSaveable { mutableStateOf("Wszystkie") }
+    var showRecipeTools by rememberSaveable { mutableStateOf(false) }
+    var calorieLimit by rememberSaveable { mutableStateOf("Dowolne kcal") }
+    var proteinFilter by rememberSaveable { mutableStateOf(false) }
     var favoritesOnly by rememberSaveable { mutableStateOf(false) }
     var extraIngredientRecipe by remember { mutableStateOf<RecipeEntity?>(null) }
     var photoRecipe by remember { mutableStateOf<RecipeEntity?>(null) }
@@ -207,7 +210,13 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
             com.example.viewmodel.RecipeFilterSupport.filter(recipeIndex, searchQuery, selectedCategory, preparationFilter, favoritesOnly)
         }
     }
-    val filteredRecipes = searchResult.second
+    val filteredRecipes = searchResult.second.filter { recipe ->
+        (when (calorieLimit) {
+            "Do 400 kcal" -> recipe.calories <= 400
+            "Do 600 kcal" -> recipe.calories <= 600
+            else -> true
+        }) && (!proteinFilter || recipe.protein >= 25)
+    }
 
     Scaffold(
         topBar = {
@@ -259,16 +268,14 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
             item(span = { GridItemSpan(maxLineSpan) }) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SuccessFeedback(planFeedback)
-                MangoCard {
-                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Baza przepisów FITMango", style = MaterialTheme.typography.titleMedium)
-                        Text(if (searchResult.first != searchQuery) "Wyszukiwanie…" else "${recipes.size} przepisów • ${filteredRecipes.size} w tym widoku", color = GoldAccent,
-                            style = MaterialTheme.typography.bodySmall)
+                Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("${recipes.size} przepisów • ${filteredRecipes.size} wyników", style = MaterialTheme.typography.bodyMedium, color = Cream)
+                    TextButton(onClick = { showFridgeDialog = true }, modifier = Modifier.testTag("open_fridge_recipes")) {
+                        Icon(Icons.Outlined.Kitchen, contentDescription = null)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Moja lodówka")
                     }
                 }
-            OutlinedButton(onClick = { showFridgeDialog = true }, modifier = Modifier.fillMaxWidth().testTag("open_fridge_recipes")) {
-                Text("Co masz w lodówce?")
-            }
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -304,7 +311,18 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
                         }, modifier = Modifier.testTag("recipe_category_$category"))
                 }
             }
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { showRecipeTools = !showRecipeTools }) {
+                    Icon(Icons.Outlined.Tune, contentDescription = null)
+                    Spacer(Modifier.width(4.dp))
+                    Text(if (showRecipeTools) "Ukryj narzędzia" else "Narzędzia i zdjęcia")
+                }
+                TextButton(onClick = {
+                    searchQuery = ""; selectedCategory = "Wszystkie"; preparationFilter = "Wszystkie czasy"
+                    favoritesOnly = false; calorieLimit = "Dowolne kcal"; proteinFilter = false
+                }) { Text("Wyczyść filtry") }
+            }
+            if (showRecipeTools) LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 item {
                     AssistChip(
                         enabled = recipes.isNotEmpty(),
@@ -342,11 +360,17 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
                     FilterChip(selected = preparationFilter == option, onClick = { preparationFilter = option }, label = { Text(option) })
                 }
             }
-            if (preparationFilter != "Wszystkie czasy") Text("Bez podanego czasu: ${recipes.count { viewModel.usability.minutes(it) == null }}. Uzupełnij go w szczegółach: Czas i sposób przygotowania.", style = MaterialTheme.typography.bodySmall)
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                items(listOf("Dowolne kcal", "Do 400 kcal", "Do 600 kcal")) { option ->
+                    FilterChip(selected = calorieLimit == option, onClick = { calorieLimit = option }, label = { Text(option) })
+                }
+                item { FilterChip(selected = proteinFilter, onClick = { proteinFilter = !proteinFilter }, label = { Text("Białko ≥ 25 g") }) }
+            }
+            if (preparationFilter != "Wszystkie czasy" && showRecipeTools) Text("Bez podanego czasu: ${recipes.count { viewModel.usability.minutes(it) == null }}. Uzupełnij go w szczegółach: Czas i sposób przygotowania.", style = MaterialTheme.typography.bodySmall)
 
             if (filteredRecipes.isEmpty()) {
                 MangoEmptyState("Brak przepisów pasujących do wybranych filtrów.", "Wyczyść filtry",
-                    onAction = { searchQuery = ""; selectedCategory = "Wszystkie"; preparationFilter = "Wszystkie czasy"; favoritesOnly = false })
+                    onAction = { searchQuery = ""; selectedCategory = "Wszystkie"; preparationFilter = "Wszystkie czasy"; favoritesOnly = false; calorieLimit = "Dowolne kcal"; proteinFilter = false })
             }
             }
             }
@@ -1086,7 +1110,7 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
                         onClick = {
                             recipeToEdit = recipe
                             editTitle = recipe.title
-                            editCategory = RecipeCategories.canonical(recipe.category)
+                            editCategory = recipe.category
                             editDescription = recipe.description
                             editIngredients = recipe.ingredients
                             editInstructions = recipe.instructions
@@ -1215,10 +1239,15 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
                         .height(380.dp).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    Text("Kategorie przepisu (możesz wybrać kilka)", color = Cream, style = MaterialTheme.typography.bodySmall)
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         items(RecipeCategories.options) { category ->
-                            FilterChip(selected = editCategory == category, onClick = { editCategory = category },
-                                label = { Text(RecipeCategories.label(category)) })
+                            val checked = category in RecipeCategories.categories(editCategory)
+                            FilterChip(selected = checked, onClick = {
+                                val current = RecipeCategories.categories(editCategory).filter { it != "Inne" }.toMutableSet()
+                                if (checked) current.remove(category) else current.add(category)
+                                editCategory = if (current.isEmpty()) "Inne" else current.joinToString(" / ")
+                            }, label = { Text(RecipeCategories.label(category)) })
                         }
                     }
                     OutlinedTextField(value = editTitle, onValueChange = { editTitle = it }, label = { Text("Nazwa") }, modifier = Modifier.fillMaxWidth(), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = JuicyOrange, unfocusedBorderColor = WarmBrown, focusedTextColor = Cream, unfocusedTextColor = Cream))
