@@ -147,12 +147,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 onRemovePlan = { day -> sports.removePlan(day) { saved() } },
                 onAddSet = { day, exercise, reps, kg -> sports.addSet(day, exercise, reps, kg) { saved() } })
         }
-        if (activitySection == "today") item {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Dzisiaj • $today", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = LeafGreen)
-                ActivityTodayCard(data, today, current)
-            }
-        }
+        if (activitySection == "today") item { ActivityTodayCard(data, today, current) }
         if (activitySection == "today" || activitySection == "training") item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SportsHistoryControls(busy,
                 onPermissions = { permissionError = null; runCatching { launcher.launch(setOf(
