@@ -242,7 +242,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 text = { Text("Dodaj") },
                 containerColor = JuicyOrange,
                 contentColor = MangoButtonInk,
-                modifier = Modifier.testTag("fresh_mango_quick_add").height(48.dp)
+                modifier = Modifier.testTag("fresh_mango_quick_add").height(44.dp)
             )
         },
         topBar = {
@@ -444,19 +444,20 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         )
                     }
                     .testTag("meal_plan_lazy_column"),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                contentPadding = PaddingValues(bottom = 104.dp)
             ) {
                 item {
                     var toolsExpanded by rememberSaveable { mutableStateOf(false) }
-                    Surface(color = MutedSurface1, shape = RoundedCornerShape(20.dp), tonalElevation = 1.dp) {
+                    Surface(color = MutedSurface1, shape = RoundedCornerShape(14.dp), tonalElevation = 0.dp) {
                         Column(Modifier.fillMaxWidth().animateContentSize()) {
                             Row(
-                                modifier = Modifier.fillMaxWidth().clickable { toolsExpanded = !toolsExpanded }.padding(14.dp),
+                                modifier = Modifier.fillMaxWidth().clickable { toolsExpanded = !toolsExpanded }.padding(horizontal = 12.dp, vertical = 9.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = JuicyOrange)
                                 Spacer(Modifier.width(10.dp))
-                                Text("Skróty i narzędzia", modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
+                                Text("Narzędzia", modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
                                 Text(if (toolsExpanded) "Zwiń" else "Rozwiń", color = LeafGreen)
                             }
                             AnimatedVisibility(
