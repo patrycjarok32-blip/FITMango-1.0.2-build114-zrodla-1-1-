@@ -61,6 +61,24 @@ workflows:
         - fitmango_key_setup
 
     scripts:
+      - name: Diagnostyka dostępu do zmiennych (bez ujawniania haseł)
+        script: |
+          set -eu
+          echo "Gałąź: $CM_BRANCH"
+          echo "Weryfikacja obecności zmiennych w grupie fitmango_key_setup:"
+          for name in STORE_PASSWORD KEY_PASSWORD KEY_BACKUP_PASSWORD; do
+            eval 'present=${'"${name}"'+x}'
+            if [ "$present" = x ]; then
+              echo "$name: dostępna"
+            else
+              echo "$name: BRAK lub pusta"
+            fi
+          done
+          if [ -z "${STORE_PASSWORD:-}" ] || [ -z "${KEY_PASSWORD:-}" ] || [ -z "${KEY_BACKUP_PASSWORD:-}" ]; then
+            echo "BŁĄD: co najmniej jedna zmienna nie jest dostępna dla tego workflow. Sprawdź grupę, projekt i uprawnienia do sekretów."
+            exit 1
+          fi
+
       - name: Utworzenie i zaszyfrowanie klucza
         script: |
           set -eu
