@@ -499,7 +499,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                     .removeSuffix("```").trim()
                 val array = JSONArray(response)
                 require(array.length() == days) { "AI zwróciło niepełny jadłospis." }
-                val result = mutableListOf<MealPlanEntity>()
+                val validatedDays = mutableListOf<Pair<String, List<Pair<String, org.json.JSONObject>>>>()
                 for (dayIndex in 0 until days) {
                     val obj = array.getJSONObject(dayIndex)
                     val expectedDate = start.plusDays(dayIndex.toLong()).toString()
@@ -522,7 +522,11 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                             meal.optInt("protein") + meal.optInt("carbs") + meal.optInt("fat") > 0 &&
                             (meal.optJSONArray("ingredients")?.length() ?: 0) > 0)
                     }
-                    result.addAll(parsed.map { (type, meal) -> saveAiGeneratedMeal(expectedDate, type, meal) })
+                    validatedDays.add(expectedDate to parsed)
+                }
+                val result = mutableListOf<MealPlanEntity>()
+                for ((date, meals) in validatedDays) {
+                    result.addAll(meals.map { (type, meal) -> saveAiGeneratedMeal(date, type, meal) })
                 }
                 repository.insertMealPlans(result)
             } catch (e: kotlinx.coroutines.CancellationException) { throw e }
