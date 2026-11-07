@@ -40,6 +40,8 @@ fun RecipePhotoDialog(recipe: RecipeEntity, viewModel: DietaViewModel, onDismiss
     var selected by remember { mutableStateOf<RecipePhotoCandidate?>(null) }
     var loading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
+    var visualCheck by remember(recipe.id) { mutableStateOf<RecipeVisualCheck.Result?>(null) }
+    var checkingImage by remember { mutableStateOf(false) }
     val gallery = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) {
             loading = true
@@ -91,6 +93,28 @@ fun RecipePhotoDialog(recipe: RecipeEntity, viewModel: DietaViewModel, onDismiss
                     RecipePhoto(photo.imageUrl, photo.title, Modifier.fillMaxWidth().height(170.dp))
                     Text("Podgląd — sprawdź, czy potrawa i główne składniki pasują. Dopiero „Zapisz zdjęcie” zatwierdzi wybór.", color = MaterialTheme.colorScheme.primary)
                     TextButton(enabled = !loading, onClick = { selected = null }) { Text("Wybierz inne") }
+                }
+                val imageToCheck = selected?.imageUrl ?: recipe.imageUrl
+                if (imageToCheck.isNotBlank()) {
+                    OutlinedButton(enabled = !checkingImage, onClick = {
+                        checkingImage = true
+                        visualCheck = null
+                        scope.launch {
+                            try {
+                                visualCheck = RecipeVisualCheck.inspect(context, recipe.title, imageToCheck)
+                            } catch (e: CancellationException) { throw e }
+                            catch (e: Exception) {
+                                visualCheck = RecipeVisualCheck.Result("Nie można sprawdzić zdjęcia: ${e.message ?: "błąd odczytu"}", emptyList(), true)
+                            } finally { checkingImage = false }
+                        }
+                    }) { Text(if (checkingImage) "Analizowanie zdjęcia…" else "Sprawdź zgodność zdjęcia (AI na urządzeniu)") }
+                    visualCheck?.let { result ->
+                        Text(result.summary, color = MaterialTheme.colorScheme.onSurface)
+                        if (result.labels.isNotEmpty()) Text("Rozpoznano: " + result.labels.joinToString(", "),
+                            style = MaterialTheme.typography.bodySmall)
+                        Text("Wynik orientacyjny. Zdjęcie nie jest automatycznie zmieniane.",
+                            style = MaterialTheme.typography.bodySmall)
+                    }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(selected = usePixabay, enabled = !loading, onClick = { usePixabay = true }, label = { Text("Pixabay") })
