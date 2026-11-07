@@ -291,7 +291,7 @@ fun MangoMealCard(
     }
 }
 
-// 6. MangoRecipeCard
+// 6. Compact recipe card: photo, name, macros, and contextual actions.
 @Composable
 fun MangoRecipeCard(
     title: String,
@@ -305,91 +305,79 @@ fun MangoRecipeCard(
     isFavorite: Boolean = false,
     onFavoriteClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
-    preparationMinutes: Int? = null
+    preparationMinutes: Int? = null,
+    protein: Int? = null,
+    onAddToPlanClick: (() -> Unit)? = null,
+    photoNeedsReview: Boolean = false
 ) {
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .pressScaleEffect()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MutedSurface1),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        modifier = modifier.fillMaxWidth().pressScaleEffect().clickable(onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column {
             Box(Modifier.fillMaxWidth()) {
-                // Photo and favorite actions have separate accessible touch targets.
                 RecipePhoto(
                     imageUrl = imageUrl,
                     title = title,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(192.dp)
-                        .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
+                    modifier = Modifier.fillMaxWidth().height(132.dp)
+                        .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)),
                     onChoosePhoto = onPhotoClick
                 )
-                Surface(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .size(32.dp)
-                        .clickable { onPhotoClick() },
-                    shape = CircleShape,
-                    color = MutedSurface2.copy(alpha = 0.95f),
-                    shadowElevation = 2.dp
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Default.CameraAlt,
-                            contentDescription = if (imageUrl.isBlank()) "Dodaj zdjęcie" else "Zmień zdjęcie",
-                            tint = MangoCoral,
-                            modifier = Modifier.size(17.dp)
-                        )
-                    }
-                }
-                Surface(Modifier.align(Alignment.BottomEnd).padding(8.dp), shape = RoundedCornerShape(8.dp), color = SurfaceDark.copy(alpha = .90f)) {
-                    Text((preparationMinutes?.let { "$it min • " } ?: "") + "$calories kcal",
-                        color = MangoPeach, fontWeight = FontWeight.Bold, fontSize = 12.sp,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp))
-                }
                 onFavoriteClick?.let { action ->
-                    Surface(Modifier.align(Alignment.TopStart).padding(4.dp), shape = CircleShape,
-                        color = MutedSurface1.copy(alpha = 0.95f)) {
-                        IconButton(onClick = action, modifier = Modifier.testTag("favorite_$title")) {
+                    Surface(Modifier.align(Alignment.TopStart).padding(6.dp), shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = .94f)) {
+                        IconButton(onClick = action, modifier = Modifier.size(40.dp).testTag("favorite_$title")) {
                             Icon(if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                 if (isFavorite) "Usuń z ulubionych: $title" else "Dodaj do ulubionych: $title",
                                 tint = if (isFavorite) JuicyOrange else LeafGreen)
                         }
                     }
                 }
-            }
-            Column(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    title,
-                    color = Cream,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.heightIn(min = 34.dp)
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(category, color = LeafGreen, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                    Spacer(Modifier.width(6.dp))
-                    Text("$calories kcal", color = OrangeInk, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Surface(Modifier.align(Alignment.TopEnd).padding(6.dp), shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = .94f)) {
+                    IconButton(onClick = onPhotoClick, modifier = Modifier.size(40.dp)) {
+                        Icon(Icons.Default.CameraAlt, "Sprawdź lub zmień zdjęcie: $title",
+                            tint = MangoCoral, modifier = Modifier.size(20.dp))
+                    }
                 }
-                Text(preparationMinutes?.let { "◷ $it min" } ?: "◷ Brak czasu", color = GoldAccent, fontSize = 11.sp)
+                if (photoNeedsReview) {
+                    Surface(Modifier.align(Alignment.BottomStart).padding(6.dp),
+                        shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.surface.copy(alpha = .95f)) {
+                        Text("Sprawdź zdjęcie", fontSize = 10.sp, color = OrangeInk,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp))
+                    }
+                }
+            }
+            Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(title, color = Cream, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis, minLines = 2)
+                Text(category, color = LeafGreen, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("$calories kcal" + (protein?.let { " • B: ${it} g" } ?: ""),
+                    color = OrangeInk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text(preparationMinutes?.let { "$it min" } ?: "Czas niepodany",
+                    color = GoldAccent, fontSize = 11.sp)
+                onAddToPlanClick?.let { action ->
+                    OutlinedButton(onClick = action, modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp),
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)) {
+                        Text("+ Do jadłospisu", fontSize = 11.sp, maxLines = 1)
+                    }
+                }
                 if (onEditClick != null || onDeleteClick != null) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        onEditClick?.let { action -> TextButton(onClick = action, contentPadding = PaddingValues(2.dp)) { Text("Zmień nazwę", fontSize = 11.sp) } }
-                        onDeleteClick?.let { action -> IconButton(onClick = action) { Icon(Icons.Default.Delete, "Usuń przepis", tint = ErrorInk) } }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically) {
+                        onEditClick?.let { action ->
+                            TextButton(onClick = action, contentPadding = PaddingValues(horizontal = 2.dp)) {
+                                Text("Zmień nazwę", fontSize = 10.sp)
+                            }
+                        }
+                        onDeleteClick?.let { action ->
+                            IconButton(onClick = action, modifier = Modifier.size(40.dp)) {
+                                Icon(Icons.Default.Delete, "Usuń przepis", tint = ErrorInk)
+                            }
+                        }
                     }
                 }
             }
