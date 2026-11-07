@@ -23,27 +23,30 @@ workflows:
         script: |
           chmod +x gradlew
 
-      - name: Przygotowanie debug.keystore
+      - name: Przygotowanie stałego klucza podpisującego
         script: |
-          if [ ! -f debug.keystore ]; then
-            keytool -genkeypair \
-              -v \
-              -keystore debug.keystore \
-              -alias androiddebugkey \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -storepass android \
-              -keypass android \
-              -dname "CN=Android Debug,O=Android,C=US"
-          fi
+          set -eu
+          : "${ANDROID_KEYSTORE_BASE64:?Brak ANDROID_KEYSTORE_BASE64 w chronionych zmiennych Codemagic}"
+          : "${STORE_PASSWORD:?Brak STORE_PASSWORD w chronionych zmiennych Codemagic}"
+          : "${KEY_PASSWORD:?Brak KEY_PASSWORD w chronionych zmiennych Codemagic}"
+          : "${KEY_ALIAS:?Brak KEY_ALIAS w chronionych zmiennych Codemagic}"
+          mkdir -p "$CM_BUILD_DIR/.signing"
+          export KEYSTORE_PATH="$CM_BUILD_DIR/.signing/fitmango-release.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+          test -s "$KEYSTORE_PATH" || { echo "BŁĄD: pusty plik klucza"; exit 1; }
+          keytool -list -keystore "$KEYSTORE_PATH" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null || {
+            echo "BŁĄD: nieprawidłowy plik, alias lub hasło klucza"; exit 1;
+          }
+          echo "Stały klucz podpisujący jest dostępny; nie generujemy nowego."
 
-      - name: Budowanie APK
+      - name: Budowanie podpisanego APK
         script: |
-          ./gradlew :app:assembleDebug --stacktrace
+          set -eu
+          ./gradlew :app:assembleRelease --stacktrace
           mkdir -p build-artifacts
-          cp app/build/outputs/apk/debug/app-debug.apk "build-artifacts/FITMango-Modern-Fresh-$(git rev-parse --short HEAD).apk"
-          echo "APK przygotowane z commita $(git rev-parse HEAD)"
+          cp app/build/outputs/apk/release/app-release.apk "build-artifacts/FITMango-Modern-Fresh-$(git rev-parse --short HEAD).apk"
+          echo "Podpisany APK przygotowany z commita $(git rev-parse HEAD)"
 
     artifacts:
       - build-artifacts/FITMango-Modern-Fresh-*.apk
