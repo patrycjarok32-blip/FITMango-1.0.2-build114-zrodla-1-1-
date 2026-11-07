@@ -2763,8 +2763,8 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun bodyPhotoStore() = BodyPhotoStore(getApplication<Application>(), AppDatabase.getDatabase(getApplication<Application>()).dietaDao())
 
-    fun addBodyPhoto(frontUri: String, sideUri: String, backUri: String, done: (String?) -> Unit = {}) {
-        bodyPhotoOperation(done) { bodyPhotoStore().add(frontUri, sideUri, backUri) }
+    fun addBodyPhoto(frontUri: String, sideUri: String, backUri: String, photoDate: java.time.LocalDate = java.time.LocalDate.now(), done: (String?) -> Unit = {}) {
+        bodyPhotoOperation(done) { bodyPhotoStore().add(frontUri, sideUri, backUri, photoDate) }
     }
     fun replaceBodyPhoto(id: Long, angle: BodyPhotoAngle, uri: String, done: (String?) -> Unit) {
         bodyPhotoOperation(done) { bodyPhotoStore().replace(id, angle, uri) }
