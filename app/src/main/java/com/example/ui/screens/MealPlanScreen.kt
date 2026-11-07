@@ -239,10 +239,10 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
             ExtendedFloatingActionButton(
                 onClick = { showQuickAdd = true },
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Dodaj posiłek") },
+                text = { Text("Dodaj") },
                 containerColor = JuicyOrange,
                 contentColor = MangoButtonInk,
-                modifier = Modifier.testTag("fresh_mango_quick_add")
+                modifier = Modifier.testTag("fresh_mango_quick_add").height(52.dp)
             )
         },
         topBar = {
@@ -290,28 +290,8 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 16.dp, vertical = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Surface(
-                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_planner_header"),
-                color = MutedSurface2,
-                shape = RoundedCornerShape(22.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Icon(Icons.Default.CalendarMonth, contentDescription = null,
-                        tint = LeafGreen, modifier = Modifier.size(22.dp))
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Zaplanuj dzień", fontSize = 14.sp,
-                            fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface)
-                        Text("Twój plan na dziś • smacznie i kolorowo",
-                            fontSize = 12.sp, color = GoldAccent)
-                    }
-                }
-            }
             MealUndoCard(viewModel)
             SuccessFeedback(actionFeedback)
             SuccessFeedback(motionFeedback, motionMessage, tag = "meal_status_feedback")
@@ -375,32 +355,6 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                             if (eatenCount > 0) androidx.compose.material3.Icon(Icons.Default.CheckCircle, null, tint = LeafGreen, modifier = Modifier.size(11.dp))
                         }
                     }
-                }
-            }
-
-            Card(
-                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_planner_summary"),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = MutedSurface2)
-            ) {
-                Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
-                    verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Text("Twój plan na dziś", fontSize = 15.sp,
-                        fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Zaplanowane: ${dayMeals.size}", fontSize = 12.sp, color = GoldAccent)
-                        Text("Do zjedzenia: ${remainingMeals.size}", fontSize = 12.sp, color = GoldAccent)
-                        Text("Zjedzone: ${eatenMeals.size}", fontSize = 12.sp, color = LeafGreen)
-                    }
-                    val completion by animateFloatAsState(
-                        targetValue = if (dayMeals.isEmpty()) 0f else (eatenMeals.size.toFloat() / dayMeals.size).coerceIn(0f, 1f),
-                        animationSpec = tween(if (motion) 450 else 0), label = "planner_completion")
-                    LinearProgressIndicator(progress = { completion },
-                        modifier = Modifier.fillMaxWidth().height(4.dp)
-                            .clip(RoundedCornerShape(6.dp)),
-                        color = LeafGreen,
-                        trackColor = MutedSurface1
-                    )
                 }
             }
 
