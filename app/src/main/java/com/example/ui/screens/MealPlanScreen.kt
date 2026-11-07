@@ -292,15 +292,15 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp, vertical = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(horizontal = 14.dp, vertical = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             MealUndoCard(viewModel)
             SuccessFeedback(actionFeedback)
             SuccessFeedback(motionFeedback, motionMessage, tag = "meal_status_feedback")
             actionError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             com.example.ui.components.LegacyPlanRepairCard(mealPlans, viewModel) { selectedDayName = it }
-            if (selectedDate == today) NutritionStatusBadge(NutritionStatus.IN_PROGRESS, "Dzień w toku")
+
             Column(Modifier.swipePlannerDays(selectedDayName) { selectedDayName = it }.testTag("planner_day_gesture")) {
                 com.example.ui.components.PlanDateSelector(selectedDayName, { selectedDayName = it }, "planner_date", showDays = false)
             }
@@ -331,7 +331,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                             .semantics { contentDescription = "$dayDate, zaplanowane: $plannedCount, zjedzone: $eatenCount" }
                             .clickable { selectedDayName = dayDate }
                             .testTag("planner_day_${daySpec.canonicalName}")
-                            .padding(horizontal = 5.dp, vertical = 3.dp)
+                            .padding(horizontal = 5.dp, vertical = 5.dp)
                     ) {
                         Text(
                             text = daySpec.shortLetter,
@@ -355,7 +355,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                                 color = if (isSelected) MangoButtonInk else GoldAccent
                             )
                         }
-                        Row(Modifier.height(9.dp), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(Modifier.height(12.dp), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
                             if (plannedCount > 0) Box(Modifier.size(5.dp).clip(CircleShape).background(JuicyOrange))
                             if (eatenCount > 0) androidx.compose.material3.Icon(Icons.Default.CheckCircle, null, tint = LeafGreen, modifier = Modifier.size(11.dp))
                         }
@@ -407,8 +407,8 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape),
                         color = LeafGreen, trackColor = MaterialTheme.colorScheme.surface)
                     if (dayMeals.isNotEmpty()) {
-                        AnimatedMealNutrition(dailyNutrition, "daily_nutrition_summary", prefix = "Zaplanowano: ")
-                    } else Text("Brak zaplanowanych posiłków", modifier = Modifier.testTag("daily_nutrition_summary"),
+                        AnimatedMealNutrition(dailyNutrition, "daily_nutrition_summary", prefix = "W planie: ")
+                    } else Text("Wybierz przepisy z bazy lub wygeneruj plan na dzień.", modifier = Modifier.testTag("daily_nutrition_summary"),
                         style = MaterialTheme.typography.bodySmall)
                 }
             }
@@ -1002,12 +1002,12 @@ private fun MealCategorySection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(20.dp))
             .background(MutedSurface1)
-            .border(1.dp, WarmBrown.copy(alpha = 0.22f), RoundedCornerShape(24.dp))
+            .border(1.dp, WarmBrown.copy(alpha = 0.16f), RoundedCornerShape(20.dp))
             .padding(10.dp)
             .testTag("meal_category_section_${categorySpec.canonicalName}"),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1030,7 +1030,7 @@ private fun MealCategorySection(
                 Column(Modifier.weight(1f)) {
                     Text(categorySpec.canonicalName, fontWeight = FontWeight.Bold, fontSize = 15.sp,
                         color = mealCategoryColor(categorySpec.canonicalName))
-                    Text(categorySpec.timeRange, fontSize = 11.sp, color = GoldAccent)
+                    Text(categorySpec.timeRange, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
@@ -1058,7 +1058,7 @@ private fun MealCategorySection(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -1071,7 +1071,7 @@ private fun MealCategorySection(
                         text = "Wybierz →",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = GoldAccent,
+                        color = LeafGreen,
                         modifier = Modifier.clickable { onAddRecipeToSlot() }
                     )
                 }
