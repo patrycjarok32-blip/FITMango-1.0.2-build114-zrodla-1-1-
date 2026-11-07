@@ -354,7 +354,15 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
             ImportSavedFeedback(savedAnimationEvent)
             photoProgress?.let { Text(it, color = GoldAccent, fontSize = 11.sp); ImportProgress() }
             photoResult?.let { Text(it, color = GoldAccent, fontSize = 11.sp) }
-            if (queueStatus.isNotBlank()) Text(queueStatus, color = GoldAccent, fontSize = 11.sp)
+            if (queueStatus.isNotBlank()) {
+                Text(
+                    text = queueStatus.lineSequence().firstOrNull().orEmpty().take(130),
+                    color = GoldAccent,
+                    fontSize = 11.sp,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+            }
             LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 items(com.example.viewmodel.RecipeFilterSupport.preparationOptions) { option ->
                     FilterChip(selected = preparationFilter == option, onClick = { preparationFilter = option }, label = { Text(option) })
