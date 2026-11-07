@@ -93,6 +93,9 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 item { FilterChip(selected = activitySection == "today" && !showReport && !showExtras,
                     onClick = { activitySection = "today"; showReport = false; showExtras = false },
                     label = { Text("Aktywność") }, modifier = Modifier.testTag("sport_activity_tab")) }
+                item { FilterChip(selected = activitySection == "profile" && !showReport && !showExtras,
+                    onClick = { activitySection = "profile"; showReport = false; showExtras = false },
+                    label = { Text("Profil sportowy") }, modifier = Modifier.testTag("sport_profile_tab")) }
                 item { FilterChip(selected = activitySection == "training" && !showReport && !showExtras,
                     onClick = { activitySection = "training"; showReport = false; showExtras = false },
                     label = { Text("Treningi") }, modifier = Modifier.testTag("sport_training_tab")) }
@@ -112,6 +115,12 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             item { reportNumbers?.let { numbers -> SportsWeeklyReport(numbers, profile, aiReport, aiBusy) { viewModel.runWeeklyAiAnalysis() } }
                 ?: LinearProgressIndicator(Modifier.fillMaxWidth()) }
         } else {
+        if (activitySection == "profile") item {
+            SportProfileCards(data, today, busy,
+                onPlan = { day, title, rest -> sports.plan(day, title, rest) { saved() } },
+                onRemovePlan = { day -> sports.removePlan(day) { saved() } },
+                onAddSet = { day, exercise, reps, kg -> sports.addSet(day, exercise, reps, kg) { saved() } })
+        }
         if (activitySection == "today") item { ActivityTodayCard(data, today, current) }
         item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SportsHistoryControls(busy,
