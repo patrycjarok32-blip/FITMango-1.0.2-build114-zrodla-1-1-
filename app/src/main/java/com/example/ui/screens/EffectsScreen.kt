@@ -58,7 +58,7 @@ fun WeightTrendChart(points: List<WeightPoint>) {
     val drawFraction by animateFloatAsState(if (revealed || !motion) 1f else 0f, animationSpec = tween(if (motion) 650 else 0), label = "weight_line_reveal")
     val lo = points.minOf { it.kg } - .5; val hi = points.maxOf { it.kg } + .5
     val from = LocalDate.parse(points.first().date).toEpochDay(); val to = LocalDate.parse(points.last().date).toEpochDay()
-    val rawColor = GoldAccent; val trendColor = LeafGreen; val axis = WarmBrown
+    val rawColor = MaterialTheme.colorScheme.tertiary; val trendColor = MaterialTheme.colorScheme.secondary; val axis = MaterialTheme.colorScheme.outline
     val values = points.map { it.kg }
     val averageWeight = values.average()
     val minWeight = values.minOrNull() ?: 0.0
@@ -70,12 +70,12 @@ fun WeightTrendChart(points: List<WeightPoint>) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text("kg • ${String.format(java.util.Locale.getDefault(), "%.1f–%.1f", lo, hi)}",
             style = MaterialTheme.typography.bodySmall)
-        Text("Zmiana w okresie: $changeLabel", color = LeafGreen,
+        Text("Zmiana w okresie: $changeLabel", color = MaterialTheme.colorScheme.secondary,
             style = MaterialTheme.typography.bodySmall)
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text("Średnia: ${String.format(java.util.Locale.getDefault(), "%.2f", averageWeight)} kg",
-            color = MangoMint, style = MaterialTheme.typography.bodySmall)
+            color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.bodySmall)
         Text("Min–max: ${String.format(java.util.Locale.getDefault(), "%.1f–%.1f", minWeight, maxWeight)} kg",
             color = GoldAccent, style = MaterialTheme.typography.bodySmall)
     }
