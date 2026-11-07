@@ -166,6 +166,14 @@ fun FitMangoIcon(imageVector: ImageVector, contentDescription: String?, modifier
             "Close", "Cancel" -> Icons.Outlined.Close
             "Check", "Done" -> Icons.Outlined.Check
             "CheckCircle", "CheckCircleOutline" -> Icons.Outlined.CheckCircle
+            "Home", "HomeFilled", "Dashboard" -> Icons.Outlined.Home
+            "CalendarMonth", "CalendarToday", "DateRange" -> Icons.Outlined.CalendarMonth
+            "RestaurantMenu", "Restaurant" -> Icons.Outlined.RestaurantMenu
+            "FitnessCenter" -> Icons.Outlined.FitnessCenter
+            "TrendingUp", "ShowChart", "BarChart" -> Icons.Outlined.TrendingUp
+            "MonitorWeight", "Scale" -> Icons.Outlined.MonitorWeight
+            "DirectionsWalk", "DirectionsRun" -> Icons.Outlined.DirectionsWalk
+            "Bedtime", "NightsStay" -> Icons.Outlined.Bedtime
             "MoreVert" -> Icons.Outlined.MoreVert
             "DriveFileMove" -> Icons.Outlined.DriveFileMove
             "MenuBook" -> Icons.Outlined.MenuBook
