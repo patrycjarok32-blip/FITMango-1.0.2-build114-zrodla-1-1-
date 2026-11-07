@@ -274,254 +274,33 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
             recipeTitle = title, servings = 1f, calories = calories)
     }
 
-    // AI Meal Plan Generator — wybiera zestaw najbliższy dziennemu celowi kalorii.
-    fun generateAiMealPlan(goal: String) {
-        _isLoadingAi.value = true
-        _mealPlanError.value = null
-        viewModelScope.launch {
-            try {
-                val currentGoal = userProfile.value?.goal ?: "Redukcja"
-                val targetCalories = (userProfile.value?.targetCalories ?: 2000).coerceAtLeast(1)
-                val prompt = """
-                Ułóż jadłospis na JEDEN dzień dla użytkownika, którego cel to "$currentGoal".
-                Dzienny cel energetyczny wynosi DOKŁADNIE $targetCalories kcal. To główne kryterium doboru posiłków.
-                Przygotuj 5 RÓŻNYCH kandydackich zestawów całego dnia. Każdy zestaw ma zawierać dokładnie 3 posiłki:
-                Śniadanie, Obiad i Kolacja. Dobieraj potrawy i ich kaloryczność tak, aby suma kcal w każdym zestawie
-                była możliwie bliska $targetCalories kcal (najlepiej różnica nie większa niż 2%). Rozłóż energię
-                rozsądnie między posiłki: około 25-30% na śniadanie, 35-40% na obiad i resztę na kolację.
-                Kalorie muszą być wiarygodne dla podanych porcji, a nie losowe. Nie dodawaj przekąsek.
+    /** One, three or seven days: exactly four slots per day, exclusively from saved recipes.
+     * Existing meals and completed entries are preserved; missing slots are filled only.
+     * No network calls, AI recipe creation or Health Connect writes.
+     */
+    fun generateAiMealPlan(day: String) = generateLocalMealPlan(day, 1)
 
-                Zwróć WYŁĄCZNIE poprawny JSON: tablicę 5 obiektów, każdy z polem "meals" zawierającym tablicę
-                dokładnie 3 obiektów z polami: "mealType" (dokładnie "Śniadanie", "Obiad" lub "Kolacja"),
-                "recipeTitle" (nazwa potrawy po polsku), "calories" (całkowite kcal całego posiłku),\n                "protein", "carbs", "fat" (gramy całego posiłku, liczby całkowite) i "ingredients"\n                (niepusta tablica składników z gramaturą, np. "Ryż — 100 g"). Oblicz makro z porcji.
-                Bez markdown i bez dodatkowego tekstu. Wszystkie 5 zestawów muszą mieć różne potrawy.
-                """.trimIndent()
+    fun generateAiMultiDayPlan(startDay: String, days: Int) = generateLocalMealPlan(startDay, days)
 
-                val aiResult = callGemini(prompt)
-                aiResult.fold(
-                    onSuccess = { responseText ->
-                        val cleanJson = responseText.trim()
-                            .removePrefix("```json").removePrefix("```JSON").removePrefix("```")
-                            .removeSuffix("```").trim()
-                        try {
-                            val array = JSONArray(cleanJson)
-                            require(array.length() > 0) { "Brak zestawów" }
-                            val candidates = (0 until array.length()).mapNotNull { candidateIndex ->
-                                val candidate = array.getJSONObject(candidateIndex)
-                                // Obsługa także starszego formatu: bezpośrednia tablica 3 posiłków.
-                                val mealArray = candidate.optJSONArray("meals")
-                                    ?: if (candidate.has("mealType")) array else null
-                                if (mealArray == null || mealArray.length() != 3) return@mapNotNull null
-                                try {
-                                    val parsed = (0 until mealArray.length()).map { i ->
-                                        val obj = mealArray.getJSONObject(i)
-                                        val mealType = obj.getString("mealType")
-                                        val title = obj.getString("recipeTitle").trim()
-                                        val kcal = obj.getInt("calories")
-                                        require(mealType in listOf("Śniadanie", "Obiad", "Kolacja") && title.isNotBlank() && kcal > 0)
-                                        Triple(mealType, title, kcal) to obj
-                                    }
-                                    require(parsed.map { it.first.first }.toSet() == setOf("Śniadanie", "Obiad", "Kolacja"))
-                                    parsed
-                                } catch (_: Exception) { null }
-                            }
-                            require(candidates.isNotEmpty()) { "Brak poprawnych zestawów" }
-                            // Minimalizujemy różnicę od celu; przy remisie preferujemy zestaw nieprzekraczający celu.
-                            val chosen = candidates.minWithOrNull(
-                                compareBy<List<Pair<Triple<String, String, Int>, org.json.JSONObject>>> { meals ->
-                                    kotlin.math.abs(meals.sumOf { it.first.third } - targetCalories)
-                                }.thenBy { meals -> if (meals.sumOf { it.first.third } <= targetCalories) 0 else 1 }
-                            )!!
-                            val meals = chosen.map { (info, json) ->
-                                saveAiGeneratedMeal(goal, info.first, json)
-                            }
-                            repository.insertMealPlans(meals)
-                        } catch (e: Exception) {
-                            _mealPlanError.value = "AI zwróciło nieprawidłowy jadłospis. Spróbuj ponownie."
-                        }
-                    },
-                    onFailure = { err -> _mealPlanError.value = "Błąd AI: ${err.message}" }
-                )
-            } catch (e: Exception) {
-                _mealPlanError.value = "Błąd: ${e.localizedMessage}"
-            } finally {
-                _isLoadingAi.value = false
-            }
-        }
-    }
-
-    // --- Website, Cookidoo & Instagram Recipe Import & Preview State ---
-    var customHtmlDocumentFetcher: (suspend (String) -> org.jsoup.nodes.Document)? = null
-    var customRecipeImportAiCaller: (suspend (String) -> Result<String>)? = null
-    var geminiCallsDuringRecipeImport: Int = 0
-
-    private val _importedRecipePreview = MutableStateFlow<ImportedRecipe?>(null)
-    val importedRecipePreview: StateFlow<ImportedRecipe?> = _importedRecipePreview.asStateFlow()
-
-    private val _importFallbackPromptMode = MutableStateFlow<String?>(null)
-    val importFallbackPromptMode: StateFlow<String?> = _importFallbackPromptMode.asStateFlow()
-
-    private val _pendingSharedRecipeText = MutableStateFlow<String?>(null)
-    val pendingSharedRecipeText: StateFlow<String?> = _pendingSharedRecipeText.asStateFlow()
-
-    fun handleIncomingSharedRecipeText(sharedText: String?) {
-        val cleaned = sharedText?.trim()?.takeIf { it.isNotBlank() } ?: return
-        _pendingSharedRecipeText.value = cleaned
-    }
-
-    fun consumePendingSharedRecipeText() {
-        _pendingSharedRecipeText.value = null
-    }
-
-    fun clearImportFallbackMode() {
-        _importFallbackPromptMode.value = null
-    }
-
-    fun cancelRecipePreview() {
-        _importedRecipePreview.value = null
-    }
-
-    fun updateRecipePreview(updated: ImportedRecipe) {
-        _importedRecipePreview.value = updated
-    }
-
-    private val _recipeSaveInProgress = MutableStateFlow(false)
-    val recipeSaveInProgress: StateFlow<Boolean> = _recipeSaveInProgress.asStateFlow()
-
-    fun confirmSavePreviewedRecipe(
-        editedRecipe: ImportedRecipe? = null,
-        onSaved: ((RecipeEntity) -> Unit)? = null,
-        onError: ((String) -> Unit)? = null
-    ) {
-        if (_recipeSaveInProgress.value) return
-        val input = editedRecipe ?: _importedRecipePreview.value ?: return
-        _recipeSaveInProgress.value = true
-        viewModelScope.launch {
-            try {
-            val preview = enrichImportedNutrition(input)
-            val cleanTitle = preview.title.trim().ifBlank { "Zaimportowany przepis" }
-            val cleanServings = preview.servings?.trim()?.takeIf { it.isNotBlank() } ?: "1"
-            val cleanSource = preview.source.trim().ifBlank { "Import" }
-            val cleanIngredients = preview.ingredients.lines()
-                .map { normalizeExtractedIngredientLine(it) }
-                .filter { it.isNotBlank() }
-                .joinToString("\n")
-            val cleanInstructions = preview.instructions.lines()
-                .map { it.trim() }
-                .filter { it.isNotBlank() }
-                .joinToString("\n")
-
-            val entity = RecipeEntity(
-                title = cleanTitle,
-                description = "Porcje: $cleanServings\n" +
-                    (preview.totalPreparationMinutes?.takeIf { it in 0..1440 }?.let { "Czas całkowity: $it min\n" } ?: "") +
-                    (if (preview.requiresInstructionsCompletion && cleanInstructions.isBlank())
-                        "Przygotowanie: brak instrukcji w publicznym źródle; uzupełnij z własnego konta Cookidoo.\n" else "") + if (preview.nutritionIsEstimated) {
-                    "Wartości odżywcze: uzupełnione automatycznie (tabele / AI), szacunkowe. Sprawdź ilości i etykiety produktów."
-                } else if (preview.extractedWithoutAi) {
-                    "Wartości odżywcze podane w źródle (niezweryfikowane niezależnie)."
-                } else {
-                    "Wartości odżywcze: szacunek AI / import niezweryfikowany."
-                },
-                ingredients = cleanIngredients,
-                instructions = cleanInstructions,
-                calories = preview.calories.coerceAtLeast(0),
-                protein = preview.protein.coerceAtLeast(0),
-                carbs = preview.carbs.coerceAtLeast(0),
-                fat = preview.fat.coerceAtLeast(0),
-                category = preview.providedCategory?.takeIf { RecipeCategories.canonical(it) != "Inne" }
-                    ?: inferCategoryFromTitle(cleanTitle),
-                source = cleanSource,
-                imageUrl = preview.imageUrl
-            )
-            val insertedId = repository.saveImportedRecipe(entity, importedIngredients(cleanIngredients))
-            _importedRecipePreview.value = null
-            _importFallbackPromptMode.value = null
-            onSaved?.invoke(entity.copy(id = insertedId))
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (e: ImportedNutritionException) {
-                onError?.invoke(e.message ?: "Uzupełnij wartości odżywcze.")
-            } catch (_: Exception) {
-                onError?.invoke("Nie udało się zapisać przepisu. Sprawdź pełną nazwę, składniki i instrukcje; spróbuj ponownie.")
-            } finally { _recipeSaveInProgress.value = false }
-        }
-    }
-
-    private fun importedIngredients(text: String): List<RecipeIngredientEntity> =
-        MealPlannerSupport.parseRecipeIngredients(text).filter { it.name.isNotBlank() }.map {
-            RecipeIngredientEntity(
-                recipeId = 0, foodName = it.name, quantity = it.baseQuantity ?: 0f,
-                unit = it.unit, grams = if (it.unit == "g") it.baseQuantity ?: 0f else 0f,
-                caloriesPer100g = -1f, proteinPer100g = -1f, carbsPer100g = -1f, fatPer100g = -1f
-            )
-        }
-
-    private suspend fun fetchHtmlDocument(url: String): org.jsoup.nodes.Document {
-        val customFetcher = customHtmlDocumentFetcher
-        if (customFetcher != null) {
-            return customFetcher(url)
-        }
-        return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            Jsoup.connect(url)
-                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
-                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-                .header("Accept-Language", "pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7")
-                .followRedirects(true)
-                .timeout(12000)
-                .get()
-        }
-    }
-
-    /** Generates 3 or 7 separate dated days in one request. Existing meals are never removed. */
-    fun generateAiMultiDayPlan(startDay: String, days: Int) {
-        if (days !in listOf(3, 7) || _isLoadingAi.value) return
+    private fun generateLocalMealPlan(startDay: String, days: Int) {
+        if (days !in setOf(1, 3, 7) || _isLoadingAi.value) return
         val start = runCatching { java.time.LocalDate.parse(startDay) }.getOrNull() ?: run {
-            _mealPlanError.value = "Wybierz prawidłową datę rozpoczęcia."; return
+            _mealPlanError.value = "Wybierz prawidłową datę rozpoczęcia."
+            return
         }
         _isLoadingAi.value = true
         _mealPlanError.value = null
         viewModelScope.launch {
             try {
-                val kcal = (userProfile.value?.targetCalories ?: 2000).coerceAtLeast(1)
-                val goal = userProfile.value?.goal ?: "Zdrowe odżywianie"
-                val prompt = """
-                Ułóż jadłospis na $days kolejnych dni od $start, cel: $goal, około $kcal kcal dziennie.
-                Zwróć TYLKO JSON: tablica DOKŁADNIE $days obiektów, każdy z polami
-                "date" (ISO yyyy-MM-dd) i "meals" (tablica DOKŁADNIE 3 obiektów).
-                Każdy posiłek ma "mealType" (Śniadanie, Obiad, Kolacja),
-                "recipeTitle" (nazwa po polsku), "calories" (dodatnia liczba całkowita),\n                "protein", "carbs", "fat" (gramy całego posiłku, liczby całkowite),\n                "ingredients" (niepusta tablica składników z ilościami, np. "Ryż — 100 g").\n                Wylicz szacunkowe makroskładniki na podstawie gramatur.
-                Daty kolejno od $start. Każdego dnia inne potrawy.
-                Nie dopisuj składników, których nie znasz. Kaloryczność to szacunek.
-                """.trimIndent()
-                val response = callGemini(prompt).getOrThrow().trim()
-                    .removePrefix("```json").removePrefix("```JSON").removePrefix("```")
-                    .removeSuffix("```").trim()
-                val array = JSONArray(response)
-                require(array.length() == days) { "AI zwróciło niepełny jadłospis." }
-                val result = mutableListOf<MealPlanEntity>()
-                for (dayIndex in 0 until days) {
-                    val obj = array.getJSONObject(dayIndex)
-                    val expectedDate = start.plusDays(dayIndex.toLong()).toString()
-                    require(obj.getString("date") == expectedDate) { "Nieprawidłowe daty." }
-                    val meals = obj.getJSONArray("meals")
-                    require(meals.length() == 3) { "Każdy dzień musi mieć trzy posiłki." }
-                    val parsed = (0 until 3).map { i ->
-                        val m = meals.getJSONObject(i)
-                        val type = m.getString("mealType")
-                        val title = m.getString("recipeTitle").trim()
-                        val calories = m.getInt("calories")
-                        require(type in listOf("Śniadanie", "Obiad", "Kolacja") && title.isNotBlank() &&
-                            title.length <= 180 && calories in 1..3000)
-                        saveAiGeneratedMeal(expectedDate, type, m)
-                    }
-                    require(parsed.map { it.mealType }.toSet().size == 3)
-                    result.addAll(parsed)
-                }
-                repository.insertMealPlans(result)
+                val available = repository.allRecipes.first()
+                val existing = repository.allMealPlans.first()
+                val target = (userProfile.value?.targetCalories ?: 2000).coerceAtLeast(1)
+                val additions = LocalFourMealPlanner.generate(start, days, available, existing, target)
+                if (additions.isNotEmpty()) repository.insertMealPlans(additions)
+                else _mealPlanError.value = "Wszystkie cztery pory posiłków są już zaplanowane na wybrane dni."
             } catch (e: kotlinx.coroutines.CancellationException) { throw e }
             catch (e: Exception) {
-                _mealPlanError.value = "Nie udało się wygenerować planu: ${e.message ?: "Sprawdź konfigurację AI i spróbuj ponownie."}"
+                _mealPlanError.value = e.message ?: "Nie udało się wygenerować jadłospisu z Twojej bazy przepisów."
             } finally {
                 _isLoadingAi.value = false
             }
