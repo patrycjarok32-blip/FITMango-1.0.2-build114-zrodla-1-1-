@@ -225,8 +225,8 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                 Text("Szacunkowe wartości składników: ${r.partialDays} dni. Pomiary wagi: ${r.points.size}. Dzisiejszy dzień jedzenia nie jest analizowany.")
                 Text("Brak wpisu to brak danych. Każdy zatwierdzony dzień oznacza pełny zapis i wchodzi do średnich. Szacunki składników oznaczamy osobno; automatyczna korekta kalorii wymaga precyzyjnych danych.")
             } }
-            item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Zapotrzebowanie i cel", style = MaterialTheme.typography.titleMedium)
+            item { CollapsibleMangoCard("Zapotrzebowanie i cel", "effects_energy") {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Utrzymanie z profilu: ${r.maintenance?.toInt()?.let { "$it kcal/dzień" } ?: "uzupełnij Profil"}.")
                 Text("Cel jedzenia: ${profile?.targetCalories ?: "brak danych"} kcal. Średnia ze wszystkich zatwierdzonych dni (także zaakceptowanych szacunków): ${r.meanCalories?.toInt() ?: "brak danych"} kcal; białko: ${r.meanProtein?.toInt() ?: "brak danych"} g.")
                 Text(EnergyCalculatorSupport.base(profile, energySettings)?.explanation ?: "Uzupełnij poprawny Profil; indywidualne cele ustaw ręcznie.", style = MaterialTheme.typography.bodySmall)
@@ -236,7 +236,8 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                     val target = profile?.targetCalories ?: 0
                     Button(enabled = !busy, onClick = { adjustment = target to delta }, modifier = Modifier.testTag("effects_review_adjustment")) { Text("Rozważ: $target → ${target + delta} kcal") }
                 }
-            } } }
+                }
+            } }
             item { CollapsibleMangoCard("Raport tygodniowy", "effects_week") { Text(r.weeklyText) } }
             item { CollapsibleMangoCard("Trening i samopoczucie", "effects_wellbeing") {
                 Text(r.strengthText)
