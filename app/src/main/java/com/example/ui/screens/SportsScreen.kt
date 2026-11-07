@@ -122,7 +122,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 onAddSet = { day, exercise, reps, kg -> sports.addSet(day, exercise, reps, kg) { saved() } })
         }
         if (activitySection == "today") item { ActivityTodayCard(data, today, current) }
-        item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (activitySection != "profile") item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SportsHistoryControls(busy,
                 onPermissions = { permissionError = null; runCatching { launcher.launch(setOf(
                     HealthPermission.getReadPermission(ExerciseSessionRecord::class), HealthPermission.getReadPermission(DistanceRecord::class),
