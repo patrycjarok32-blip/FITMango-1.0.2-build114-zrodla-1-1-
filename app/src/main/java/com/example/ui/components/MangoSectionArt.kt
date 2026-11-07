@@ -7,7 +7,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -17,7 +16,7 @@ import com.example.ui.theme.*
 /** Packaged 3D artwork: one consistent size and soft halo, no network or animation loop. */
 @Composable
 fun MangoSectionArt(resource: Int, accent: Color, size: Dp = 48.dp) {
-    Box(Modifier.size(size).background(Brush.radialGradient(listOf(accent.copy(alpha = .30f), MangoPeach.copy(alpha = .11f), Color.Transparent)), CircleShape),
+    Box(Modifier.size(size).background(accent.copy(alpha = .12f), CircleShape),
         contentAlignment = Alignment.Center) {
         FitMangoAssetIcon(resource, contentDescription = null, modifier = Modifier.size(size * .82f))
     }
@@ -44,7 +43,8 @@ fun sectionArtworkAccent(id: String): Color = when (id) {
     "water" -> WaterAccent
     "tools", "photos" -> MangoCoral
     "produce", "health", "sport" -> MangoMint
-    "effects", "weekly_summary", "ai", "gemini", "analysis", "motion" -> MangoLavender
+    "effects", "weekly_summary" -> LeafGreen
+    "ai", "gemini", "analysis", "motion" -> JuicyOrange
     "backup", "reminder_settings" -> MangoCoral
     else -> MangoYellow
 }
