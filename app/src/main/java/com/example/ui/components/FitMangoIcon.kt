@@ -185,10 +185,60 @@ fun FitMangoIcon(imageVector: ImageVector, contentDescription: String?, modifier
     }
 }
 
+/** Unified line icons for all functional cards. Decorative mango artwork is kept in MangoGuide. */
+private fun fitMangoLineIcon(resource: Int): ImageVector = when (resource) {
+    R.drawable.fit_icon_calendar -> Icons.Outlined.CalendarMonth
+    R.drawable.fit_icon_home -> Icons.Outlined.Home
+    R.drawable.fit_icon_recipes, R.drawable.fit_icon_meal, R.drawable.fit_icon_breakfast,
+    R.drawable.fit_icon_dinner, R.drawable.fit_icon_snack -> Icons.Outlined.RestaurantMenu
+    R.drawable.fit_icon_mass, R.drawable.fit_icon_creatine -> Icons.Outlined.FitnessCenter
+    R.drawable.fit_icon_progress, R.drawable.fit_icon_reduction,
+    R.drawable.fit_icon_balance -> Icons.Outlined.TrendingUp
+    R.drawable.fit_icon_water, R.drawable.fit_icon_drink -> Icons.Outlined.WaterDrop
+    R.drawable.fit_icon_health -> Icons.Outlined.FavoriteBorder
+    R.drawable.fit_icon_weight -> Icons.Outlined.MonitorWeight
+    R.drawable.fit_icon_measure -> Icons.Outlined.Straighten
+    R.drawable.fit_icon_ai -> Icons.Outlined.AutoAwesome
+    R.drawable.fit_icon_camera -> Icons.Outlined.CameraAlt
+    R.drawable.fit_icon_document, R.drawable.fit_icon_pdf -> Icons.Outlined.Description
+    R.drawable.fit_icon_profile -> Icons.Outlined.Person
+    R.drawable.fit_icon_shopping -> Icons.Outlined.ShoppingCart
+    R.drawable.fit_icon_clock -> Icons.Outlined.Schedule
+    R.drawable.fit_icon_check -> Icons.Outlined.CheckCircle
+    R.drawable.fit_icon_add -> Icons.Outlined.Add
+    R.drawable.fit_icon_edit -> Icons.Outlined.Edit
+    R.drawable.fit_icon_delete -> Icons.Outlined.DeleteOutline
+    R.drawable.fit_icon_swap -> Icons.Outlined.SwapHoriz
+    R.drawable.fit_icon_favorite, R.drawable.fit_icon_favorite_outline -> Icons.Outlined.FavoriteBorder
+    R.drawable.fit_icon_vegetable, R.drawable.fit_icon_protein,
+    R.drawable.fit_icon_carbs, R.drawable.fit_icon_fat, R.drawable.fit_icon_dairy -> Icons.Outlined.RestaurantMenu
+    R.drawable.fit_icon_goal -> Icons.Outlined.Flag
+    R.drawable.fit_icon_warning -> Icons.Outlined.Warning
+    R.drawable.fit_icon_bell -> Icons.Outlined.Notifications
+    R.drawable.fit_icon_fire -> Icons.Outlined.LocalFireDepartment
+    R.drawable.fit_icon_globe -> Icons.Outlined.Language
+    R.drawable.fit_icon_link -> Icons.Outlined.Link
+    R.drawable.fit_clay_walk -> Icons.Outlined.DirectionsWalk
+    R.drawable.fit_clay_sleep -> Icons.Outlined.Bedtime
+    R.drawable.fit_clay_medal -> Icons.Outlined.EmojiEvents
+    else -> Icons.Outlined.StarOutline
+}
+
 @Composable
 fun FitMangoAssetIcon(resource: Int, contentDescription: String? = null, modifier: Modifier = Modifier) {
-    androidx.compose.material3.Icon(fitMangoPainter(resource), contentDescription,
-        modifier.then(Modifier.size(28.dp)), tint = Color.Unspecified)
+    val tint = when (resource) {
+        R.drawable.fit_icon_water, R.drawable.fit_icon_drink -> com.example.ui.theme.WaterAccent
+        R.drawable.fit_icon_mass, R.drawable.fit_icon_health, R.drawable.fit_icon_progress,
+        R.drawable.fit_icon_weight, R.drawable.fit_icon_balance, R.drawable.fit_icon_reduction,
+        R.drawable.fit_clay_walk, R.drawable.fit_clay_sleep -> com.example.ui.theme.LeafGreen
+        else -> JuicyOrange
+    }
+    androidx.compose.material3.Icon(
+        imageVector = fitMangoLineIcon(resource),
+        contentDescription = contentDescription,
+        modifier = modifier,
+        tint = tint
+    )
 }
 
 internal fun fitMangoCategoryResource(label: String): Int? = when (label.trim().lowercase()) {
