@@ -54,16 +54,16 @@ fun CollapsibleMangoCard(
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 MangoSectionArt(sectionArtwork(sectionId), sectionArtworkAccent(sectionId), size = 44.dp)
-                Text(title, Modifier.weight(1f), color = Cream,
+                Text(title, Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(if (expanded) "Zwiń −" else "Rozwiń +", color = LeafGreen,
+                Text(if (expanded) "Zwiń −" else "Rozwiń +", color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.labelMedium)
             }
         }
         AnimatedVisibility(expanded, enter = expandVertically(tween(duration)) + fadeIn(tween(duration)),
             exit = shrinkVertically(tween(duration)) + fadeOut(tween(duration))) {
             Column {
-            HorizontalDivider(color = WarmBrown.copy(alpha = 0.3f))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp), content = content)
             }
         }
