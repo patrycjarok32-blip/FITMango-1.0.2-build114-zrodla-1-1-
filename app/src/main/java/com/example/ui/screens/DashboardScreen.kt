@@ -205,34 +205,26 @@ fun DashboardScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
             ) {
                 Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(116.dp)) {
-                            CircularProgressIndicator(progress = { calorieFraction }, modifier = Modifier.fillMaxSize(),
-                                color = JuicyOrange, trackColor = MutedSurface2, strokeWidth = 10.dp)
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("$animatedCalories", fontSize = 28.sp, fontWeight = FontWeight.Black,
-                                    color = MaterialTheme.colorScheme.onSurface)
-                                Text("/ $targetCalories kcal", fontSize = 12.sp, color = GoldAccent)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        MangoHalfGauge(
+                            label = "Spożyte kcal", value = animatedCalories, goal = targetCalories,
+                            progress = calorieFraction, color = LeafGreen, modifier = Modifier.weight(1f),
+                            subtitle = "z $targetCalories kcal"
+                        )
+                        val burned = com.example.viewmodel.CurrentActivitySupport.calories(burnedCalories)
+                        MangoHalfGauge(
+                            label = "Spalone kcal", value = burned, goal = null,
+                            progress = if (burned == null) 0f else (burned.toFloat() / targetCalories).coerceIn(0f, 1f),
+                            color = JuicyOrange, modifier = Modifier.weight(1f),
+                            subtitle = when {
+                                burned == null -> "Brak odczytu"
+                                healthSync?.totalCaloriesBurned?.let { it.isFinite() && it > 0 } == true -> "Łącznie z Health Connect"
+                                else -> "Aktywne z Health Connect"
                             }
-                        }
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Surface(shape = RoundedCornerShape(16.dp), color = MutedSurface2) {
-                                Column(Modifier.fillMaxWidth().padding(12.dp)) {
-                                    Text("🔥 Pozostało", fontSize = 12.sp, color = GoldAccent)
-                                    Text("${(targetCalories - consumedCalories).coerceAtLeast(0)} kcal",
-                                        fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                            Surface(shape = RoundedCornerShape(16.dp), color = MutedSurface2) {
-                                Column(Modifier.fillMaxWidth().padding(12.dp)) {
-                                    Text("🎯 Cel", fontSize = 12.sp, color = GoldAccent)
-                                    Text(profile?.goal ?: "Twój cel", fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp, maxLines = 1)
-                                }
-                            }
-                        }
+                        )
                     }
+                    Text("Pozostało: ${(targetCalories - consumedCalories).coerceAtLeast(0)} kcal  •  Cel: ${profile?.goal ?: "Twój cel"}",
+                        fontSize = 12.sp, color = GoldAccent, maxLines = 2)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FreshMangoMacroTile("Białko", consumedProtein, targetProtein, LeafGreen, Modifier.weight(1f))
                         FreshMangoMacroTile("Tłuszcze", consumedFat, targetFat, JuicyOrange, Modifier.weight(1f))
@@ -781,5 +773,40 @@ private fun FreshMangoMacroTile(
             Text("$value g", fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface)
             Text("cel $target g", fontSize = 10.sp, color = GoldAccent)
         }
+    }
+}
+
+@Composable
+private fun MangoHalfGauge(
+    label: String, value: Int?, goal: Int?, progress: Float,
+    color: Color, modifier: Modifier = Modifier, subtitle: String
+) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Text(label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
+        Box(Modifier.fillMaxWidth().height(84.dp), contentAlignment = Alignment.BottomCenter) {
+            androidx.compose.foundation.Canvas(Modifier.fillMaxWidth().height(76.dp)) {
+                val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+                    width = 9.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                val diameter = minOf(size.width - 12.dp.toPx(), size.height * 1.75f)
+                val arcSize = androidx.compose.ui.geometry.Size(diameter, diameter)
+                val left = (size.width - diameter) / 2f
+                val top = size.height - diameter / 2f - 4.dp.toPx()
+                drawArc(color = Color.LightGray.copy(alpha = .32f), startAngle = 180f,
+                    sweepAngle = 180f, useCenter = false,
+                    topLeft = androidx.compose.ui.geometry.Offset(left, top), size = arcSize, style = stroke)
+                drawArc(color = color, startAngle = 180f,
+                    sweepAngle = 180f * progress.coerceIn(0f, 1f), useCenter = false,
+                    topLeft = androidx.compose.ui.geometry.Offset(left, top), size = arcSize, style = stroke)
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(value?.toString() ?: "—", fontSize = 23.sp, fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface)
+                if (goal != null) Text("z $goal", fontSize = 11.sp, color = GoldAccent)
+            }
+        }
+        Text(subtitle, fontSize = 10.sp, color = GoldAccent, maxLines = 2,
+            textAlign = TextAlign.Center, lineHeight = 12.sp)
     }
 }
