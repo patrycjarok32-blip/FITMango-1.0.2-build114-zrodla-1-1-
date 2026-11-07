@@ -736,13 +736,14 @@ private fun FreshMangoDestinationCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+            val accent = if (imageVector == Icons.Default.FitnessCenter || imageVector == Icons.Default.TrendingUp) LeafGreen else JuicyOrange
             Box(
                 modifier = Modifier.size(42.dp).clip(RoundedCornerShape(14.dp))
-                    .background(JuicyOrange.copy(alpha = 0.14f)),
+                    .background(accent.copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center
             ) {
-                androidx.compose.material3.Icon(imageVector, contentDescription = null,
-                    tint = JuicyOrange, modifier = Modifier.size(25.dp))
+                Icon(imageVector, contentDescription = null,
+                    tint = accent, modifier = Modifier.size(24.dp))
             }
             Text(title, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 12.sp,
                 maxLines = 1)
