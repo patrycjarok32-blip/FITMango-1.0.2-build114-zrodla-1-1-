@@ -6,6 +6,10 @@ import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.*
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -78,10 +82,16 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     LazyColumn(Modifier.fillMaxSize().background(DarkBackground).padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp)) {
         item {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Aktywność", style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.weight(1f))
-                TextButton(onClick = onBack) { Text("Wróć") }
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Centrum sportowe", style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold, color = LeafGreen)
+                        Text("Aktywność • siła • regeneracja", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    TextButton(onClick = onBack) { Text("Wróć") }
+                }
             }
             SuccessFeedback(feedback, "Zapisano")
             message?.let { Text(it, color = GoldAccent) }
@@ -89,7 +99,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
 
         }
         item {
-            androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(vertical = 4.dp)) {
                 item { FilterChip(selected = activitySection == "today" && !showReport && !showExtras,
                     onClick = { activitySection = "today"; showReport = false; showExtras = false },
                     label = { Text("Aktywność") }, modifier = Modifier.testTag("sport_activity_tab")) }
@@ -136,7 +147,12 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 onRemovePlan = { day -> sports.removePlan(day) { saved() } },
                 onAddSet = { day, exercise, reps, kg -> sports.addSet(day, exercise, reps, kg) { saved() } })
         }
-        if (activitySection == "today") item { ActivityTodayCard(data, today, current) }
+        if (activitySection == "today") item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Dzisiaj • $today", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = LeafGreen)
+                ActivityTodayCard(data, today, current)
+            }
+        }
         if (activitySection == "today" || activitySection == "training") item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SportsHistoryControls(busy,
                 onPermissions = { permissionError = null; runCatching { launcher.launch(setOf(
@@ -147,7 +163,9 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         } }
         if (activitySection == "today" || activitySection == "training") item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
         if (activitySection == "training") item {
-            MangoCard(Modifier.fillMaxWidth().testTag("health_connect_training_diary")) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Twój dziennik treningów", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = LeafGreen)
+                MangoCard(Modifier.fillMaxWidth().testTag("health_connect_training_diary")) {
                 Column(Modifier.padding(14.dp).then(if (reducedMangoMotion) Modifier else Modifier.animateContentSize(animationSpec = androidx.compose.animation.core.tween(220))), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("Historia treningów • 30 dni",
                         style = MaterialTheme.typography.titleMedium, color = MangoMint)
@@ -158,6 +176,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     }
                     if (duplicates.isNotEmpty()) Text("Wykryte powtórzone wpisy: ${duplicates.size}",
                         style = MaterialTheme.typography.bodySmall, color = GoldAccent)
+                }
                 }
             }
         }
@@ -186,6 +205,10 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
         } } }
         if (activitySection == "training") item { Button(onClick = { add = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().testTag("sport_add_activity")) { Text("+ Dodaj wykonaną aktywność") } }
+        if (activitySection == "recovery") item {
+            Text("Regeneracja i samopoczucie", style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold, color = LeafGreen)
+        }
         if (activitySection == "recovery") item { RecoveryCard(data, today, busy,
             onSave = { d, energy, fatigue -> sports.recovery(d, energy, fatigue, ::saved) },
             onRemove = { sports.removeRecovery(it, ::saved) }) }
