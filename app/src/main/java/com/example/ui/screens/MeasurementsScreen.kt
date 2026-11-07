@@ -392,6 +392,8 @@ fun WeightTrendChart(weights: List<Float>, dates: List<String>) {
     val maxWeight = weights.maxOrNull() ?: 100f
     val range = (maxWeight - minWeight).coerceAtLeast(1f)
 
+    val pointGlowColor = MaterialTheme.colorScheme.primary
+
     androidx.compose.foundation.Canvas(
         modifier = Modifier
             .fillMaxWidth()
@@ -432,7 +434,7 @@ fun WeightTrendChart(weights: List<Float>, dates: List<String>) {
         // Draw glow and points
         points.forEach { pt ->
             drawCircle(
-                color = MaterialTheme.colorScheme.primary,
+                color = pointGlowColor,
                 radius = 5.dp.toPx(),
                 center = pt
             )
