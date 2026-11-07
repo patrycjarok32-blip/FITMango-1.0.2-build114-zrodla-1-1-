@@ -1022,7 +1022,7 @@ private fun MealCategorySection(
                 }
                 Box(Modifier.width(2.dp).height(12.dp).background(LeafGreen.copy(alpha = .35f)))
             }
-            Text(categorySpec.timeRange, color = LeafGreen, fontSize = 12.sp,
+            Text(categorySpec.canonicalName, color = LeafGreen, fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold)
             if (meals.isNotEmpty() && meals.all { MealPlannerSupport.completedInCurrentWeek(it) })
                 Text("Zjedzone", color = LeafGreen, fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -1048,7 +1048,7 @@ private fun MealCategorySection(
                 Column(Modifier.weight(1f)) {
                     Text(categorySpec.canonicalName, fontWeight = FontWeight.Bold, fontSize = 15.sp,
                         color = mealCategoryColor(categorySpec.canonicalName))
-                    Text(categorySpec.timeRange, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(categorySpec.timeRange, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
@@ -1076,7 +1076,7 @@ private fun MealCategorySection(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -1151,6 +1151,7 @@ internal fun PlannedMealDetailCard(
 ) {
     val statusBusy = if (viewModel != null) meal.id in viewModel.mealStatusBusy.collectAsStateWithLifecycle().value else false
     var expanded by remember(meal.id) { mutableStateOf(false) }
+    var quickActionsExpanded by remember(meal.id) { mutableStateOf(false) }
     val motion = progressMotionEnabled()
     var actionsOpen by remember(meal.id) { mutableStateOf(false) }
     var showSkipConfirmation by remember(meal.id) { mutableStateOf(false) }
@@ -1312,7 +1313,7 @@ internal fun PlannedMealDetailCard(
         modifier = Modifier
             .mangoExpand()
             .animateContentSize(animationSpec = tween(if (motion) 240 else 0))
-            .clip(RoundedCornerShape(22.dp))
+            .clip(RoundedCornerShape(16.dp))
             .testTag("planned_meal_card_${meal.id}")
     ) {
         Column(
@@ -1380,8 +1381,8 @@ internal fun PlannedMealDetailCard(
                     imageUrl = recipe?.imageUrl.orEmpty(),
                     title = meal.recipeTitle,
                     modifier = Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(14.dp))
+                        .size(58.dp)
+                        .clip(RoundedCornerShape(12.dp))
                 )
                 Column(
                     modifier = Modifier.weight(1f),
@@ -1572,7 +1573,15 @@ internal fun PlannedMealDetailCard(
 
             }
 
+            TextButton(onClick = { quickActionsExpanded = !quickActionsExpanded },
+                modifier = Modifier.fillMaxWidth().testTag("expand_meal_actions_${meal.id}"),
+                contentPadding = PaddingValues(vertical = 0.dp, horizontal = 6.dp)) {
+                Text(if (quickActionsExpanded) "Zwiń działania" else "Zmień • Pomiń • Zjedzony", fontSize = 12.sp)
+                Icon(if (quickActionsExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = null, modifier = Modifier.size(18.dp))
+            }
             // Compact Respo-style actions; existing advanced actions remain in the menu.
+            if (quickActionsExpanded) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically) {
                 OutlinedButton(onClick = onChangeRecipeClick, enabled = interactionsEnabled,
@@ -1623,6 +1632,7 @@ internal fun PlannedMealDetailCard(
                         DropdownMenuItem(text = { Text("Usuń posiłek") }, onClick = { actionsOpen = false; onRemoveMealClick() }, modifier = Modifier.testTag("remove_meal_${meal.id}"))
                     }
                 }
+            }
             }
         }
     }
