@@ -45,6 +45,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import coil.ImageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
+import android.graphics.drawable.BitmapDrawable
 import com.example.data.RecipeEntity
 import com.example.ui.components.*
 import com.example.ui.theme.*
@@ -92,6 +96,9 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
     var favoritesOnly by rememberSaveable { mutableStateOf(false) }
     var extraIngredientRecipe by remember { mutableStateOf<RecipeEntity?>(null) }
     var photoRecipe by remember { mutableStateOf<RecipeEntity?>(null) }
+    var photoReviewRecipe by remember { mutableStateOf<RecipeEntity?>(null) }
+    var photoReviewResult by remember { mutableStateOf<String?>(null) }
+    var photoReviewLoading by remember { mutableStateOf(false) }
     var showPhotoRecipePicker by remember { mutableStateOf(false) }
     var showImportDialog by rememberSaveable { mutableStateOf(openImportOnLaunch) }
     var instagramReaderUrl by rememberSaveable { mutableStateOf<String?>(null) }
@@ -400,6 +407,7 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
                         preparationMinutes = viewModel.usability.minutes(recipe),
                         protein = recipe.protein,
                         photoNeedsReview = photoReview,
+                        onReviewPhotoClick = { photoReviewRecipe = recipe },
                         onAddToPlanClick = {
                             recipeToAddToPlan = recipe
                             servingsInput = "1"
@@ -1230,6 +1238,34 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
             TextButton(enabled = MealPlannerSupport.parseRecipeIngredients(recipe.ingredients).size > 1, onClick = { viewModel.editRecipeIngredient(recipe, ingredient.formatForServings(1f), null); ingredientEditTarget = null }) { Text("Usuń składnik") }
             TextButton(onClick = { ingredientEditTarget = null }) { Text("Anuluj") }
         } }) }
+
+    photoReviewRecipe?.let { recipe ->
+        LaunchedEffect(recipe.id, recipe.imageUrl) {
+            photoReviewLoading = true
+            photoReviewResult = null
+            photoReviewResult = try {
+                if (recipe.imageUrl.isBlank()) "Brak zdjęcia do analizy."
+                else {
+                    val request = ImageRequest.Builder(context).data(recipe.imageUrl).allowHardware(false).build()
+                    val response = ImageLoader(context).execute(request)
+                    val bitmap = (response as? SuccessResult)?.drawable as? BitmapDrawable
+                    if (bitmap == null) "Nie udało się odczytać zdjęcia. Sprawdź połączenie i uprawnienia."
+                    else {
+                        val result = com.example.viewmodel.RecipePhotoReview.analyzeBitmap(recipe.title, bitmap.bitmap)
+                        result.status + if (result.labels.isEmpty()) "" else "\\nRozpoznane: " + result.labels.joinToString(", ")
+                    }
+                }
+            } catch (_: Exception) { "Analiza niedostępna. Zdjęcie nie zostało zmienione." }
+            photoReviewLoading = false
+        }
+        AlertDialog(
+            onDismissRequest = { photoReviewRecipe = null },
+            title = { Text("Kontrola zdjęcia: ${recipe.title}") },
+            text = { Text(if (photoReviewLoading) "Analizuję zdjęcie na urządzeniu…" else photoReviewResult.orEmpty()) },
+            confirmButton = { TextButton(onClick = { photoReviewRecipe = null }) { Text("Zamknij") } },
+            dismissButton = { TextButton(onClick = { photoReviewRecipe = null; photoRecipe = recipe }) { Text("Zmień zdjęcie") } }
+        )
+    }
 
     photoRecipe?.let { recipe ->
         RecipePhotoDialog(recipe, viewModel) { photoRecipe = null; selectedRecipe = recipe }
