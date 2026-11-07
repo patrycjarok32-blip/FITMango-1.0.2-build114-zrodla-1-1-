@@ -285,14 +285,14 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                 val prompt = """
                 Ułóż jadłospis na JEDEN dzień dla użytkownika, którego cel to "$currentGoal".
                 Dzienny cel energetyczny wynosi DOKŁADNIE $targetCalories kcal. To główne kryterium doboru posiłków.
-                Przygotuj 5 RÓŻNYCH kandydackich zestawów całego dnia. Każdy zestaw ma zawierać dokładnie 3 posiłki:
-                Śniadanie, Obiad i Kolacja. Dobieraj potrawy i ich kaloryczność tak, aby suma kcal w każdym zestawie
+                Przygotuj 5 RÓŻNYCH kandydackich zestawów całego dnia. Każdy zestaw ma zawierać dokładnie 4 posiłki:
+                Śniadanie, II śniadanie, Obiad i Kolacja. Dobieraj potrawy i ich kaloryczność tak, aby suma kcal w każdym zestawie
                 była możliwie bliska $targetCalories kcal (najlepiej różnica nie większa niż 2%). Rozłóż energię
-                rozsądnie między posiłki: około 25-30% na śniadanie, 35-40% na obiad i resztę na kolację.
-                Kalorie muszą być wiarygodne dla podanych porcji, a nie losowe. Nie dodawaj przekąsek.
+                rozsądnie między posiłki: około 25% na śniadanie, 15% na II śniadanie, 35% na obiad i 25% na kolację.
+                Kalorie muszą być wiarygodne dla podanych porcji, a nie losowe. II śniadanie jest obowiązkowym czwartym posiłkiem. Nie dodawaj piątego posiłku.
 
                 Zwróć WYŁĄCZNIE poprawny JSON: tablicę 5 obiektów, każdy z polem "meals" zawierającym tablicę
-                dokładnie 3 obiektów z polami: "mealType" (dokładnie "Śniadanie", "Obiad" lub "Kolacja"),
+                dokładnie 4 obiektów z polami: "mealType" (dokładnie "Śniadanie", "II śniadanie", "Obiad" lub "Kolacja"),
                 "recipeTitle" (nazwa potrawy po polsku), "calories" (całkowite kcal całego posiłku),\n                "protein", "carbs", "fat" (gramy całego posiłku, liczby całkowite) i "ingredients"\n                (niepusta tablica składników z gramaturą, np. "Ryż — 100 g"). Oblicz makro z porcji.
                 Bez markdown i bez dodatkowego tekstu. Wszystkie 5 zestawów muszą mieć różne potrawy.
                 """.trimIndent()
@@ -308,20 +308,20 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                             require(array.length() > 0) { "Brak zestawów" }
                             val candidates = (0 until array.length()).mapNotNull { candidateIndex ->
                                 val candidate = array.getJSONObject(candidateIndex)
-                                // Obsługa także starszego formatu: bezpośrednia tablica 3 posiłków.
+                                // Obsługa także starszego formatu: bezpośrednia tablica 4 posiłków.
                                 val mealArray = candidate.optJSONArray("meals")
                                     ?: if (candidate.has("mealType")) array else null
-                                if (mealArray == null || mealArray.length() != 3) return@mapNotNull null
+                                if (mealArray == null || mealArray.length() != 4) return@mapNotNull null
                                 try {
                                     val parsed = (0 until mealArray.length()).map { i ->
                                         val obj = mealArray.getJSONObject(i)
                                         val mealType = obj.getString("mealType")
                                         val title = obj.getString("recipeTitle").trim()
                                         val kcal = obj.getInt("calories")
-                                        require(mealType in listOf("Śniadanie", "Obiad", "Kolacja") && title.isNotBlank() && kcal > 0)
+                                        require(mealType in listOf("Śniadanie", "II śniadanie", "Obiad", "Kolacja") && title.isNotBlank() && kcal > 0)
                                         Triple(mealType, title, kcal) to obj
                                     }
-                                    require(parsed.map { it.first.first }.toSet() == setOf("Śniadanie", "Obiad", "Kolacja"))
+                                    require(parsed.map { it.first.first }.toSet() == setOf("Śniadanie", "II śniadanie", "Obiad", "Kolacja"))
                                     parsed
                                 } catch (_: Exception) { null }
                             }
@@ -488,10 +488,10 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                 val prompt = """
                 Ułóż jadłospis na $days kolejnych dni od $start, cel: $goal, około $kcal kcal dziennie.
                 Zwróć TYLKO JSON: tablica DOKŁADNIE $days obiektów, każdy z polami
-                "date" (ISO yyyy-MM-dd) i "meals" (tablica DOKŁADNIE 3 obiektów).
-                Każdy posiłek ma "mealType" (Śniadanie, Obiad, Kolacja),
+                "date" (ISO yyyy-MM-dd) i "meals" (tablica DOKŁADNIE 4 obiektów).
+                Każdy posiłek ma "mealType" (Śniadanie, II śniadanie, Obiad, Kolacja),
                 "recipeTitle" (nazwa po polsku), "calories" (dodatnia liczba całkowita),\n                "protein", "carbs", "fat" (gramy całego posiłku, liczby całkowite),\n                "ingredients" (niepusta tablica składników z ilościami, np. "Ryż — 100 g").\n                Wylicz szacunkowe makroskładniki na podstawie gramatur.
-                Daty kolejno od $start. Każdego dnia inne potrawy.
+                Każdego dnia dokładnie po jednym posiłku każdego z czterech typów. Rozkład energii: 25% śniadanie, 15% II śniadanie, 35% obiad, 25% kolacja. Daty kolejno od $start. Każdego dnia inne potrawy.
                 Nie dopisuj składników, których nie znasz. Kaloryczność to szacunek.
                 """.trimIndent()
                 val response = callGemini(prompt).getOrThrow().trim()
@@ -505,18 +505,24 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                     val expectedDate = start.plusDays(dayIndex.toLong()).toString()
                     require(obj.getString("date") == expectedDate) { "Nieprawidłowe daty." }
                     val meals = obj.getJSONArray("meals")
-                    require(meals.length() == 3) { "Każdy dzień musi mieć trzy posiłki." }
-                    val parsed = (0 until 3).map { i ->
+                    require(meals.length() == 4) { "Każdy dzień musi mieć cztery posiłki." }
+                    val parsed = (0 until 4).map { i ->
                         val m = meals.getJSONObject(i)
                         val type = m.getString("mealType")
                         val title = m.getString("recipeTitle").trim()
                         val calories = m.getInt("calories")
-                        require(type in listOf("Śniadanie", "Obiad", "Kolacja") && title.isNotBlank() &&
+                        require(type in listOf("Śniadanie", "II śniadanie", "Obiad", "Kolacja") && title.isNotBlank() &&
                             title.length <= 180 && calories in 1..3000)
-                        saveAiGeneratedMeal(expectedDate, type, m)
+                        type to m
                     }
-                    require(parsed.map { it.mealType }.toSet().size == 3)
-                    result.addAll(parsed)
+                    require(parsed.map { it.first }.toSet() == setOf("Śniadanie", "II śniadanie", "Obiad", "Kolacja"))
+                    parsed.forEach { (_, meal) ->
+                        require(meal.optInt("protein", -1) in 0..500 && meal.optInt("carbs", -1) in 0..700 &&
+                            meal.optInt("fat", -1) in 0..400 &&
+                            meal.optInt("protein") + meal.optInt("carbs") + meal.optInt("fat") > 0 &&
+                            (meal.optJSONArray("ingredients")?.length() ?: 0) > 0)
+                    }
+                    result.addAll(parsed.map { (type, meal) -> saveAiGeneratedMeal(expectedDate, type, meal) })
                 }
                 repository.insertMealPlans(result)
             } catch (e: kotlinx.coroutines.CancellationException) { throw e }
