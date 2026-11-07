@@ -73,7 +73,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     }.sortedByDescending { it.start } }
     val duplicates = remember(data) { val ids = ActivityRecoverySupport.unique(data.history).map { it.id }.toSet(); data.history.filterNot { it.id in ids } }
     LazyColumn(Modifier.fillMaxSize().background(DarkBackground).padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(vertical = 12.dp)) {
+        verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("Aktywność", style = MaterialTheme.typography.headlineSmall,
@@ -106,10 +106,11 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     HealthPermission.getReadPermission(SleepSessionRecord::class))) }.onFailure { permissionError = "Otwórz uprawnienia Health Connect w Profilu." } },
                 onRefresh = { permissionError = null; sports.refresh { viewModel.usability.changed() } })
         } }
+        item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
         item {
             MangoCard(Modifier.fillMaxWidth().testTag("health_connect_training_diary")) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Ostatnie treningi • 30 dni",
+                    Text("Historia treningów • 30 dni",
                         style = MaterialTheme.typography.titleMedium, color = MangoMint)
                     Text("Zapisane aktywności: ${visible.size}",
                         style = MaterialTheme.typography.bodyMedium)
@@ -121,7 +122,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 }
             }
         }
-        item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
+
         item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("Twój tydzień • $start – ${start.plusDays(6)}", style = MaterialTheme.typography.labelLarge, color = GoldAccent)
             SportGoalProgress(data, week, completed, previous, today == start)
