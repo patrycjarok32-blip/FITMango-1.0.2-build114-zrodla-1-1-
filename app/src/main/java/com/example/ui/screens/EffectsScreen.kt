@@ -58,7 +58,7 @@ fun WeightTrendChart(points: List<WeightPoint>) {
     val drawFraction by animateFloatAsState(if (revealed || !motion) 1f else 0f, animationSpec = tween(if (motion) 650 else 0), label = "weight_line_reveal")
     val lo = points.minOf { it.kg } - .5; val hi = points.maxOf { it.kg } + .5
     val from = LocalDate.parse(points.first().date).toEpochDay(); val to = LocalDate.parse(points.last().date).toEpochDay()
-    val rawColor = MaterialTheme.colorScheme.tertiary; val trendColor = MaterialTheme.colorScheme.secondary; val axis = MaterialTheme.colorScheme.outline
+    val rawColor = MangoCoral; val trendColor = MaterialTheme.colorScheme.secondary; val axis = MaterialTheme.colorScheme.outline
     val values = points.map { it.kg }
     val averageWeight = values.average()
     val minWeight = values.minOrNull() ?: 0.0
@@ -201,8 +201,9 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
             } } }
         item {
             var planExpanded by rememberSaveable { mutableStateOf(false) }
+            val reducedMangoMotion = LocalReducedMangoMotion.current
             MangoCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp).then(if (reducedMangoMotion) Modifier else Modifier.animateContentSize(animationSpec = tween(220)))) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Text("Etapy redukcji", style = MaterialTheme.typography.titleMedium,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.weight(1f))
