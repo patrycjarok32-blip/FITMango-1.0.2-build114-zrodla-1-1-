@@ -89,8 +89,8 @@ fun ProfileScreen(
     if (showTargetDialog) {
         AlertDialog(
             onDismissRequest = { showTargetDialog = false },
-            containerColor = MutedSurface1,
-            title = { Text("Własne cele kalorii i makro", color = Cream) },
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text("Własne cele kalorii i makro", color = MaterialTheme.colorScheme.onSurface) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(customCalories, { customCalories = it }, label = { Text("Kalorie (kcal)") })
@@ -113,7 +113,7 @@ fun ProfileScreen(
                         viewModel.updateProfile(name, cal, protein, carbs, fat, goal)
                         showTargetDialog = false
                     }
-                }) { Text("Zapisz", color = MangoYellow) }
+                }) { Text("Zapisz", color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = { TextButton(onClick = { showTargetDialog = false }) { Text("Anuluj") } }
         )
@@ -209,12 +209,12 @@ fun ProfileScreen(
                 title = { Text(if (detail == null) "Więcej" else ProfileHubCatalog.title(detail), fontWeight = FontWeight.Black) },
                 navigationIcon = { if (detail != null) TextButton(onClick = returnToHub, modifier = Modifier.testTag("profile_detail_back")) { Text("Wróć") } },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = Cream
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
         },
-        containerColor = DarkBackground
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (detail == null) {
             Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
@@ -251,8 +251,8 @@ fun ProfileScreen(
             item {
                 CollapsibleMangoCard(title = "Kalkulator kalorii i profil", sectionId = "calculator") {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("Kalkulator TDEE i Cel Kaloryczny", fontWeight = FontWeight.Bold, color = MangoYellow, fontSize = 16.sp)
-                        Text("Szacunek Mifflin–St Jeor, opis aktywności i późniejsza weryfikacja trendem. Cel zapisujesz po podglądzie.", fontSize = 11.sp, color = Cream.copy(alpha = 0.7f))
+                        Text("Kalkulator TDEE i Cel Kaloryczny", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
+                        Text("Szacunek Mifflin–St Jeor, opis aktywności i późniejsza weryfikacja trendem. Cel zapisujesz po podglądzie.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
 
                         OutlinedTextField(
                             value = name,
@@ -270,7 +270,7 @@ fun ProfileScreen(
                         com.example.ui.components.EnergyChoice("Płeć do wzoru", gender, linkedMapOf("Kobieta" to "Kobieta", "Mężczyzna" to "Mężczyzna")) { gender = it }
                         com.example.ui.components.EnergyChoice("Dotychczasowy poziom aktywności", activity,
                             listOf("Niska aktywność", "Umiarkowana aktywność", "Wysoka aktywność", "Bardzo wysoka aktywność").associateWith { it }) { activity = it }
-                        Text("Cel:", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Cream)
+                        Text("Cel:", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             listOf("Redukcja", "Utrzymanie", "Budowanie masy").forEach { g ->
                                 FilterChip(
@@ -290,11 +290,11 @@ fun ProfileScreen(
 
                         profile?.let { p ->
                             HorizontalDivider(color = WarmBrown.copy(alpha = 0.3f))
-                            Text("Obecnie zapisane cele:", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MangoYellow)
-                            Text("Cel jedzenia: ${p.targetCalories} kcal", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Cream)
-                            Text("💪 Białko: ${p.targetProtein}g | Węglowodany: ${p.targetCarbs}g | Tłuszcz: ${p.targetFat}g", fontSize = 11.sp, color = Cream.copy(alpha = 0.8f))
+                            Text("Obecnie zapisane cele:", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
+                            Text("Cel jedzenia: ${p.targetCalories} kcal", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                            Text("💪 Białko: ${p.targetProtein}g | Węglowodany: ${p.targetCarbs}g | Tłuszcz: ${p.targetFat}g", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
                             TextButton(onClick = { targetError = null; showTargetDialog = true }) {
-                                Text("Ustaw własne cele kalorii i makro", color = MangoYellow)
+                                Text("Ustaw własne cele kalorii i makro", color = MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
@@ -335,7 +335,7 @@ fun ProfileScreen(
                             Text(
                                 text = "Ustawienia Gemini AI",
                                 fontWeight = FontWeight.Bold,
-                                color = MangoYellow,
+                                color = MaterialTheme.colorScheme.primary,
                                 fontSize = 16.sp
                             )
                         }
@@ -343,7 +343,7 @@ fun ProfileScreen(
                         Text(
                             text = "Aplikacja MangoFit nie przechowuje Twojego klucza API na zewnętrznych serwerach. Jest on szyfrowany lokalnie w zabezpieczonej pamięci telefonu (Android Keystore).",
                             fontSize = 11.sp,
-                            color = Cream.copy(alpha = 0.7f)
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
 
                         OutlinedTextField(
@@ -359,7 +359,7 @@ fun ProfileScreen(
                                     Icon(
                                         imageVector = if (isKeyVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                                         contentDescription = if (isKeyVisible) "Ukryj" else "Pokaż",
-                                        tint = Cream.copy(alpha = 0.6f)
+                                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                     )
                                 }
                             },
@@ -447,7 +447,7 @@ fun ProfileScreen(
                                     .testTag("gemini_test_connection_button")
                             ) {
                                 if (isTesting) {
-                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Cream)
+                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), color = MaterialTheme.colorScheme.onSurface)
                                 } else {
                                     Text("Testuj", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                 }
@@ -510,7 +510,7 @@ fun ProfileScreen(
                             Text(
                                 text = "Zdrowie i aktywność",
                                 fontWeight = FontWeight.Bold,
-                                color = MangoYellow,
+                                color = MaterialTheme.colorScheme.primary,
                                 fontSize = 16.sp
                             )
                         }
@@ -552,7 +552,7 @@ fun ProfileScreen(
                         Text(
                             text = "Połącz z Google Health Connect, aby bezpiecznie pobierać kroki, spalone kalorie, wagę i sen z Twojego zegarka lub opaski.",
                             fontSize = 12.sp,
-                            color = Cream.copy(alpha = 0.8f)
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                         )
 
                         // Status Info
@@ -584,7 +584,7 @@ fun ProfileScreen(
                                     Text(
                                         text = msg,
                                         fontSize = 11.sp,
-                                        color = Cream.copy(alpha = 0.75f)
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
                                     )
                                 }
                                 Text(
@@ -686,13 +686,13 @@ fun ProfileScreen(
                 CollapsibleMangoCard(title = "Analiza dietetyczna AI", sectionId = "analysis") {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MangoYellow, modifier = Modifier.size(20.dp))
-                            Text("Analiza dietetyczna AI", fontWeight = FontWeight.Bold, color = Cream, fontSize = 16.sp)
+                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                            Text("Analiza dietetyczna AI", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp)
                         }
                         Text("Analiza w stylu konsultacji dietetycznej: AI łączy zapisane jedzenie i makroskładniki z celem, trendem masy ciała, obwodami, aktywnością, snem i samopoczuciem. Sprawdza ostatnie 7 zakończonych dni i porównuje jedzenie z poprzednim tygodniem. Wskazuje mocne strony, powtarzające się wzorce i maksymalnie 3 konkretne priorytety na kolejny tydzień. Dzisiejszy dzień nie wchodzi do raportu. Zatwierdzone dni pozostają pełnym, potwierdzonym zapisem; szacunkowe wartości odżywcze są osobno oznaczane.", fontSize = 13.sp)
                         Text("Po naciśnięciu przycisku te dane zostaną wysłane do Gemini. Używane są ostatnio zsynchronizowane dane aktywności; odśwież je w sekcji Sport lub Health Connect. Tryb lokalny blokuje wysyłanie.", fontSize = 12.sp)
                         Text("Raport pokazuje lokalne obliczenia i ograniczenia danych przed interpretacją AI. AI nie dopowiada niezmierzonych składników ani nie zmienia samodzielnie Twojego celu. To narzędzie wspierające, nie diagnoza ani zamiennik indywidualnej konsultacji z dietetykiem. Po zmianie posiłków, pomiarów lub synchronizacji wygeneruj raport ponownie.", fontSize = 12.sp)
-                        Text(weeklyAnalysis, fontSize = 13.sp, color = Cream.copy(alpha = 0.9f))
+                        Text(weeklyAnalysis, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f))
 
                         Button(
                             onClick = { viewModel.runWeeklyAiAnalysis() },
@@ -717,7 +717,7 @@ fun ProfileScreen(
             item {
                 CollapsibleMangoCard(title = "Pomiary ciała", sectionId = "measurements") {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("Wymiary Ciała i Obwody", fontWeight = FontWeight.Bold, color = MangoYellow, fontSize = 16.sp)
+                        Text("Wymiary Ciała i Obwody", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
 
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedTextField(value = weight, onValueChange = { weight = it }, label = { Text("Waga (kg)") }, modifier = Modifier.weight(1f), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = JuicyOrange, unfocusedBorderColor = WarmBrown, focusedTextColor = Cream, unfocusedTextColor = Cream))
@@ -750,7 +750,7 @@ fun ProfileScreen(
 
                         Text("Historia pomiarów:", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = GoldAccent)
                         bodyMeasurements.take(3).forEach { m ->
-                            Text("• ${m.date}: ${m.weightKg}kg | Talia: ${m.waistCm}cm | Biodra: ${m.hipsCm}cm", fontSize = 12.sp, color = Cream.copy(alpha = 0.8f))
+                            Text("• ${m.date}: ${m.weightKg}kg | Talia: ${m.waistCm}cm | Biodra: ${m.hipsCm}cm", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
                         }
 
                         onNavigateToMeasurements?.let { navigate ->
@@ -759,7 +759,7 @@ fun ProfileScreen(
                                 onClick = navigate,
                                 modifier = Modifier.align(Alignment.End)
                             ) {
-                                Text("Zobacz pełną historię i wykresy 📊", color = MangoYellow, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text("Zobacz pełną historię i wykresy 📊", color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
