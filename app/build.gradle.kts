@@ -108,6 +108,7 @@ dependencies {
   implementation(libs.jsoup)
   implementation(libs.mlkit.barcode.scanning)
   implementation(libs.mlkit.text.recognition)
+  implementation("com.google.mlkit:image-labeling:17.0.9")
   implementation(libs.camerax.core)
   implementation(libs.camerax.camera2)
   implementation(libs.camerax.lifecycle)
