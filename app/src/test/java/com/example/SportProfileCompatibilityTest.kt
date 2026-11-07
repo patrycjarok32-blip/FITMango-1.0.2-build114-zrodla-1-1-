@@ -3,9 +3,14 @@ package com.example
 import com.example.viewmodel.*
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.time.LocalDate
 
 /** Regression coverage for the profile's reuse of the existing sports_v1 schema. */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [33])
 class SportProfileCompatibilityTest {
     @Test fun existingPlansSetsAndRecoverySurviveRoundTrip() {
         val day = LocalDate.now().toString()
