@@ -42,8 +42,8 @@ fun MangoGuide(message: String? = null, event: Int = 0, size: Dp = 36.dp, modifi
                 .background(Brush.linearGradient(listOf(MangoSunset.copy(alpha = .55f), JuicyOrange.copy(alpha = .18f))), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            FitMangoAssetIcon(R.drawable.fit_icon_mango, null,
-                Modifier.size(size).graphicsLayer { rotationZ = tilt.value })
+            Text("🥭", modifier = Modifier.graphicsLayer { rotationZ = tilt.value },
+                style = MaterialTheme.typography.headlineMedium)
         }
         if (message != null) Text(message, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
     }
