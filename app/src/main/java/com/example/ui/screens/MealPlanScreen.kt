@@ -1135,6 +1135,12 @@ internal fun PlannedMealDetailCard(
     var expanded by remember(meal.id) { mutableStateOf(false) }
     val motion = progressMotionEnabled()
     var actionsOpen by remember(meal.id) { mutableStateOf(false) }
+    var showSkipConfirmation by remember(meal.id) { mutableStateOf(false) }
+    if (showSkipConfirmation) AlertDialog(onDismissRequest = { showSkipConfirmation = false },
+        title = { Text("Pominąć ten posiłek?") },
+        text = { Text("Posiłek zostanie usunięty tylko z jadłospisu. Przepis pozostanie w Twojej bazie.") },
+        confirmButton = { TextButton(onClick = { showSkipConfirmation = false; onRemoveMealClick() }) { Text("Pomiń posiłek") } },
+        dismissButton = { TextButton(onClick = { showSkipConfirmation = false }) { Text("Anuluj") } })
     var copying by remember(meal.id) { mutableStateOf(false) }
     var batching by remember(meal.id) { mutableStateOf(false) }
     val quantityGuard = remember(meal.id) { com.example.ui.components.QuantityReviewGuard() }
@@ -1548,25 +1554,33 @@ internal fun PlannedMealDetailCard(
 
             }
 
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            // Compact Respo-style actions; existing advanced actions remain in the menu.
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically) {
                 OutlinedButton(onClick = onChangeRecipeClick, enabled = interactionsEnabled,
-                    contentPadding = PaddingValues(horizontal = 12.dp),
-                    modifier = Modifier.testTag("quick_change_recipe_${meal.id}")) {
-                    Icon(Icons.Default.SwapHoriz, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Zmień")
+                    contentPadding = PaddingValues(horizontal = 5.dp),
+                    modifier = Modifier.weight(1f).testTag("quick_change_recipe_${meal.id}")) {
+                    Text("Zmień", fontSize = 12.sp, maxLines = 1)
                 }
-                TextButton(onClick = onViewInstructionsClick, enabled = interactionsEnabled,
-                    modifier = Modifier.weight(1f).testTag("quick_cook_recipe_${meal.id}")) {
-                    Text("Przepis")
+                OutlinedButton(onClick = { showSkipConfirmation = true }, enabled = interactionsEnabled && !mealEaten,
+                    contentPadding = PaddingValues(horizontal = 5.dp),
+                    modifier = Modifier.weight(1f).testTag("skip_meal_${meal.id}")) {
+                    Text("Pomiń", fontSize = 12.sp, maxLines = 1)
+                }
+                Button(enabled = interactionsEnabled && !statusBusy, onClick = onToggleEatenClick,
+                    contentPadding = PaddingValues(horizontal = 5.dp),
+                    modifier = Modifier.weight(1.2f).testTag("toggle_eaten_${meal.id}"),
+                    colors = ButtonDefaults.buttonColors(containerColor = if (mealEaten) LeafGreen else JuicyOrange, contentColor = MangoButtonInk)) {
+                    Text(if (statusBusy) "..." else if (mealEaten) "Cofnij ✓" else "Zjedzony ✓",
+                        fontSize = 11.sp, maxLines = 1)
                 }
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = onViewInstructionsClick, enabled = interactionsEnabled,
+                    modifier = Modifier.testTag("quick_cook_recipe_${meal.id}")) { Text("Przepis") }
                 Box {
-                    OutlinedButton(enabled = interactionsEnabled, onClick = { actionsOpen = true }, modifier = Modifier.testTag("meal_options_${meal.id}")) {
-                        androidx.compose.material3.Icon(Icons.Default.MoreVert, null, Modifier.size(18.dp))
-                        Text("Opcje")
-                    }
+                    TextButton(enabled = interactionsEnabled, onClick = { actionsOpen = true },
+                        modifier = Modifier.testTag("meal_options_${meal.id}")) { Text("Więcej ⋮") }
                     MangoActionsMenu(expanded = actionsOpen, onDismiss = { actionsOpen = false }) {
                         DropdownMenuItem(text = { Text("Przepis / gotowanie") }, onClick = { actionsOpen = false; onViewInstructionsClick() }, modifier = Modifier.testTag("view_instructions_${meal.id}"))
                         if (viewModel != null) {
@@ -1590,10 +1604,6 @@ internal fun PlannedMealDetailCard(
                         DropdownMenuItem(text = { Text("Przenieś") }, onClick = { actionsOpen = false; onMoveMealClick() }, modifier = Modifier.testTag("move_meal_${meal.id}"))
                         DropdownMenuItem(text = { Text("Usuń posiłek") }, onClick = { actionsOpen = false; onRemoveMealClick() }, modifier = Modifier.testTag("remove_meal_${meal.id}"))
                     }
-                }
-                Button(enabled = interactionsEnabled && !statusBusy, onClick = onToggleEatenClick, modifier = Modifier.weight(1f).testTag("toggle_eaten_${meal.id}"),
-                    colors = ButtonDefaults.buttonColors(containerColor = if (MealPlannerSupport.completedInCurrentWeek(meal)) LeafGreen else JuicyOrange, contentColor = MangoButtonInk)) {
-                    Text(if (statusBusy) "Zapisywanie…" else if (MealPlannerSupport.completedInCurrentWeek(meal)) "Cofnij zjedzenie" else "Zjedzone ✓")
                 }
             }
         }
