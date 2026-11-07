@@ -7,6 +7,8 @@ workflows:
 
     environment:
       java: 21
+      groups:
+        - fitmango_key_setup
 
     scripts:
       - name: Potwierdzenie wersji i źródeł
@@ -23,26 +25,28 @@ workflows:
         script: |
           chmod +x gradlew
 
-      - name: Przygotowanie debug.keystore
+      - name: Odtworzenie stałego klucza podpisującego
         script: |
-          if [ ! -f debug.keystore ]; then
-            keytool -genkeypair \
-              -v \
-              -keystore debug.keystore \
-              -alias androiddebugkey \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -storepass android \
-              -keypass android \
-              -dname "CN=Android Debug,O=Android,C=US"
-          fi
+          set -eu
+          : "${ANDROID_KEYSTORE_BASE64:?Brak ANDROID_KEYSTORE_BASE64 w grupie fitmango_key_setup}"
+          : "${STORE_PASSWORD:?Brak STORE_PASSWORD}"
+          : "${KEY_PASSWORD:?Brak KEY_PASSWORD}"
+          : "${KEY_ALIAS:?Brak KEY_ALIAS}"
+          KEYSTORE_PATH="$PWD/my-upload-key.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -D > "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+          test -s "$KEYSTORE_PATH" || { echo "BŁĄD: pusty klucz podpisujący"; exit 1; }
+          keytool -list -keystore "$KEYSTORE_PATH" -storepass:env STORE_PASSWORD -alias "$KEY_ALIAS" >/dev/null || {
+            echo "BŁĄD: nieprawidłowy klucz, alias lub hasło"; exit 1;
+          }
+          echo "Stały klucz podpisujący został zweryfikowany."
 
-      - name: Budowanie APK
+      - name: Budowanie podpisanego APK release
         script: |
-          ./gradlew :app:assembleDebug --stacktrace
+          set -eu
+          ./gradlew :app:assembleRelease --stacktrace
           mkdir -p build-artifacts
-          cp app/build/outputs/apk/debug/app-debug.apk "build-artifacts/FITMango-Premium-build125-$(git rev-parse --short HEAD).apk"
+          cp app/build/outputs/apk/release/app-release.apk "build-artifacts/FITMango-Premium-build125-$(git rev-parse --short HEAD).apk"
           echo "APK przygotowane z commita $(git rev-parse HEAD)"
 
     artifacts:
