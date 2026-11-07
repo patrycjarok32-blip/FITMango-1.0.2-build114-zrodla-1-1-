@@ -58,6 +58,9 @@ class RecipePhotoWorker(context: Context, params: WorkerParameters) : CoroutineW
             val eventTime = "event_time_$id"
             val prefs = settings.prefs
             val service = RecipePhotoService(cacheDirectory = File(applicationContext.cacheDir, "pixabay_search_cache"))
+            // Keep already downloaded local photographs, including manually selected ones.
+            if (recipe.imageUrl.isNotBlank() && !recipe.imageUrl.startsWith("file:///android_asset/") &&
+                !RecipePhotoHealth.needsRepair(applicationContext, recipe.imageUrl)) return@withLock Result.success()
             var photo: AutomaticPhoto? = null
             var downloadedBytes: ByteArray? = null
             try {
@@ -66,6 +69,26 @@ class RecipePhotoWorker(context: Context, params: WorkerParameters) : CoroutineW
                 var event = prefs.getString(eventKey, null).takeIf {
                     prefs.getString(eventFingerprint, "") == fingerprint &&
                         System.currentTimeMillis() - prefs.getLong(eventTime, 0) < 24 * 60 * 60 * 1000L
+                }
+                if (event == null) {
+                    val query = RecipePhotoMatching.query(recipe.title)
+                    val fallback = if (query == null) null else runCatching {
+                        RecipePhotoSearch.search(query).filter { RecipePhotoMatching.matchesEnglish(query, it.title) }
+                            .maxByOrNull { RecipePhotoMatching.score(query, it.title, recipe.ingredients) }
+                    }.getOrElse { error ->
+                        if (error is kotlinx.coroutines.CancellationException) throw error
+                        null
+                    }
+                    if (fallback != null) {
+                        val path = RecipePhotoSearch.savePhoto(applicationContext, fallback)
+                        val description = recipe.description.substringBefore("\n\nZdjęcie: ") +
+                            "\n\nZdjęcie: poglądowe Wikimedia; ${fallback.author}; ${fallback.pageUrl}; ${fallback.license}; ${fallback.licenseUrl}"
+                        val saved = dao.saveAutomaticPhoto(recipe.id, recipe.imageUrl, recipe.title, recipe.ingredients,
+                            recipe.description, path, description)
+                        // Search saves content-addressed files: another recipe may already use this photograph.
+                        settings.status(if (saved == 1) "Zapisano zdjęcie: ${recipe.title}" else "Przepis zmienił się. Zachowano aktualne zdjęcie.")
+                        return@withLock Result.success()
+                    }
                 }
                 if (event == null && token.isNotBlank() && !settings.blocked("pixabay")) {
                     try {
@@ -92,39 +115,9 @@ class RecipePhotoWorker(context: Context, params: WorkerParameters) : CoroutineW
                     catch (e: PhotoServiceException) { photo = null; settings.block(e.provider, e.retryAfterMillis); settings.status(e.notice) }
                     catch (_: Exception) { photo = null; settings.status("Zdjęcie z Pixabay jest niedostępne. Szukamy innego źródła.") }
                 }
-                if (photo == null && event == null) {
-                    val query = RecipePhotoMatching.query(recipe.title)
-                    val fallback = if (query == null) null else runCatching {
-                        RecipePhotoSearch.search(query).filter { RecipePhotoMatching.matchesEnglish(query, it.title) }
-                            .maxByOrNull { RecipePhotoMatching.score(query, it.title, recipe.ingredients) }
-                    }.getOrElse { error ->
-                        if (error is kotlinx.coroutines.CancellationException) throw error
-                        null
-                    }
-                    if (fallback != null) {
-                        val path = RecipePhotoSearch.savePhoto(applicationContext, fallback)
-                        val description = recipe.description.substringBefore("\n\nZdjęcie: ") +
-                            "\n\nZdjęcie: poglądowe Wikimedia; ${fallback.author}; ${fallback.pageUrl}; ${fallback.license}; ${fallback.licenseUrl}"
-                        val saved = dao.saveAutomaticPhoto(recipe.id, recipe.imageUrl, recipe.title, recipe.ingredients,
-                            recipe.description, path, description)
-                        // Search saves content-addressed files: another recipe may already use this photograph.
-                        settings.status(if (saved == 1) "Zapisano zdjęcie: ${recipe.title}" else "Przepis zmienił się. Zachowano aktualne zdjęcie.")
-                        return@withLock Result.success()
-                    }
-                }
                 if (photo == null) {
-                    if (settings.blocked("hf")) {
-                        settings.status("AI czeka na odnowienie darmowego limitu albo poprawienie klucza w Profilu.")
-                        return@withLock Result.retry()
-                    }
-                    if (event == null) {
-                        event = service.startAi(recipe, settings.token("hf"))
-                        // Save before polling, so process restart resumes the same request.
-                        prefs.edit().putString(eventKey, event).putString(eventFingerprint, fingerprint)
-                            .putLong(eventTime, System.currentTimeMillis()).commit()
-                    }
-                    settings.status("Generowanie ilustracji AI: ${recipe.title}")
-                    photo = service.awaitAi(event, settings.token("hf"))
+                    settings.status("Brak pasującego zdjęcia w Wikimedia Commons i Pixabay. Pozostawiono grafikę zastępczą.")
+                    return@withLock Result.success()
                 }
                 val result = requireNotNull(photo)
                 val bytes = downloadedBytes ?: service.download(result)
