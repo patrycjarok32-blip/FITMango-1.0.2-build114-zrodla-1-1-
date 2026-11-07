@@ -146,24 +146,7 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
     fun n(value: Double?, unit: String) = value?.let { String.format(java.util.Locale.getDefault(), "%.2f %s", it, unit) } ?: "brak danych"
     LazyColumn(Modifier.fillMaxSize().background(DarkBackground).padding(horizontal = 16.dp), state = rememberLazyListState(), verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(vertical = 12.dp)) {
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_progress_hero"),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(26.dp),
-                colors = CardDefaults.cardColors(containerColor = com.example.ui.theme.MutedSurface2)
-            ) {
-                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Icon(Icons.Outlined.Insights, contentDescription = null, tint = com.example.ui.theme.GoldAccent)
-                        Text("Twoje postępy", style = MaterialTheme.typography.headlineSmall,
-                        color = com.example.ui.theme.Cream)
-                    }
-                    Text("Każdy krok przybliża Cię do celu",
-                        style = MaterialTheme.typography.bodyMedium, color = com.example.ui.theme.GoldAccent)
-                }
-            }
-        }
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically) { TextButton(onClick = onBack) { Text("Wróć") }; Text("Efekty i analiza", style = MaterialTheme.typography.titleLarge) }
+            Row(verticalAlignment = Alignment.CenterVertically) { TextButton(onClick = onBack) { Text("Wróć") }; Text("Postępy", style = MaterialTheme.typography.headlineSmall, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) }
             SuccessFeedback(feedback, "Zapisano")
             message?.let { Text(it, color = ErrorInk) }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { listOf(14, 30, 90).forEach { value -> FilterChip(range == value, { range = value }, label = { Text("$value dni") }) } }
@@ -189,7 +172,7 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
         val r = report
         if (r != null) {
             item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Twoje wyniki • ostatnie $range dni", style = MaterialTheme.typography.titleMedium)
+                Text("Twoje wyniki • ostatnie $range dni", style = MaterialTheme.typography.titleMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Card(Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                         Column(Modifier.padding(12.dp)) {
