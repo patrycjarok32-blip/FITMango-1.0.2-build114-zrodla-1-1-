@@ -87,7 +87,7 @@ fun MangoPrimaryButton(
             .background(
                 Brush.verticalGradient(
                     colors = if (enabled) listOf(RipeYellow, MangoPeach, JuicyOrange)
-                        else listOf(WarmBrown, WarmBrown)
+                        else listOf(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.surfaceVariant)
                 )
             )
             .clickable(
@@ -130,7 +130,7 @@ fun MangoSecondaryButton(
             .scale(scale)
             .shadow(if (enabled) 1.dp else 0.dp, RoundedCornerShape(12.dp), clip = false)
             .clip(RoundedCornerShape(18.dp))
-            .border(1.5.dp, if (enabled) JuicyOrange else GoldAccent, CircleShape)
+            .border(1.5.dp, if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))
             .background(Brush.verticalGradient(listOf(MutedSurface1, MutedSurface2)))
             .clickable(
                 interactionSource = interactionSource,
@@ -163,14 +163,14 @@ fun MangoCard(
             .fillMaxWidth()
             .border(
                 width = if (isSelected) 1.5.dp else 1.dp,
-                color = if (isSelected) MangoCoral else MangoPeach.copy(alpha = 0.50f),
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
                 shape = RoundedCornerShape(24.dp)
             ),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MutedSurface1
+            containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         content = content
     )
 }
