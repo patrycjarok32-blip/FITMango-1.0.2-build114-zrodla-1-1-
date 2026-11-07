@@ -100,8 +100,8 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
     if (showAiPlanOptions) {
         AlertDialog(
             onDismissRequest = { showAiPlanOptions = false },
-            title = { Text("Jadłospis AI") },
-            text = { Text("Wybierz długość planu. Nowe posiłki zostaną dodane do wybranych dat, bez usuwania istniejących. Wyniki AI i kalorie są szacunkowe. Plan na 3 lub 7 dni wymaga połączenia z Gemini.") },
+            title = { Text("Generuj z moich przepisów") },
+            text = { Text("Wybierz 1, 3 lub 7 dni. Każdego dnia zaplanujemy 4 posiłki: śniadanie, II śniadanie, obiad i kolację. Wykorzystamy wyłącznie przepisy z Twojej bazy. Istniejące posiłki pozostaną bez zmian; uzupełnimy tylko brakujące pory. Generowanie działa bez internetu.") },
             confirmButton = {
                 Column {
                     TextButton(enabled = !isLoading, onClick = {
