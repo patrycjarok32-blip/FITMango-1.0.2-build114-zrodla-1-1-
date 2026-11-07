@@ -68,14 +68,44 @@ object RecipeFilterSupport {
             recipe.description, recipe.source, aliases).joinToString(" "))
     }
 
+    /** Deterministic Polish natural-language query parser; never silently changes saved recipes. */
+    data class SmartQuery(val words: List<String>, val category: String?, val maxMinutes: Int?,
+        val maxCalories: Int?, val minProtein: Int?, val noCook: Boolean, val work: Boolean)
+
+    fun parseQuery(query: String): SmartQuery {
+        var text = RecipeCategories.normalized(query)
+        val category = when {
+            Regex("\\b(sniadani\\w*|breakfast)\\b").containsMatchIn(text) -> "Śniadanie"
+            Regex("\\b(obiad\\w*|lunch)\\b").containsMatchIn(text) -> "Obiad"
+            Regex("\\b(kolacj\\w*|dinner)\\b").containsMatchIn(text) -> "Kolacja"
+            Regex("\\b(przekask\\w*|deser\\w*|snack)\\b").containsMatchIn(text) -> "Przekąska"
+            else -> null
+        }
+        val minutes = Regex("(?:do|max|ponizej)\\s*(\\d+)\\s*(?:minut\\w*|min\\b)").find(text)
+            ?.groupValues?.get(1)?.toIntOrNull()?.takeIf { it in 1..1440 }
+        val kcal = Regex("(?:do|max|ponizej)\\s*(\\d+)\\s*(?:kcal|kalorii)").find(text)
+            ?.groupValues?.get(1)?.toIntOrNull()?.takeIf { it in 1..5000 }
+        val protein = Regex("(?:min(?:imum)?|od|co najmniej)\\s*(\\d+)\\s*(?:g\\s*)?(?:bialka|protein)").find(text)
+            ?.groupValues?.get(1)?.toIntOrNull()?.takeIf { it in 1..300 }
+        val noCook = Regex("\\b(bez gotowania|na zimno)\\b").containsMatchIn(text)
+        val work = Regex("\\b(do pracy|do lunchboxa)\\b").containsMatchIn(text)
+        text = text.replace(Regex("\\b(sniadani\\w*|breakfast|obiad\\w*|lunch|kolacj\\w*|dinner|przekask\\w*|deser\\w*|snack)\\b"), " ")
+        text = text.replace(Regex("(?:do|max|ponizej)\\s*\\d+\\s*(?:minut\\w*|min\\b|kcal|kalorii)"), " ")
+        text = text.replace(Regex("(?:min(?:imum)?|od|co najmniej)\\s*\\d+\\s*(?:g\\s*)?(?:bialka|protein)"), " ")
+        text = text.replace(Regex("\\b(bez gotowania|na zimno|do pracy|do lunchboxa)\\b"), " ")
+        text = text.replace(Regex("\\b(chce|chcialabym|chcialbym|szukam|pokaz|przepisy|przepis|cos|na|z|ze|i|oraz|szybki|szybkie|szybko|maksymalnie)\\b"), " ")
+        return SmartQuery(text.split(Regex("\\s+")).filter { it.isNotBlank() }, category, minutes, kcal, protein, noCook, work)
+    }
+
     data class Indexed(val recipe: RecipeEntity, val text: String, val categories: Set<String>,
         val minutes: Int?, val noCook: Boolean, val work: Boolean)
     fun index(recipe: RecipeEntity, minutes: Int?, noCook: Boolean, work: Boolean) =
         Indexed(recipe, searchable(recipe), RecipeCategories.categories(recipe.category), minutes, noCook, work)
 
     fun filter(index: List<Indexed>, query: String, category: String, preparation: String, favoritesOnly: Boolean): List<RecipeEntity> {
-        val words = RecipeCategories.normalized(query).split(' ').filter { it.isNotBlank() }
-        val selected = if (category == "Wszystkie") null else RecipeCategories.canonical(category)
+        val smart = parseQuery(query)
+        val words = smart.words
+        val selected = if (category == "Wszystkie") smart.category else RecipeCategories.canonical(category)
         return index.asSequence().filter { entry ->
             (!favoritesOnly || entry.recipe.isFavorite) && (selected == null || selected in entry.categories) &&
                 (when (preparation) {
@@ -85,7 +115,11 @@ object RecipeFilterSupport {
                     "Do pracy" -> entry.work
                     "Brak czasu" -> entry.minutes == null
                     else -> true
-                }) && words.all { it in entry.text }
+                }) && (smart.maxMinutes == null || entry.minutes != null && entry.minutes <= smart.maxMinutes) &&
+                (smart.maxCalories == null || entry.recipe.calories <= smart.maxCalories) &&
+                (smart.minProtein == null || entry.recipe.protein >= smart.minProtein) &&
+                (!smart.noCook || entry.noCook) && (!smart.work || entry.work) &&
+                words.all { it in entry.text }
         }.map { it.recipe }.toList()
     }
 
