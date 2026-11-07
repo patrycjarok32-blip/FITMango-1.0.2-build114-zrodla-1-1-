@@ -310,7 +310,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 horizontalArrangement = Arrangement.SpaceBetween) {
                 TextButton(onClick = { selectedDayName = selectedDate.minusWeeks(1).toString() },
                     modifier = Modifier.testTag("meal_previous_week")) {
-                    Icon(Icons.Default.ChevronLeft, contentDescription = null)
+                    Icon(Icons.Outlined.ChevronLeft, contentDescription = null)
                     Text("Poprzedni")
                 }
                 Text("Tydzień ${selectedDate.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR)}",
@@ -318,7 +318,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 TextButton(onClick = { selectedDayName = selectedDate.plusWeeks(1).toString() },
                     modifier = Modifier.testTag("meal_next_week")) {
                     Text("Następny")
-                    Icon(Icons.Default.ChevronRight, contentDescription = null)
+                    Icon(Icons.Outlined.ChevronRight, contentDescription = null)
                 }
             }
             Row(
