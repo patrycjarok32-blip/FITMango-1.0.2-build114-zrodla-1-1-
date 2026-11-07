@@ -184,7 +184,12 @@ fun DashboardScreen(
                 }
                 MangoGuide(size = 38.dp, event = consumedCalories + waterTotal)
             }
-            MangoDailyGreeting(
+            var showDailyGreeting by rememberSaveable { mutableStateOf(false) }
+            TextButton(onClick = { showDailyGreeting = !showDailyGreeting },
+                modifier = Modifier.testTag("dashboard_daily_greeting_toggle")) {
+                Text(if (showDailyGreeting) "Ukryj motywację −" else "Motywacja dnia +")
+            }
+            if (showDailyGreeting) MangoDailyGreeting(
                 today = today,
                 activeDates = habitDays.map { it.date },
                 waterMl = waterTotal,
@@ -197,10 +202,10 @@ fun DashboardScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
             ) {
-                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(144.dp)) {
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(116.dp)) {
                             CircularProgressIndicator(progress = { calorieFraction }, modifier = Modifier.fillMaxSize(),
                                 color = JuicyOrange, trackColor = MutedSurface2, strokeWidth = 10.dp)
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
