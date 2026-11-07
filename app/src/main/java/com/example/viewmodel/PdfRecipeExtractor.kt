@@ -153,27 +153,47 @@ data class PdfChunkExtractionOutcome(
 internal object PdfRecipeExtractor {
 
 
+    /** Extract complete recipes even when a title, ingredients and steps occupy separate pages. */
     fun extractPageSpanningRecipes(text: String, source: String): List<ParsedRecipe> {
-        val pages = Regex("""(?m)^=== STRONA \d+ ===\s*$""").split(text)
+        val pages = Regex("""(?m)^=== STRONA (\\d+) ===\\s*$""").split(text)
         val found = mutableListOf<ParsedRecipe>()
-        for (i in 1 until pages.size - 2) {
-            val title = pages[i].trim()
-            if (title.length !in 5..160 || title.lines().size > 5 || title.startsWith("PRZEPISY ", ignoreCase = true)) continue
-            val ingredientsPage = pages[i + 1]
-            val preparationPage = pages[i + 2]
-            if (!ingredientsPage.contains("Składniki", ignoreCase = true) || !preparationPage.contains("Przygotowanie", ignoreCase = true)) continue
-            val ingredients = ingredientsPage.substringAfter("Składniki").substringBefore("Sugerowana liczba porcji")
-                .lines().map { it.trim() }.filter { it.startsWith("•") || it.startsWith("- ") || it.startsWith("॰") }
+        val titleRegex = Regex("""^[A-ZĄĆĘŁŃÓŚŹŻ0-9][A-ZĄĆĘŁŃÓŚŹŻ0-9\\s,()'’:\\-–]+$""")
+        for (i in 1 until pages.size) {
+            val rawTitle = pages[i].trim()
+            val titleLines = rawTitle.lines().map { it.trim() }.filter { it.isNotBlank() }
+            if (titleLines.isEmpty() || titleLines.size > 5 || rawTitle.length !in 5..150 ||
+                titleLines.any { !titleRegex.matches(it) } ||
+                rawTitle.startsWith("PRZEPISY ", true) || rawTitle.startsWith("BAZA:", true).not() && rawTitle.startsWith("SŁOWO ", true)) continue
+            val title = titleLines.joinToString(" ").replace(Regex("""\\s+"""), " ").trim()
+            val content = pages.drop(i + 1).take(3).joinToString("\\n")
+            val ingredientStart = Regex("""(?im)^\\s*Składniki\\s*$""").find(content) ?: continue
+            val preparationStart = Regex("""(?im)^\\s*Przygotowanie\\s*$""").find(content) ?: continue
+            if (preparationStart.range.first <= ingredientStart.range.last) continue
+            val ingredientSection = content.substring(ingredientStart.range.last + 1, preparationStart.range.first)
+                .substringBefore("Sugerowana liczba porcji", missingDelimiterValue = content.substring(ingredientStart.range.last + 1, preparationStart.range.first))
+            val ingredients = ingredientSection.lines().map { it.trim() }
+                .filter { it.startsWith("•") || it.startsWith("- ") || it.startsWith("॰") }
                 .map { it.removePrefix("•").removePrefix("-").removePrefix("॰").trim() }
-            val steps = Regex("""(?m)^\s*\d+[.)]\s+(.+)""")
-                .findAll(preparationPage.substringAfter("Przygotowanie"))
-                .map { it.groupValues[1] }.toList()
+                .filter { it.isNotBlank() }
+            val preparation = content.substring(preparationStart.range.last + 1)
+            val steps = Regex("""(?m)^\\s*(\\d+)[.)]\\s+(.+?)(?=\\n\\s*\\d+[.)]\\s+|\\n\\s*Cały przepis:|\\z)""", RegexOption.DOT_MATCHES_ALL)
+                .findAll(preparation).map { match -> match.groupValues[2].trim().replace(Regex("""\\s+"""), " ") }.toList()
             if (ingredients.size < 2 || steps.isEmpty()) continue
-            found.add(ParsedRecipe(
-                title = title, servings = "1", ingredients = ingredients.joinToString("\n"),
-                instructions = steps.joinToString("\n"), calories = 0, protein = 0,
-                carbs = 0, fat = 0, source = source, sourcePageOrChunk = "PDF"
-            ))
+            val servings = Regex("""Sugerowana liczba porcji:\\s*(\\d+)""", RegexOption.IGNORE_CASE)
+                .find(content)?.groupValues?.get(1) ?: "1"
+            // Prefer per-serving nutrition where present; otherwise leave missing fields unset.
+            val perServing = preparation.substringAfter("Jedna porcja:", "")
+            fun macro(label: String): Int {
+                val number = Regex("""(?i)\\b$label\\s*:\\s*(\\d+(?:[,.]\\d+)?)""")
+                    .find(perServing)?.groupValues?.get(1)?.replace(',', '.')?.toDoubleOrNull()
+                return number?.toInt() ?: 0
+            }
+            found.add(ParsedRecipe(title = title, servings = servings,
+                ingredients = ingredients.joinToString("\\n"),
+                instructions = steps.mapIndexed { index, step -> "${index + 1}. $step" }.joinToString("\\n"),
+                calories = macro("Kalorie"), protein = macro("Białko"),
+                carbs = macro("Węglowodany"), fat = macro("Tłuszcze"),
+                source = source, sourcePageOrChunk = "PDF, strona ${i + 1}"))
         }
         return deduplicateParsedRecipes(found)
     }
