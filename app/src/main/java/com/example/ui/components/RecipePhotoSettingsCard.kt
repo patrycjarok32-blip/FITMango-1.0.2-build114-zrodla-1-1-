@@ -38,13 +38,13 @@ fun RecipePhotoSettingsCard(viewModel: DietaViewModel) {
                     if (it) viewModel.fillMissingRecipePhotos(context) else viewModel.cancelRecipePhotoFill()
                 })
             }
-            Text("Najpierw szukamy pasującego zdjęcia w Pixabay. Jeśli go nie ma, generujemy ilustrację AI w darmowym limicie. Zdjęcia dodane przez Ciebie i pobrane z przepisu zachowujemy.")
+            Text("Uzupełniamy wyłącznie brakujące zdjęcia: Pixabay, następnie Wikimedia Commons, a na końcu opcjonalna ilustracja AI. Już pobrane zdjęcia pozostają zapisane.", style = MaterialTheme.typography.bodySmall)
             OutlinedTextField(pixabay, onValueChange = { pixabay = it }, label = { Text("Darmowy klucz Pixabay") },
                 visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
             TextButton(onClick = { links.openUri("https://pixabay.com/api/docs/") }) { Text("Uzyskaj darmowy klucz Pixabay") }
             OutlinedTextField(hf, onValueChange = { hf = it }, label = { Text("Token Hugging Face — opcjonalnie") },
                 visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
-            Text("AI działa też bez tokenu, ze wspólnym limitem. Własny token daje limit Twojego konta. Nie korzystamy z płatnej usługi.")
+            Text("AI działa również bez tokenu, ale darmowy limit może być czasowo niedostępny.", style = MaterialTheme.typography.bodySmall)
             TextButton(onClick = { links.openUri("https://huggingface.co/settings/tokens") }) { Text("Ustawienia tokenu Hugging Face") }
             Button(onClick = {
                 try {
@@ -56,7 +56,7 @@ fun RecipePhotoSettingsCard(viewModel: DietaViewModel) {
                     settings.status("Zapisano ustawienia. Klucze są przechowywane tylko na telefonie.")
                 } catch (_: Exception) { notice = "Nie udało się bezpiecznie zapisać klucza. Spróbuj ponownie." }
             }) { Text("Zapisz i uzupełnij zdjęcia") }
-            Text(notice, style = MaterialTheme.typography.bodySmall)
+            Text(notice, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             TextButton(onClick = { links.openUri("https://pixabay.com") }) { Text("Zdjęcia: Pixabay i autorzy") }
         }
     }
