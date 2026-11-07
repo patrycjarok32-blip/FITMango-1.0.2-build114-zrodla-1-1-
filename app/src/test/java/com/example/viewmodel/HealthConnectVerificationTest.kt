@@ -162,6 +162,7 @@ class HealthConnectVerificationTest {
             HealthConnectSupport.isDuplicateMeasurement(
                 existingMeasurements = existing,
                 recordId = "rec_existing_123",
+                weightKg = 64.8f,
                 dateString = "2026-10-02",
                 timestampMillis = 1699100000000L
             )
@@ -172,6 +173,7 @@ class HealthConnectVerificationTest {
             HealthConnectSupport.isDuplicateMeasurement(
                 existingMeasurements = existing,
                 recordId = "rec_other",
+                weightKg = 64.8f,
                 dateString = "2026-10-02",
                 timestampMillis = 1699100010000L // 10s difference
             )
@@ -182,6 +184,7 @@ class HealthConnectVerificationTest {
             HealthConnectSupport.isDuplicateMeasurement(
                 existingMeasurements = existing,
                 recordId = "rec_new_456",
+                weightKg = 64.5f,
                 dateString = "2026-10-06",
                 timestampMillis = 1700000000000L
             )
