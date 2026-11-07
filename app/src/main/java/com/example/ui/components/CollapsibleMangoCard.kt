@@ -4,6 +4,10 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -53,7 +57,18 @@ fun CollapsibleMangoCard(
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MangoSectionArt(sectionArtwork(sectionId), sectionArtworkAccent(sectionId), size = 44.dp)
+                Box(Modifier.size(44.dp).background(sectionArtworkAccent(sectionId).copy(alpha = 0.13f), RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+                    val symbol = when {
+                        sectionId.contains("quality") -> Icons.Outlined.FactCheck
+                        sectionId.contains("week") -> Icons.Outlined.DateRange
+                        sectionId.contains("wellbeing") -> Icons.Outlined.FavoriteBorder
+                        sectionId.contains("photo") -> Icons.Outlined.PhotoCamera
+                        sectionId.contains("health") -> Icons.Outlined.FavoriteBorder
+                        sectionId.contains("recipe") -> Icons.Outlined.MenuBook
+                        else -> Icons.Outlined.Tune
+                    }
+                    Icon(symbol, contentDescription = null, tint = sectionArtworkAccent(sectionId), modifier = Modifier.size(25.dp))
+                }
                 Text(title, Modifier.weight(1f), color = Cream,
                     style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(if (expanded) "Zwiń −" else "Rozwiń +", color = LeafGreen,
