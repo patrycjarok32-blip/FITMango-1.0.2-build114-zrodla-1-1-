@@ -30,8 +30,8 @@ workflows:
           : "${STORE_PASSWORD:?Brak STORE_PASSWORD w chronionych zmiennych Codemagic}"
           : "${KEY_PASSWORD:?Brak KEY_PASSWORD w chronionych zmiennych Codemagic}"
           : "${KEY_ALIAS:?Brak KEY_ALIAS w chronionych zmiennych Codemagic}"
-          export KEYSTORE_PATH="$CM_BUILD_DIR/my-upload-key.jks"
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          export KEYSTORE_PATH="$PWD/my-upload-key.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -D > "$KEYSTORE_PATH"
           chmod 600 "$KEYSTORE_PATH"
           test -s "$KEYSTORE_PATH" || { echo "BŁĄD: pusty plik klucza"; exit 1; }
           keytool -list -keystore "$KEYSTORE_PATH" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null || {
