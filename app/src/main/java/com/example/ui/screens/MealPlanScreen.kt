@@ -1552,7 +1552,7 @@ internal fun PlannedMealDetailCard(
                 OutlinedButton(onClick = onChangeRecipeClick, enabled = interactionsEnabled,
                     contentPadding = PaddingValues(horizontal = 12.dp),
                     modifier = Modifier.testTag("quick_change_recipe_${meal.id}")) {
-                    Icon(Icons.Outlined.SwapHoriz, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.SwapHoriz, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(4.dp))
                     Text("Zmień")
                 }
