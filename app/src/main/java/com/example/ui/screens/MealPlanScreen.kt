@@ -87,6 +87,7 @@ import kotlin.math.roundToInt
 fun MealPlanScreen(viewModel: DietaViewModel) {
     val mealPlans by viewModel.mealPlans.collectAsStateWithLifecycle()
     val recipes by viewModel.recipes.collectAsStateWithLifecycle()
+    val profile by viewModel.userProfile.collectAsStateWithLifecycle()
     val recipeIngredients by viewModel.recipeIngredients.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoadingAi.collectAsStateWithLifecycle()
     val refreshing by viewModel.healthConnect.isSyncing.collectAsStateWithLifecycle()
@@ -182,8 +183,9 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
         previousEatenCount = eatenMeals.size
     }
     val displayedCategories = mealCategories.filter { category ->
-        showEmptySlots || dayMeals.isEmpty() || renderedMeals.any { MealPlannerSupport.matchesMealCategory(it.mealType, category.canonicalName) }
-    }.sortedBy { category -> if (renderedMeals.any { MealPlannerSupport.matchesMealCategory(it.mealType, category.canonicalName) }) 0 else 1 }
+        category.canonicalName in com.example.viewmodel.LocalFourMealPlanner.SLOTS ||
+            showEmptySlots || dayMeals.any { MealPlannerSupport.matchesMealCategory(it.mealType, category.canonicalName) }
+    }
 
     // Dialog states
     var mealToChangeRecipe by remember { mutableStateOf<MealPlanEntity?>(null) }
@@ -271,7 +273,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     IconButton(onClick = { showAiPlanOptions = true }) {
                         Icon(
                             imageVector = Icons.Outlined.AutoAwesome,
-                            contentDescription = "Generuj z AI",
+                            contentDescription = "Generuj cztery posiłki z moich przepisów",
                             tint = GoldAccent
                         )
                     }
@@ -314,6 +316,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     val mealsForDate = mealPlans.filter { MealPlannerSupport.matchesDay(it.dayOfWeek, dayDate) }
                     val plannedCount = com.example.viewmodel.MealQueueSupport.remaining(mealsForDate, dayDate).size
                     val eatenCount = com.example.viewmodel.MealQueueSupport.eaten(mealsForDate, dayDate).size
+                    val progress = (eatenCount.toFloat() / mealsForDate.size.coerceAtLeast(1)).coerceIn(0f, 1f)
                     val isToday = dayDate == currentDate
                     val dropTarget = dragController.target() == dayDate
                     Column(
@@ -341,7 +344,8 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                             modifier = Modifier
                                 .size(26.dp)
                                 .clip(CircleShape)
-                                .background(if (isSelected) JuicyOrange else Color.Transparent),
+                                .background(if (isSelected) JuicyOrange else Color.Transparent)
+                                .border(2.dp, if (progress >= 1f && mealsForDate.isNotEmpty()) LeafGreen else if (eatenCount > 0) LeafGreen.copy(alpha = .55f) else Color.Transparent, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -365,35 +369,47 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
             }
 
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("planner_compact_daily_balance"),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MutedSurface1)
             ) {
-                Column(Modifier.weight(1f)) {
-                    MangoSectionTitle(text = "Posiłki • ${selectedDaySpec.canonicalName}")
-                    key(selectedDayName) {
-                        if (dayMeals.isEmpty()) Text("Zaplanowano: 0 posiłków", modifier = Modifier.testTag("daily_nutrition_summary"), style = MaterialTheme.typography.labelMedium)
-                        else AnimatedMealNutrition(dailyNutrition, "daily_nutrition_summary", prefix = "Suma dnia: ")
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Bilans dnia", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            Text("${eatenMeals.size} zjedzone • ${remainingMeals.size} do zjedzenia",
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Button(onClick = { showAiPlanOptions = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = JuicyOrange, contentColor = MangoButtonInk),
+                            shape = RoundedCornerShape(14.dp), modifier = Modifier.testTag("planner_generate_local")) {
+                            Icon(Icons.Outlined.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(5.dp))
+                            Text("Generuj", fontWeight = FontWeight.Bold)
+                        }
                     }
-                }
-
-                Button(
-                    onClick = { showAiPlanOptions = true },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = JuicyOrange,
-                        contentColor = MangoButtonInk
-                    ),
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.pressScaleEffect()
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.AutoAwesome,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Generuj", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    val target = (profile?.targetCalories ?: 2000).coerceAtLeast(1)
+                    val consumed = eatenMeals.sumOf { it.calories }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column { Text("${consumed} kcal", fontWeight = FontWeight.Bold, color = LeafGreen)
+                            Text("Zjedzone", style = MaterialTheme.typography.labelSmall) }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("${target} kcal", fontWeight = FontWeight.Bold)
+                            Text("Cel", style = MaterialTheme.typography.labelSmall)
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text("${(target - consumed).coerceAtLeast(0)} kcal", fontWeight = FontWeight.Bold, color = JuicyOrange)
+                            Text("Pozostało", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                    LinearProgressIndicator(progress = { (consumed.toFloat() / target).coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape),
+                        color = LeafGreen, trackColor = MaterialTheme.colorScheme.surface)
+                    if (dayMeals.isNotEmpty()) {
+                        AnimatedMealNutrition(dailyNutrition, "daily_nutrition_summary", prefix = "Zaplanowano: ")
+                    } else Text("Brak zaplanowanych posiłków", modifier = Modifier.testTag("daily_nutrition_summary"),
+                        style = MaterialTheme.typography.bodySmall)
                 }
             }
 
@@ -573,7 +589,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         dragController = dragController
                     )
                 }
-                if (dayMeals.isNotEmpty()) item { TextButton(onClick = { showEmptySlots = !showEmptySlots }, modifier = Modifier.testTag("show_other_meal_slots")) { Text(if (showEmptySlots) "Ukryj puste pory posiłków" else "Zaplanuj dodatkowy posiłek") } }
+                item { TextButton(onClick = { showEmptySlots = !showEmptySlots }, modifier = Modifier.testTag("show_other_meal_slots")) { Text(if (showEmptySlots) "Ukryj dodatkowe pory" else "Pokaż dodatkowe pory posiłków") } }
             }
         }
         MealDragOverlay(dragController)
