@@ -69,8 +69,8 @@ fun MangoBottomNav(
     fun accent(route: String): Color = when (route) {
         Screen.Dashboard.route -> JuicyOrange
         Screen.MealPlan.route -> JuicyOrange
-        Screen.Sport.route -> JuicyOrange
-        Screen.Progress.route -> JuicyOrange
+        Screen.Sport.route -> LeafGreen
+        Screen.Progress.route -> LeafGreen
         else -> MangoYellow
     }
     Surface(
