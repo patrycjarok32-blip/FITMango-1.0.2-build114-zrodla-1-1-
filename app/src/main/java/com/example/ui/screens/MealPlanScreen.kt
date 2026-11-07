@@ -242,7 +242,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 text = { Text("Dodaj") },
                 containerColor = JuicyOrange,
                 contentColor = MangoButtonInk,
-                modifier = Modifier.testTag("fresh_mango_quick_add").height(52.dp)
+                modifier = Modifier.testTag("fresh_mango_quick_add").height(48.dp)
             )
         },
         topBar = {
@@ -363,30 +363,6 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 IngredientSubstitutionSupport.totalMealNutrition(dayMeals, recipes, recipeIngredients)
             }
 
-            Surface(
-                modifier = Modifier.fillMaxWidth().testTag("modern_fresh_daily_nutrition"),
-                shape = RoundedCornerShape(20.dp),
-                color = MutedSurface1,
-                tonalElevation = 1.dp
-            ) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = JuicyOrange, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Bilans wybranego dnia", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                        Text("${dayMeals.size} posiłków", color = GoldAccent, style = MaterialTheme.typography.labelMedium)
-                    }
-                    if (dayMeals.isEmpty()) {
-                        Text("Dodaj pierwszy posiłek, aby zobaczyć kalorie i makroskładniki.", color = GoldAccent, style = MaterialTheme.typography.bodySmall)
-                    } else {
-                        AnimatedMealNutrition(dailyNutrition, "modern_fresh_nutrition_values", prefix = "")
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Zaplanowane: ${dayMeals.size}", color = GoldAccent, fontSize = 12.sp)
-                        Text("Zjedzone: ${eatenMeals.size}", color = LeafGreen, fontSize = 12.sp)
-                    }
-                }
-            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
