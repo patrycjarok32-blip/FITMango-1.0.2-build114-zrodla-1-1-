@@ -31,6 +31,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Add
@@ -269,7 +270,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 actions = {
                     IconButton(onClick = { showAiPlanOptions = true }) {
                         Icon(
-                            imageVector = Icons.Default.AutoAwesome,
+                            imageVector = Icons.Outlined.AutoAwesome,
                             contentDescription = "Generuj z AI",
                             tint = GoldAccent
                         )
@@ -387,7 +388,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                     modifier = Modifier.pressScaleEffect()
                 ) {
                     Icon(
-                        imageVector = Icons.Default.AutoAwesome,
+                        imageVector = Icons.Outlined.AutoAwesome,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp)
                     )
@@ -455,7 +456,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                                 modifier = Modifier.fillMaxWidth().clickable { toolsExpanded = !toolsExpanded }.padding(horizontal = 12.dp, vertical = 9.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = JuicyOrange)
+                                Icon(Icons.Outlined.AutoAwesome, contentDescription = null, tint = JuicyOrange)
                                 Spacer(Modifier.width(10.dp))
                                 Text("Narzędzia", modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
                                 Text(if (toolsExpanded) "Zwiń" else "Rozwiń", color = LeafGreen)
@@ -626,7 +627,7 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         modifier = Modifier.fillMaxWidth().testTag("planner_recipe_search"),
                         singleLine = true,
                         placeholder = { Text("Szukaj w zapisanych przepisach...", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), fontSize = 12.sp) },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                        leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                         shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = JuicyOrange,
@@ -1469,10 +1470,10 @@ internal fun PlannedMealDetailCard(
                                     }
                                     if (viewModel != null) IconButton(modifier = Modifier.testTag("remove_meal_ingredient_${meal.id}_${ing.originalIngredientName}"),
                                         onClick = { removingIngredient = ing; ingredientError = null }) {
-                                        Icon(Icons.Default.DeleteOutline, contentDescription = "Usuń składnik ${ing.ingredientName}", tint = MaterialTheme.colorScheme.primary)
+                                        Icon(Icons.Outlined.DeleteOutline, contentDescription = "Usuń składnik ${ing.ingredientName}", tint = MaterialTheme.colorScheme.primary)
                                     }
                                     if (onIngredientQuantityChange != null) IconButton(modifier = Modifier.testTag("edit_ingredient_quantity_${meal.id}_${ing.originalIngredientName}"), onClick = { quantityTarget = ing; quantityText = ing.quantityForMeal?.let { IngredientSubstitutionSupport.quantityInGramsOrMl(ing.ingredientName, it, ing.unit, recipeIngredients.filter { row -> row.recipeId == recipe?.id }) }?.toString().orEmpty() }) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Zmień gramaturę", tint = MaterialTheme.colorScheme.primary)
+                                        Icon(Icons.Outlined.Edit, contentDescription = "Zmień gramaturę", tint = MaterialTheme.colorScheme.primary)
                                     }
                                     TextButton(
                                         onClick = { onSwapIngredientClick("${ing.originalIngredientName} — ${MealPlannerSupport.formatQuantityNumber((ing.originalBaseQuantity ?: 1f) * meal.servings)} ${ing.originalUnit}") },
