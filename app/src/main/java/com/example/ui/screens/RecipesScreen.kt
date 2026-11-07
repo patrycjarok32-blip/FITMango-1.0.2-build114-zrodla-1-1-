@@ -282,7 +282,7 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("recipes_search_input"),
-                placeholder = { Text("Szukaj przepisu...", color = Cream.copy(alpha = 0.5f)) },
+                placeholder = { Text("Np. obiad do 30 min, do 500 kcal", color = Cream.copy(alpha = 0.5f)) },
                 leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null, tint = MangoYellow) },
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -383,6 +383,7 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
             }
             }
                 gridItems(filteredRecipes, key = { it.id }) { recipe ->
+                    val photoReview = com.example.viewmodel.RecipePhotoReview.needsReview(recipe.title, recipe.imageUrl)
                     MangoRecipeCard(
                         title = recipe.title,
                         category = RecipeCategories.categories(recipe.category).joinToString(" / ") { RecipeCategories.label(it) },
@@ -396,7 +397,15 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
                         onFavoriteClick = { viewModel.toggleRecipeFavorite(recipe.id) },
                         modifier = Modifier.testTag("recipe_card_${recipe.title}")
                             .mangoResultAppearance("$selectedCategory|$preparationFilter|${searchResult.first}|$favoritesOnly"),
-                        preparationMinutes = viewModel.usability.minutes(recipe)
+                        preparationMinutes = viewModel.usability.minutes(recipe),
+                        protein = recipe.protein,
+                        photoNeedsReview = photoReview,
+                        onAddToPlanClick = {
+                            recipeToAddToPlan = recipe
+                            servingsInput = "1"
+                            selectedPlanDay = java.time.LocalDate.now().toString()
+                            showAddToPlanDialog = true
+                        }
                     )
                 }
         }
