@@ -99,7 +99,7 @@ fun RecipePhotoDialog(recipe: RecipeEntity, viewModel: DietaViewModel, onDismiss
                 Text(if (usePixabay) "Zdjęcia z Pixabay. Darmowy klucz dodaj w Profilu. Wybierz zdjęcie pasujące do potrawy; autor i licencja zostaną zapisane przy przepisie." else "Bezpłatne zdjęcia z Wikimedia Commons, bez klucza. Wybierz zdjęcie pasujące do potrawy.", color = MaterialTheme.colorScheme.onSurface)
                 if (usePixabay) TextButton(onClick = { links.openUri("https://pixabay.com") }) { Text("Zdjęcia: Pixabay", color = MaterialTheme.colorScheme.primary) }
                 OutlinedTextField(query, { query = it.take(if (usePixabay) 100 else 120) }, label = { Text("Hasło do zdjęcia") }, modifier = Modifier.fillMaxWidth())
-                Text("Szukamy po angielsku. Nazwa przepisu w aplikacji pozostaje bez zmian. Zdjęcia z bazy są poglądowe.", color = MangoYellow)
+                Text("Szukamy po angielsku. Nazwa przepisu w aplikacji pozostaje bez zmian. Zdjęcia z bazy są poglądowe.", color = MaterialTheme.colorScheme.primary)
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     TextButton(enabled = !loading, onClick = {
                         keyboard?.hide()
@@ -112,7 +112,7 @@ fun RecipePhotoDialog(recipe: RecipeEntity, viewModel: DietaViewModel, onDismiss
                             catch (e: Exception) { message = e.message ?: "Sprawdź połączenie z internetem." }
                             finally { loading = false }
                         }
-                    }) { Text("Szukaj zdjęć", color = MangoYellow) }
+                    }) { Text("Szukaj zdjęć", color = MaterialTheme.colorScheme.primary) }
                     TextButton(enabled = !loading, onClick = {
                         keyboard?.hide()
                         loading = true; message = null
@@ -120,11 +120,11 @@ fun RecipePhotoDialog(recipe: RecipeEntity, viewModel: DietaViewModel, onDismiss
                             loading = false
                             if (success) onDismiss() else message = error
                         }
-                    }) { Text("Ze strony przepisu", color = MangoYellow) }
+                    }) { Text("Ze strony przepisu", color = MaterialTheme.colorScheme.primary) }
                 }
-                TextButton(enabled = !loading, onClick = { gallery.launch("image/*") }) { Text("Wybierz zdjęcie z telefonu", color = MangoYellow) }
+                TextButton(enabled = !loading, onClick = { gallery.launch("image/*") }) { Text("Wybierz zdjęcie z telefonu", color = MaterialTheme.colorScheme.primary) }
                 if (loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.primary)
-                message?.let { Text(it, color = MangoYellow) }
+                message?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
                 LazyColumn(Modifier.heightIn(max = 270.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(candidates, key = { it.imageUrl }) { photo ->
                         Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)).clickable(enabled = !loading) {
@@ -132,9 +132,9 @@ fun RecipePhotoDialog(recipe: RecipeEntity, viewModel: DietaViewModel, onDismiss
                             selected = photo; message = null
                         }.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             RecipePhoto(photo.imageUrl, photo.title, Modifier.fillMaxWidth().height(120.dp))
-                            Text(photo.title, color = Cream, maxLines = 2)
-                            Text("${photo.author} • ${photo.license}", color = MangoYellow, maxLines = 2)
-                            Text(if (selected?.imageUrl == photo.imageUrl) "Wybrane — zatwierdź poniżej" else "Pokaż podgląd", color = MangoYellow)
+                            Text(photo.title, color = MaterialTheme.colorScheme.onSurface, maxLines = 2)
+                            Text("${photo.author} • ${photo.license}", color = MaterialTheme.colorScheme.primary, maxLines = 2)
+                            Text(if (selected?.imageUrl == photo.imageUrl) "Wybrane — zatwierdź poniżej" else "Pokaż podgląd", color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
@@ -153,5 +153,5 @@ fun RecipePhotoDialog(recipe: RecipeEntity, viewModel: DietaViewModel, onDismiss
                 }) { Text("Zapisz zdjęcie") }
             }
         },
-        dismissButton = { TextButton(enabled = !loading, onClick = onDismiss) { Text("Zamknij", color = Cream) } })
+        dismissButton = { TextButton(enabled = !loading, onClick = onDismiss) { Text("Zamknij", color = MaterialTheme.colorScheme.onSurface) } })
 }
