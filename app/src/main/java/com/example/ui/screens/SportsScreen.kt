@@ -4,6 +4,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.*
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -36,6 +37,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         sports.refreshIfGranted { viewModel.usability.changed() }
     }
     val busy by sports.busy.collectAsStateWithLifecycle()
+    val reducedMangoMotion = LocalReducedMangoMotion.current
     val message by sports.message.collectAsStateWithLifecycle()
     val aiBusy by viewModel.effectsAiBusy.collectAsStateWithLifecycle()
     val aiReport by viewModel.sportsWeeklyAi.collectAsStateWithLifecycle()
@@ -109,7 +111,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
         item {
             MangoCard(Modifier.fillMaxWidth().testTag("health_connect_training_diary")) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(Modifier.padding(14.dp).then(if (reducedMangoMotion) Modifier else Modifier.animateContentSize(animationSpec = androidx.compose.animation.core.tween(220))), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("Historia treningów • 30 dni",
                         style = MaterialTheme.typography.titleMedium, color = MangoMint)
                     Text("Zapisane aktywności: ${visible.size}",
