@@ -76,7 +76,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     }.sortedByDescending { it.start } }
     val duplicates = remember(data) { val ids = ActivityRecoverySupport.unique(data.history).map { it.id }.toSet(); data.history.filterNot { it.id in ids } }
     LazyColumn(Modifier.fillMaxSize().background(DarkBackground).padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp)) {
+        verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("Aktywność", style = MaterialTheme.typography.headlineSmall,
@@ -107,7 +107,14 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     label = { Text("Raport") }, modifier = Modifier.testTag("sport_report_tab")) }
             }
         }
-        item { TextButton(onClick = { showExtras = !showExtras; showReport = false }, modifier = Modifier.testTag("sport_personal_progress")) { Text(if (showExtras) "Wróć do aktywności ←" else "Rekordy i porównanie tygodni →") } }
+        item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { showExtras = !showExtras; showReport = false }, modifier = Modifier.weight(1f).testTag("sport_personal_progress")) {
+                Text(if (showExtras) "Wróć" else "Rekordy i siła", maxLines = 1)
+            }
+            OutlinedButton(onClick = { showReport = true; showExtras = false }, modifier = Modifier.weight(1f).testTag("sport_report_shortcut")) {
+                Text("Raport tygodnia", maxLines = 1)
+            }
+        } }
         if (showExtras) {
             item { PersonalProgressCards(viewModel, data, today) }
         } else if (showReport) {
@@ -122,7 +129,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 onAddSet = { day, exercise, reps, kg -> sports.addSet(day, exercise, reps, kg) { saved() } })
         }
         if (activitySection == "today") item { ActivityTodayCard(data, today, current) }
-        if (activitySection != "profile") item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (activitySection == "today" || activitySection == "training") item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SportsHistoryControls(busy,
                 onPermissions = { permissionError = null; runCatching { launcher.launch(setOf(
                     HealthPermission.getReadPermission(ExerciseSessionRecord::class), HealthPermission.getReadPermission(DistanceRecord::class),
@@ -189,7 +196,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
         }
         if (showSportNutrition && activitySection == "training") item { NutritionWeekCard(viewModel) }
-        item { Button(onClick = { showReport = true; showExtras = false }, modifier = Modifier.fillMaxWidth().testTag("sport_open_report")) { Text("Zobacz raport tygodniowy →") } }
+
         if (activitySection == "training") item {
             TextButton(onClick = { showHistory = !showHistory }) { Text(if (showHistory) "Zwiń historię treningów −" else "Historia treningów (${visible.size}) +") }
             Text("Kalorie treningów mają charakter informacyjny. Nie zwiększają celu jedzenia i nie są ponownie dodawane do spalania ogółem.", style = MaterialTheme.typography.bodySmall)
