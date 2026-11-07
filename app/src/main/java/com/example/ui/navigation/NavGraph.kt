@@ -262,7 +262,7 @@ fun MainNavigation(viewModel: DietaViewModel) {
                 },
             enterTransition = {
                 val direction = tabTransitionDirection(initialState.destination.route, targetState.destination.route)
-                slideInHorizontally(tween(if (reduced) 0 else 240)) { width -> if (reduced) 0 else direction * width / 8 } + fadeIn(tween(if (reduced) 0 else 200))
+                slideInHorizontally(tween(if (reduced) 0 else 200)) { width -> if (reduced) 0 else direction * width / 8 } + fadeIn(tween(if (reduced) 0 else 200))
             },
             exitTransition = {
                 val direction = tabTransitionDirection(initialState.destination.route, targetState.destination.route)
