@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -236,9 +237,9 @@ fun DashboardScreen(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_quick_navigation"),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                FreshMangoDestinationCard("Jadłospis", "Posiłki", Icons.Default.RestaurantMenu,
+                FreshMangoDestinationCard("Jadłospis", "Posiłki", Icons.Outlined.RestaurantMenu,
                     Modifier.weight(1f), onNavigateToMealPlan)
-                FreshMangoDestinationCard("Trening", "Aktywność", Icons.Default.FitnessCenter,
+                FreshMangoDestinationCard("Trening", "Aktywność", Icons.Outlined.FitnessCenter,
                     Modifier.weight(1f), onNavigateToSport)
                 FreshMangoDestinationCard("Postępy", "Wyniki", Icons.Default.TrendingUp,
                     Modifier.weight(1f), onNavigateToEffects)
@@ -279,7 +280,7 @@ fun DashboardScreen(
                             .background(MutedSurface2),
                         contentAlignment = Alignment.Center
                     ) {
-                        androidx.compose.material3.Icon(Icons.Default.RestaurantMenu,
+                        androidx.compose.material3.Icon(Icons.Outlined.RestaurantMenu,
                             contentDescription = null, tint = JuicyOrange,
                             modifier = Modifier.size(28.dp))
                     }
@@ -301,7 +302,7 @@ fun DashboardScreen(
                     color = GoldAccent, style = MaterialTheme.typography.bodyMedium)
                 TextButton(onClick = onNavigateToMealPlan) { Text("Jadłospis →") }
                 IconButton(onClick = onNavigateToSport, modifier = Modifier.testTag("dashboard_open_sport")) {
-                    androidx.compose.material3.Icon(Icons.Default.FitnessCenter, "Sport i treningi", tint = LeafGreen)
+                    androidx.compose.material3.Icon(Icons.Outlined.FitnessCenter, "Sport i treningi", tint = LeafGreen)
                 }
             }
 
@@ -395,7 +396,7 @@ fun DashboardScreen(
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Icon(Icons.Default.DirectionsWalk, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                                    Icon(Icons.Outlined.DirectionsWalk, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                                     Text("Kroki", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontWeight = FontWeight.Bold)
                                 }
                                 val stepsText = HealthConnectSupport.formatStepsDisplay(activity.steps)
@@ -420,7 +421,7 @@ fun DashboardScreen(
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = OrangeInk, modifier = Modifier.size(24.dp))
+                                    Icon(Icons.Outlined.LocalFireDepartment, contentDescription = null, tint = OrangeInk, modifier = Modifier.size(24.dp))
                                     Text("Spalone kcal", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontWeight = FontWeight.Bold)
                                 }
                                 val calBurnedText = com.example.viewmodel.CurrentActivitySupport.calories(activity.calories)?.let { "$it kcal" } ?: "Brak danych"
@@ -450,7 +451,7 @@ fun DashboardScreen(
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Icon(Icons.Default.MonitorWeight, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                                    Icon(Icons.Outlined.MonitorWeight, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                                     Text("Aktualna waga", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontWeight = FontWeight.Bold)
                                 }
                                 val weightText = if (latestWeightValue != null && latestWeightValue > 0f) {
@@ -479,7 +480,7 @@ fun DashboardScreen(
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Icon(Icons.Default.Bedtime, contentDescription = null, tint = GoldAccent, modifier = Modifier.size(24.dp))
+                                    Icon(Icons.Outlined.Bedtime, contentDescription = null, tint = GoldAccent, modifier = Modifier.size(24.dp))
                                     Text(activity.sleepLabel, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontWeight = FontWeight.Bold)
                                 }
                                 val sleepText = HealthConnectSupport.formatSleepDurationDisplay(activity.sleepMinutes)
@@ -616,7 +617,7 @@ fun DashboardScreen(
                 )
                 QuickActionCard(
                     title = "Baza przepisów",
-                    icon = Icons.Default.RestaurantMenu,
+                    icon = Icons.Outlined.RestaurantMenu,
                     modifier = Modifier.weight(1f),
                     onClick = onNavigateToRecipes
                 )
@@ -640,7 +641,7 @@ fun DashboardScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 QuickActionCard(
                     title = "Pomiary ciała",
-                    icon = Icons.Default.MonitorWeight,
+                    icon = Icons.Outlined.MonitorWeight,
                     modifier = Modifier.weight(1f),
                     onClick = onNavigateToMeasurements
                 )
@@ -736,7 +737,7 @@ private fun FreshMangoDestinationCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            val accent = if (imageVector == Icons.Default.FitnessCenter || imageVector == Icons.Default.TrendingUp) LeafGreen else JuicyOrange
+            val accent = if (imageVector == Icons.Outlined.FitnessCenter || imageVector == Icons.Default.TrendingUp) LeafGreen else JuicyOrange
             Box(
                 modifier = Modifier.size(42.dp).clip(RoundedCornerShape(14.dp))
                     .background(accent.copy(alpha = 0.12f)),
