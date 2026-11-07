@@ -44,6 +44,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     val foodDays by viewModel.habits.days.collectAsStateWithLifecycle()
     val confirmations by viewModel.healthConnect.weeklyEnergy.confirmations.collectAsStateWithLifecycle()
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
+    var activitySection by rememberSaveable { mutableStateOf("today") }
     var showReport by rememberSaveable { mutableStateOf(false) }
     var showExtras by rememberSaveable { mutableStateOf(false) }
     var showSportNutrition by rememberSaveable { mutableStateOf(false) }
@@ -87,10 +88,22 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             permissionError?.let { Text(it, color = ErrorInk) }
 
         }
-        item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = !showReport && !showExtras, onClick = { showReport = false; showExtras = false }, label = { Text("Aktywność") }, modifier = Modifier.testTag("sport_activity_tab"))
-            FilterChip(selected = showReport && !showExtras, onClick = { showReport = true; showExtras = false }, label = { Text("Raport") }, modifier = Modifier.testTag("sport_report_tab"))
-        } }
+        item {
+            androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                item { FilterChip(selected = activitySection == "today" && !showReport && !showExtras,
+                    onClick = { activitySection = "today"; showReport = false; showExtras = false },
+                    label = { Text("Aktywność") }, modifier = Modifier.testTag("sport_activity_tab")) }
+                item { FilterChip(selected = activitySection == "training" && !showReport && !showExtras,
+                    onClick = { activitySection = "training"; showReport = false; showExtras = false },
+                    label = { Text("Treningi") }, modifier = Modifier.testTag("sport_training_tab")) }
+                item { FilterChip(selected = activitySection == "recovery" && !showReport && !showExtras,
+                    onClick = { activitySection = "recovery"; showReport = false; showExtras = false },
+                    label = { Text("Regeneracja") }, modifier = Modifier.testTag("sport_recovery_tab")) }
+                item { FilterChip(selected = showReport && !showExtras,
+                    onClick = { showReport = true; showExtras = false },
+                    label = { Text("Raport") }, modifier = Modifier.testTag("sport_report_tab")) }
+            }
+        }
         item { TextButton(onClick = { showExtras = !showExtras; showReport = false }, modifier = Modifier.testTag("sport_personal_progress")) { Text(if (showExtras) "Wróć do aktywności ←" else "Rekordy i porównanie tygodni →") } }
         if (showExtras) {
             item { PersonalProgressCards(viewModel, data, today) }
@@ -99,7 +112,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             item { reportNumbers?.let { numbers -> SportsWeeklyReport(numbers, profile, aiReport, aiBusy) { viewModel.runWeeklyAiAnalysis() } }
                 ?: LinearProgressIndicator(Modifier.fillMaxWidth()) }
         } else {
-        item { ActivityTodayCard(data, today, current) }
+        if (activitySection == "today") item { ActivityTodayCard(data, today, current) }
         item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SportsHistoryControls(busy,
                 onPermissions = { permissionError = null; runCatching { launcher.launch(setOf(
@@ -108,8 +121,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     HealthPermission.getReadPermission(SleepSessionRecord::class))) }.onFailure { permissionError = "Otwórz uprawnienia Health Connect w Profilu." } },
                 onRefresh = { permissionError = null; sports.refresh { viewModel.usability.changed() } })
         } }
-        item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
-        item {
+        if (activitySection == "today" || activitySection == "training") item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
+        if (activitySection == "training") item {
             MangoCard(Modifier.fillMaxWidth().testTag("health_connect_training_diary")) {
                 Column(Modifier.padding(14.dp).then(if (reducedMangoMotion) Modifier else Modifier.animateContentSize(animationSpec = androidx.compose.animation.core.tween(220))), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("Historia treningów • 30 dni",
@@ -125,7 +138,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
         }
 
-        item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (activitySection == "today" || activitySection == "training") item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("Twój tydzień • $start – ${start.plusDays(6)}", style = MaterialTheme.typography.labelLarge, color = GoldAccent)
             SportGoalProgress(data, week, completed, previous, today == start)
             TextButton(onClick = { editGoal = !editGoal }) { Text(if (editGoal) "Zwiń ustawienia celu −" else "Zmień cel tygodniowy +") }
@@ -148,13 +161,13 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
             }
         } } }
-        item { Button(onClick = { add = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().testTag("sport_add_activity")) { Text("+ Dodaj wykonaną aktywność") } }
-        item { RecoveryCard(data, today, busy,
+        if (activitySection == "training") item { Button(onClick = { add = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().testTag("sport_add_activity")) { Text("+ Dodaj wykonaną aktywność") } }
+        if (activitySection == "recovery") item { RecoveryCard(data, today, busy,
             onSave = { d, energy, fatigue -> sports.recovery(d, energy, fatigue, ::saved) },
             onRemove = { sports.removeRecovery(it, ::saved) }) }
-        item { SportWellnessCards(data, today) }
-        item { SportInsightsCards(data, today, reportNumbers) }
-        item {
+        if (activitySection == "recovery") item { SportWellnessCards(data, today) }
+        if (activitySection == "recovery") item { SportInsightsCards(data, today, reportNumbers) }
+        if (activitySection == "training") item {
             MangoCard(Modifier.fillMaxWidth().testTag("sport_nutrition_connection")) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Sport + dieta", style = MaterialTheme.typography.titleMedium, color = LeafGreen)
@@ -166,14 +179,14 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 }
             }
         }
-        if (showSportNutrition) item { NutritionWeekCard(viewModel) }
+        if (showSportNutrition && activitySection == "training") item { NutritionWeekCard(viewModel) }
         item { Button(onClick = { showReport = true }, modifier = Modifier.fillMaxWidth().testTag("sport_open_report")) { Text("Zobacz raport tygodniowy →") } }
-        item {
+        if (activitySection == "training") item {
             TextButton(onClick = { showHistory = !showHistory }) { Text(if (showHistory) "Zwiń historię treningów −" else "Historia treningów (${visible.size}) +") }
             Text("Kalorie treningów mają charakter informacyjny. Nie zwiększają celu jedzenia i nie są ponownie dodawane do spalania ogółem.", style = MaterialTheme.typography.bodySmall)
             if (duplicates.isNotEmpty()) TextButton(onClick = { showDuplicates = !showDuplicates }) { Text("Pominięte powtórzenia: ${duplicates.size} • ${if (showDuplicates) "zwiń" else "pokaż"}") }
         }
-        if (showDuplicates) items(duplicates, key = { "duplicate|" + it.id }) { session ->
+        if (activitySection == "training" && showDuplicates) items(duplicates, key = { "duplicate|" + it.id }) { session ->
             Text("Pominięto: ${session.title} • ${sportTime(Instant.parse(session.start).toEpochMilli())} • ${session.source}", style = MaterialTheme.typography.bodySmall)
             if (ActivityRecoverySupport.manual(session)) TextButton(enabled = !busy, onClick = { sports.removeActivity(session.id, ::saved) }) { Text("Usuń ręczne powtórzenie") }
         }
