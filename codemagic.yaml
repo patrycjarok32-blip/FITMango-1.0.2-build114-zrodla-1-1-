@@ -66,16 +66,22 @@ workflows:
           set -eu
           echo "Gałąź: $CM_BRANCH"
           echo "Weryfikacja obecności zmiennych w grupie fitmango_key_setup:"
+          missing=0
           for name in STORE_PASSWORD KEY_PASSWORD KEY_BACKUP_PASSWORD; do
-            eval 'present=${'"${name}"'+x}'
-            if [ "$present" = x ]; then
-              echo "$name: dostępna"
+            case "$name" in
+              STORE_PASSWORD) value="${STORE_PASSWORD:-}" ;;
+              KEY_PASSWORD) value="${KEY_PASSWORD:-}" ;;
+              KEY_BACKUP_PASSWORD) value="${KEY_BACKUP_PASSWORD:-}" ;;
+            esac
+            if [ -n "$value" ]; then
+              echo "$name: dostępna i niepusta"
             else
               echo "$name: BRAK lub pusta"
+              missing=1
             fi
           done
-          if [ -z "${STORE_PASSWORD:-}" ] || [ -z "${KEY_PASSWORD:-}" ] || [ -z "${KEY_BACKUP_PASSWORD:-}" ]; then
-            echo "BŁĄD: co najmniej jedna zmienna nie jest dostępna dla tego workflow. Sprawdź grupę, projekt i uprawnienia do sekretów."
+          if [ "$missing" -ne 0 ]; then
+            echo "BŁĄD: co najmniej jedna zmienna nie jest dostępna lub jest pusta. Sprawdź grupę i ustawienia sekretów."
             exit 1
           fi
 
