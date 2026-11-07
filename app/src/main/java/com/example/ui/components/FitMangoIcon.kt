@@ -155,8 +155,8 @@ fun FitMangoIcon(imageVector: ImageVector, contentDescription: String?, modifier
         else -> tint
     }
     if (resource != null && colorful) {
-        androidx.compose.material3.Icon(painter = fitMangoPainter(resource), contentDescription = contentDescription,
-            modifier = modifier.then(Modifier.size(28.dp)), tint = Color.Unspecified)
+        androidx.compose.material3.Icon(imageVector = fitMangoLineIcon(resource),
+            contentDescription = contentDescription, modifier = modifier, tint = freshTint)
     } else {
         val simple = when (imageVector.name.substringAfterLast('.')) {
             "Edit", "EditNote" -> Icons.Outlined.Edit
