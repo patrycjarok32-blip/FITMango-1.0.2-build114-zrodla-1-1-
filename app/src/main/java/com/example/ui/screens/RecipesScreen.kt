@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Add
@@ -219,7 +220,7 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateHome, modifier = Modifier.testTag("recipes_go_home")) {
-                        Icon(Icons.Default.Home, "Wróć do Startu", tint = MangoYellow)
+                        Icon(Icons.Outlined.Home, "Wróć do Startu", tint = MangoYellow)
                     }
                 },
                 actions = {
@@ -275,7 +276,7 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
                     .fillMaxWidth()
                     .testTag("recipes_search_input"),
                 placeholder = { Text("Szukaj przepisu...", color = Cream.copy(alpha = 0.5f)) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MangoYellow) },
+                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null, tint = MangoYellow) },
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = JuicyOrange,
@@ -1022,13 +1023,13 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
                                             calorieIngredients.filter { it.recipeId == recipe.id }), fontSize = 11.sp, color = MangoYellow)
                                     }
                                     IconButton(onClick = { ingredientEditTarget = recipe to ingItem; ingredientQuantity = ingItem.baseQuantity?.toString().orEmpty(); selectedRecipe = null }) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Zmień ilość składnika", tint = MangoYellow)
+                                        Icon(Icons.Outlined.Edit, contentDescription = "Zmień ilość składnika", tint = MangoYellow)
                                     }
                                     IconButton(
                                         enabled = parsedIngredients.size > 1,
                                         onClick = { ingredientDeleteTarget = recipe to ingItem; selectedRecipe = null }
                                     ) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Usuń składnik", tint = if (parsedIngredients.size > 1) ErrorInk else Color.Gray)
+                                        Icon(Icons.Outlined.DeleteOutline, contentDescription = "Usuń składnik", tint = if (parsedIngredients.size > 1) ErrorInk else Color.Gray)
                                     }
                                     TextButton(
                                         onClick = {
@@ -1041,7 +1042,7 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
                                             .testTag("recipe_swap_ingredient_${ingItem.name}"),
                                         contentPadding = PaddingValues(horizontal = 8.dp)
                                     ) {
-                                        Icon(Icons.Default.SwapHoriz, contentDescription = "Zamień", modifier = Modifier.size(14.dp), tint = MangoYellow)
+                                        Icon(Icons.Outlined.SwapHoriz, contentDescription = "Zamień", modifier = Modifier.size(14.dp), tint = MangoYellow)
                                         Spacer(modifier = Modifier.width(2.dp))
                                         Text("Zamień", fontSize = 11.sp, color = MangoYellow)
                                     }
