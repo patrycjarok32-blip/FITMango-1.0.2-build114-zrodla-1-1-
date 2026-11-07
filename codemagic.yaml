@@ -25,21 +25,32 @@ workflows:
         script: |
           chmod +x gradlew
 
-      - name: Odtworzenie stałego klucza podpisującego
+      - name: Odtworzenie klucza z zaszyfrowanej kopii
         script: |
           set -eu
-          : "${ANDROID_KEYSTORE_BASE64:?Brak ANDROID_KEYSTORE_BASE64 w grupie fitmango_key_setup}"
+          : "${FITMANGO_ENCRYPTED_KEYSTORE_BASE64:?Brak zaszyfrowanej kopii klucza w chronionej zmiennej FITMANGO_ENCRYPTED_KEYSTORE_BASE64}"
+          : "${KEY_BACKUP_PASSWORD:?Brak KEY_BACKUP_PASSWORD}"
           : "${STORE_PASSWORD:?Brak STORE_PASSWORD}"
           : "${KEY_PASSWORD:?Brak KEY_PASSWORD}"
-          : "${KEY_ALIAS:?Brak KEY_ALIAS}"
           KEYSTORE_PATH="$PWD/my-upload-key.jks"
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -D > "$KEYSTORE_PATH"
+          ENCRYPTED_PATH="$CM_BUILD_DIR/fitmango-signing-key.jks.enc"
+          umask 077
+          printf '%s' "$FITMANGO_ENCRYPTED_KEYSTORE_BASE64" | base64 -D > "$ENCRYPTED_PATH"
+          test -s "$ENCRYPTED_PATH" || { echo "BŁĄD: zaszyfrowany plik jest pusty"; exit 1; }
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+            -in "$ENCRYPTED_PATH" -out "$KEYSTORE_PATH" -pass env:KEY_BACKUP_PASSWORD || {
+              rm -f "$KEYSTORE_PATH"
+              echo "BŁĄD: nie udało się odszyfrować klucza. Sprawdź hasło kopii i plik."
+              exit 1
+            }
+          rm -f "$ENCRYPTED_PATH"
           chmod 600 "$KEYSTORE_PATH"
-          test -s "$KEYSTORE_PATH" || { echo "BŁĄD: pusty klucz podpisujący"; exit 1; }
-          keytool -list -keystore "$KEYSTORE_PATH" -storepass:env STORE_PASSWORD -alias "$KEY_ALIAS" >/dev/null || {
-            echo "BŁĄD: nieprawidłowy klucz, alias lub hasło"; exit 1;
+          keytool -list -keystore "$KEYSTORE_PATH" -storepass:env STORE_PASSWORD -alias upload >/dev/null || {
+            rm -f "$KEYSTORE_PATH"
+            echo "BŁĄD: klucz nie pasuje do STORE_PASSWORD lub aliasu upload."
+            exit 1
           }
-          echo "Stały klucz podpisujący został zweryfikowany."
+          echo "Zweryfikowano stały klucz podpisujący; nie generujemy nowego."
 
       - name: Budowanie podpisanego APK release
         script: |
