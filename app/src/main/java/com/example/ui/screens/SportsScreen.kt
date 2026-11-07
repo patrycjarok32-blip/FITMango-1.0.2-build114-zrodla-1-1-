@@ -75,19 +75,15 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     LazyColumn(Modifier.fillMaxSize().background(DarkBackground).padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(vertical = 12.dp)) {
         item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Aktywność", style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.weight(1f))
                 TextButton(onClick = onBack) { Text("Wróć") }
-                Text("Aktywność", style = MaterialTheme.typography.headlineSmall, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.weight(1f))
             }
             SuccessFeedback(feedback, "Zapisano")
             message?.let { Text(it, color = GoldAccent) }
             permissionError?.let { Text(it, color = ErrorInk) }
-            SportsHistoryControls(busy,
-                onPermissions = { permissionError = null; runCatching { launcher.launch(setOf(
-                    HealthPermission.getReadPermission(ExerciseSessionRecord::class), HealthPermission.getReadPermission(DistanceRecord::class),
-                    HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class), HealthPermission.getReadPermission(StepsRecord::class),
-                    HealthPermission.getReadPermission(SleepSessionRecord::class))) }.onFailure { permissionError = "Otwórz uprawnienia Health Connect w Profilu." } },
-                onRefresh = { permissionError = null; sports.refresh { viewModel.usability.changed() } })
+
         }
         item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(selected = !showReport && !showExtras, onClick = { showReport = false; showExtras = false }, label = { Text("Aktywność") }, modifier = Modifier.testTag("sport_activity_tab"))
@@ -102,10 +98,18 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 ?: LinearProgressIndicator(Modifier.fillMaxWidth()) }
         } else {
         item { ActivityTodayCard(data, today, current) }
+        item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SportsHistoryControls(busy,
+                onPermissions = { permissionError = null; runCatching { launcher.launch(setOf(
+                    HealthPermission.getReadPermission(ExerciseSessionRecord::class), HealthPermission.getReadPermission(DistanceRecord::class),
+                    HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class), HealthPermission.getReadPermission(StepsRecord::class),
+                    HealthPermission.getReadPermission(SleepSessionRecord::class))) }.onFailure { permissionError = "Otwórz uprawnienia Health Connect w Profilu." } },
+                onRefresh = { permissionError = null; sports.refresh { viewModel.usability.changed() } })
+        } }
         item {
             MangoCard(Modifier.fillMaxWidth().testTag("health_connect_training_diary")) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Dziennik treningów • ostatnie 30 dni",
+                    Text("Ostatnie treningi • 30 dni",
                         style = MaterialTheme.typography.titleMedium, color = MangoMint)
                     Text("Zapisane aktywności: ${visible.size}",
                         style = MaterialTheme.typography.bodyMedium)
