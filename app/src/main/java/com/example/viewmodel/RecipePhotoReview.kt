@@ -1,10 +1,7 @@
 package com.example.viewmodel
 
 import java.net.URLDecoder
-import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.net.Uri
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
@@ -44,7 +41,7 @@ object RecipePhotoReview {
             val other = top.firstOrNull { it.confidence >= .80f && !hasFood }
             val status = when {
                 top.isEmpty() -> "Nie można wiarygodnie ocenić zdjęcia"
-                hasFood -> "Na zdjęciu prawdopodobnie jest jedzenie; sprawdź zgodność z przepisem"
+                hasFood -> "Wykryto jedzenie; model nie potwierdza konkretnej potrawy. Sprawdź ręcznie"
                 other != null -> "Możliwe niedopasowanie zdjęcia; sprawdź ręcznie"
                 else -> "Nie można potwierdzić zgodności potrawy"
             }
