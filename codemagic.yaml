@@ -25,6 +25,11 @@ workflows:
         script: |
           chmod +x gradlew
 
+      - name: Testy jednostkowe i kontrola kompilacji
+        script: |
+          set -eu
+          ./gradlew :app:testDebugUnitTest :app:assembleDebug --stacktrace
+
       - name: Odtworzenie klucza z zaszyfrowanej kopii
         script: |
           set -eu
