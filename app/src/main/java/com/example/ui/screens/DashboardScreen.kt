@@ -121,7 +121,7 @@ fun DashboardScreen(
                                 text = "FITMango",
                                 fontWeight = FontWeight.Black,
                                 fontSize = 18.sp,
-                                color = MangoYellow
+                                color = MaterialTheme.colorScheme.primary
                             )
                             Text("Twój dzień, Twoja energia ✨", fontSize = 11.sp, color = GoldAccent)
                         }
@@ -141,7 +141,7 @@ fun DashboardScreen(
                         )
                     }
                     IconButton(onClick = onNavigateToProductPhoto) {
-                        androidx.compose.material3.Icon(Icons.Default.CameraAlt, "Zdjęcie produktu", tint = MangoYellow)
+                        androidx.compose.material3.Icon(Icons.Default.CameraAlt, "Zdjęcie produktu", tint = MaterialTheme.colorScheme.primary)
                     }
                     IconButton(onClick = onNavigateToDocuments) {
                         androidx.compose.material3.Icon(Icons.Default.PictureAsPdf, "Dokumenty i import PDF", tint = GoldAccent)
@@ -152,12 +152,12 @@ fun DashboardScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = Cream
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
         },
-        containerColor = DarkBackground
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         androidx.compose.material3.pulltorefresh.PullToRefreshBox(isRefreshing = refreshing,
             onRefresh = { viewModel.refreshCurrentDate(); viewModel.healthConnect.sync(force = true) }, modifier = Modifier.fillMaxSize()) {
@@ -190,7 +190,7 @@ fun DashboardScreen(
                     MangoGuide(size = 52.dp, event = consumedCalories + waterTotal)
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text("Twój dzień, Twój balans", fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp, color = Cream)
+                            fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
                         Text("Małe kroki. Wielka zmiana. 🥭", fontSize = 12.sp, color = GoldAccent)
                     }
                 }
@@ -205,7 +205,7 @@ fun DashboardScreen(
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_calorie_hero"),
                 shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(containerColor = MutedSurface1),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
             ) {
                 Column(
@@ -213,7 +213,7 @@ fun DashboardScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Dzisiejszy bilans", color = Cream, fontSize = 18.sp,
+                    Text("Dzisiejszy bilans", color = MaterialTheme.colorScheme.onSurface, fontSize = 18.sp,
                         fontWeight = FontWeight.ExtraBold)
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.size(132.dp)) {
                         CircularProgressIndicator(
@@ -224,7 +224,7 @@ fun DashboardScreen(
                             strokeWidth = 10.dp
                         )
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("$animatedCalories", color = Cream, fontSize = 30.sp,
+                            Text("$animatedCalories", color = MaterialTheme.colorScheme.onSurface, fontSize = 30.sp,
                                 fontWeight = FontWeight.Black)
                             Text("/ $targetCalories kcal", color = GoldAccent, fontSize = 14.sp)
                         }
@@ -265,7 +265,7 @@ fun DashboardScreen(
                     androidx.compose.material3.Icon(Icons.Default.AddCircleOutline, contentDescription = null,
                         tint = JuicyOrange, modifier = Modifier.size(30.dp))
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Importuj przepis", color = Cream, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                        Text("Importuj przepis", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
                         Text("Instagram • Cookidoo • strony WWW • zdjęcia",
                             color = GoldAccent, fontSize = 12.sp)
                     }
@@ -277,7 +277,7 @@ fun DashboardScreen(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_meal_preview")
                     .clickable(onClick = onNavigateToMealPlan),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MutedSurface1)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -295,7 +295,7 @@ fun DashboardScreen(
                     }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Text("Dzisiejsze posiłki", fontWeight = FontWeight.ExtraBold,
-                            fontSize = 16.sp, color = Cream)
+                            fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
                         Text("Otwórz jadłospis i zaplanuj swój dzień",
                             fontSize = 12.sp, color = GoldAccent)
                     }
@@ -351,7 +351,7 @@ fun DashboardScreen(
                     .border(1.dp, WarmBrown.copy(alpha = 0.3f), RoundedCornerShape(24.dp))
                     .testTag("dashboard_health_connect_card"),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MutedSurface1)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -376,7 +376,7 @@ fun DashboardScreen(
                             Text(
                                 text = "Aktywność i zdrowie",
                                 fontWeight = FontWeight.Bold,
-                                color = Cream,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 14.sp
                             )
                         }
@@ -405,15 +405,15 @@ fun DashboardScreen(
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Icon(Icons.Default.DirectionsWalk, contentDescription = null, tint = MangoYellow, modifier = Modifier.size(24.dp))
-                                    Text("Kroki", fontSize = 11.sp, color = Cream.copy(alpha = 0.7f), fontWeight = FontWeight.Bold)
+                                    Icon(Icons.Default.DirectionsWalk, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                                    Text("Kroki", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontWeight = FontWeight.Bold)
                                 }
                                 val stepsText = HealthConnectSupport.formatStepsDisplay(activity.steps)
                                 Text(
                                     text = stepsText,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = Cream,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.testTag("dashboard_steps_text")
                                 )
                             }
@@ -431,14 +431,14 @@ fun DashboardScreen(
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = OrangeInk, modifier = Modifier.size(24.dp))
-                                    Text("Spalone kcal", fontSize = 11.sp, color = Cream.copy(alpha = 0.7f), fontWeight = FontWeight.Bold)
+                                    Text("Spalone kcal", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontWeight = FontWeight.Bold)
                                 }
                                 val calBurnedText = com.example.viewmodel.CurrentActivitySupport.calories(activity.calories)?.let { "$it kcal" } ?: "Brak danych"
                                 Text(
                                     text = calBurnedText,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = Cream,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.testTag("dashboard_calories_burned_text")
                                 )
                             }
@@ -460,8 +460,8 @@ fun DashboardScreen(
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Icon(Icons.Default.MonitorWeight, contentDescription = null, tint = MangoYellow, modifier = Modifier.size(24.dp))
-                                    Text("Aktualna waga", fontSize = 11.sp, color = Cream.copy(alpha = 0.7f), fontWeight = FontWeight.Bold)
+                                    Icon(Icons.Default.MonitorWeight, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                                    Text("Aktualna waga", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontWeight = FontWeight.Bold)
                                 }
                                 val weightText = if (latestWeightValue != null && latestWeightValue > 0f) {
                                     HealthConnectSupport.formatWeightDisplay(latestWeightValue)
@@ -472,7 +472,7 @@ fun DashboardScreen(
                                     text = weightText,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = Cream,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.testTag("dashboard_weight_text")
                                 )
                             }
@@ -490,14 +490,14 @@ fun DashboardScreen(
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Icon(Icons.Default.Bedtime, contentDescription = null, tint = GoldAccent, modifier = Modifier.size(24.dp))
-                                    Text(activity.sleepLabel, fontSize = 11.sp, color = Cream.copy(alpha = 0.7f), fontWeight = FontWeight.Bold)
+                                    Text(activity.sleepLabel, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontWeight = FontWeight.Bold)
                                 }
                                 val sleepText = HealthConnectSupport.formatSleepDurationDisplay(activity.sleepMinutes)
                                 Text(
                                     text = sleepText,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = Cream,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.testTag("dashboard_sleep_text")
                                 )
                                 if (sleepReadMessage.isNotBlank() && activity.sleepLabel == "Sen (ostatni odczyt)") Text(sleepReadMessage, style = MaterialTheme.typography.bodySmall)
@@ -574,7 +574,7 @@ fun DashboardScreen(
                         Icon(
                             imageVector = Icons.Default.SmartToy,
                             contentDescription = "AI",
-                            tint = Cream,
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -583,13 +583,13 @@ fun DashboardScreen(
                         Text(
                             text = "Zapytaj AI Dietetyka Mango",
                             fontWeight = FontWeight.ExtraBold,
-                            color = Cream,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 16.sp
                         )
                         Text(
                             text = "Profesjonalne porady i zamienniki",
                             fontSize = 12.sp,
-                            color = Cream.copy(alpha = 0.8f)
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                         )
                     }
 
@@ -603,7 +603,7 @@ fun DashboardScreen(
                         Icon(
                             imageVector = Icons.Default.ChevronRight,
                             contentDescription = "Go",
-                            tint = Cream,
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -699,7 +699,7 @@ fun QuickActionCard(title: String, icon: ImageVector, modifier: Modifier = Modif
             .pressScaleEffect()
             .clickable { onClick() }
             .border(1.dp, WarmBrown.copy(alpha = 0.3f), RoundedCornerShape(20.dp)),
-        colors = CardDefaults.cardColors(containerColor = MutedSurface1),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(20.dp)
     ) {
         Column(
@@ -712,7 +712,7 @@ fun QuickActionCard(title: String, icon: ImageVector, modifier: Modifier = Modif
             Icon(
                 imageVector = icon,
                 contentDescription = title,
-                tint = MangoYellow,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -720,7 +720,7 @@ fun QuickActionCard(title: String, icon: ImageVector, modifier: Modifier = Modif
                 text = title,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                color = Cream,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1
             )
         }
@@ -738,7 +738,7 @@ private fun FreshMangoDestinationCard(
     Card(
         modifier = modifier.clickable(onClick = onClick),
         shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = MutedSurface1),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
@@ -754,7 +754,7 @@ private fun FreshMangoDestinationCard(
                 androidx.compose.material3.Icon(imageVector, contentDescription = null,
                     tint = JuicyOrange, modifier = Modifier.size(25.dp))
             }
-            Text(title, color = Cream, fontWeight = FontWeight.Bold, fontSize = 12.sp,
+            Text(title, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 12.sp,
                 maxLines = 1)
             Text(subtitle, color = GoldAccent, fontSize = 10.sp, maxLines = 1)
         }
@@ -776,9 +776,9 @@ private fun FreshMangoMacroTile(
             verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Box(Modifier.size(9.dp).clip(CircleShape).background(accent))
-            Text(label, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Cream,
+            Text(label, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1)
-            Text("$value g", fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = Cream)
+            Text("$value g", fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface)
             Text("cel $target g", fontSize = 10.sp, color = GoldAccent)
         }
     }
