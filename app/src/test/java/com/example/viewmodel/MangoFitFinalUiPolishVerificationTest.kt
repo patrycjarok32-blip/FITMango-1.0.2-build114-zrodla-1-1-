@@ -113,8 +113,8 @@ class MangoFitFinalUiPolishVerificationTest {
         }
         Shadows.shadowOf(Looper.getMainLooper()).idle()
 
-        composeTestRule.onNodeWithText("FITMango").assertIsDisplayed()
-        composeTestRule.onNodeWithText("FITMango").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("animated_fitmango_logo").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("animated_fitmango_logo").assertIsDisplayed()
         
         composeTestRule.onNodeWithTag("compact_start_health").performScrollTo().performClick()
         composeTestRule.onNodeWithTag("dashboard_health_connect_card").performScrollTo().assertIsDisplayed()
