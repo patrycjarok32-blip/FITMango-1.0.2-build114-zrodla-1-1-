@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -96,7 +97,21 @@ fun WeeklySummaryCard(viewModel: DietaViewModel) {
         }
         val chartMax = (foodValues.filterNotNull() + burned.filterNotNull() + listOfNotNull(goal)).maxOrNull()?.coerceAtLeast(1f)?.times(1.15f) ?: 1f
         Text("${metric.unit} • skala do ${chartMax.roundToInt()}", style = MaterialTheme.typography.bodySmall)
-        WeeklyBars(dates, foodValues, burned, metric == WeeklyMetric.ENERGY, goal, chartMax, metric.unit, selected) { selected = it }
+        val reducedSummaryMotion = LocalReducedMangoMotion.current
+        val summaryEntrance = remember(start, end, metric) { androidx.compose.animation.core.Animatable(1f) }
+        LaunchedEffect(start, end, metric, reducedSummaryMotion) {
+            if (reducedSummaryMotion) summaryEntrance.snapTo(1f)
+            else {
+                summaryEntrance.snapTo(0f)
+                summaryEntrance.animateTo(1f, androidx.compose.animation.core.tween(340))
+            }
+        }
+        Box(Modifier.graphicsLayer {
+            alpha = if (reducedSummaryMotion) 1f else 0.65f + 0.35f * summaryEntrance.value
+            translationY = if (reducedSummaryMotion) 0f else 10.dp.toPx() * (1f - summaryEntrance.value)
+        }) {
+            WeeklyBars(dates, foodValues, burned, metric == WeeklyMetric.ENERGY, goal, chartMax, metric.unit, selected) { selected = it }
+        }
         if (metric == WeeklyMetric.ENERGY) Text("🟠 Zjedzone   🟢 $expenditureLabel", style = MaterialTheme.typography.bodySmall)
         Text("— brak wpisu; 0 = zapisane zero. Linia: aktualny cel ${goal?.roundToInt()?.toString() ?: "nieustawiony"} ${if (goal != null) metric.unit else ""}. Cele mogły wcześniej być inne.", style = MaterialTheme.typography.bodySmall)
         if (today >= start && today <= end) Text("Dziś w toku — nie uwzględniamy tego dnia w analizie.", style = MaterialTheme.typography.bodySmall)
