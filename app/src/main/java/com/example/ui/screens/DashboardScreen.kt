@@ -223,6 +223,12 @@ fun DashboardScreen(
                             }
                         )
                     }
+                    if (consumedProtein >= targetProtein && consumedProtein > 0) {
+                        MangoBadge("Cel białka", earned = true)
+                    }
+                    if (consumedCalories in 1..targetCalories && consumedCalories >= (targetCalories * 0.95f).toInt()) {
+                        MangoBadge("Dzienny cel kalorii", earned = true)
+                    }
                     Text("Pozostało: ${(targetCalories - consumedCalories).coerceAtLeast(0)} kcal  •  Cel: ${profile?.goal ?: "Twój cel"}",
                         fontSize = 12.sp, color = GoldAccent, maxLines = 2)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
