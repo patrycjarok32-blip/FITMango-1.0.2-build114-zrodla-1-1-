@@ -37,6 +37,7 @@ class DailyConvenienceUiTest {
         compose.setContent { MojaDietaAiTheme {
             PlannedMealDetailCard(meal, recipe, emptyList(), "12:00", {}, {}, {}, {}, {}, {}, { moved = true }, {}, { eaten = true })
         } }
+        compose.onNodeWithTag("expand_meal_actions_728").performClick()
         compose.onNodeWithTag("toggle_eaten_728").assertIsDisplayed()
         compose.onNodeWithTag("move_meal_728").assertDoesNotExist()
         compose.onNodeWithTag("meal_options_728").performClick()
