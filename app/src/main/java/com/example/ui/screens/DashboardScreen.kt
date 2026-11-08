@@ -185,7 +185,7 @@ fun DashboardScreen(
                 .imePadding()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(DarkBackground, mangoBackground.copy(alpha = if (reducedMangoMotion) .06f else backgroundPulse), DarkBackground)
+                        colors = listOf(MaterialTheme.colorScheme.background, mangoBackground.copy(alpha = if (reducedMangoMotion) .06f else backgroundPulse).compositeOver(MaterialTheme.colorScheme.background), MaterialTheme.colorScheme.background)
                     )
                 )
                 .verticalScroll(rememberScrollState())
