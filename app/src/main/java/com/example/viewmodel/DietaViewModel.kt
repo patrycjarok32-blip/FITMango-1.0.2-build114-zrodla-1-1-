@@ -1050,6 +1050,39 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun saveGeneratedWeek(days: List<GeneratedDay>, onResult: (String?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                require(days.isNotEmpty() && days.size <= 7) { "Brak propozycji do zapisania." }
+                recipeEditMutex.withLock {
+                    val existing = repository.allMealPlans.first()
+                    val dayNames = MealPlannerSupport.WEEK_DAYS
+                    require(days.all { it.dayIndex in 0..6 && it.suggestions.size <= 6 })
+                    require(days.all { day -> existing.none { it.dayOfWeek == dayNames[day.dayIndex].canonicalName } }) {
+                        "W jadłospisie są już posiłki. Aby uniknąć duplikatów, zapisz plan tylko w pustym tygodniu."
+                    }
+                    val currentRecipes = repository.allRecipes.first().associateBy { it.id }
+                    val pending = days.flatMap { day ->
+                        day.suggestions.mapIndexed { slot, suggestion ->
+                            val recipe = currentRecipes[suggestion.recipe.id]
+                                ?: error("Jeden z przepisów został usunięty.")
+                            val categories = listOf("Śniadanie", "Drugie śniadanie", "Obiad", "Podwieczorek", "Kolacja", "Przekąska")
+                            MealPlanEntity(dayOfWeek = dayNames[day.dayIndex].canonicalName,
+                                mealType = MealPlannerSupport.normalizeMealType(categories[slot]),
+                                recipeId = recipe.id, recipeTitle = recipe.title,
+                                servings = suggestion.servings,
+                                calories = (recipe.calories * suggestion.servings).roundToInt())
+                        }
+                    }
+                    pending.forEach { repository.insertMealPlan(it) }
+                    rebuildShoppingListInternal()
+                }
+                onResult(null)
+            } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+            catch (e: Exception) { onResult(e.message ?: "Nie udało się zapisać jadłospisu.") }
+        }
+    }
+
     fun addSuggestedMeal(recipeId: Long, servings: Float, type: String, onResult: (String?) -> Unit) {
         viewModelScope.launch {
             try {
