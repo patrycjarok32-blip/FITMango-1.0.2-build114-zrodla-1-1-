@@ -27,6 +27,9 @@ fun BackupSettingsCard(viewModel: DietaViewModel) {
     val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
         uri?.let { backup.export(it, backupPassword) }
     }
+    val saveAutomatic = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+        uri?.let { backup.exportAutomatic(it) }
+    }
     val load = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { backup.prepare(it, backupPassword) }
     }
@@ -45,6 +48,11 @@ fun BackupSettingsCard(viewModel: DietaViewModel) {
             Text("Po zmianach w przepisach i jadłospisie zapisujemy kopię lokalną po 20 sekundach bez kolejnych zmian. Pozostaje na tym telefonie; plik zewnętrzny zapisz osobno.", style = MaterialTheme.typography.bodySmall)
             OutlinedButton(onClick = { backup.saveAutomaticNow() }, enabled = !busy) { Text("Zapisz kopię lokalną teraz") }
             if (backupStatus.lastAutomatic > 0) {
+                OutlinedButton(onClick = { saveAutomatic.launch("FITMango-automatyczna-${java.time.LocalDate.now()}.zip") },
+                    enabled = !busy, modifier = Modifier.testTag("backup_export_automatic")) {
+                    Text("Eksportuj kopię automatyczną")
+                }
+                Text("Wybierz Pobrane (Downloads), Dysk Google lub inne dostępne miejsce. Ta kopia nie jest szyfrowana hasłem — przechowuj ją prywatnie.", style = MaterialTheme.typography.bodySmall)
                 OutlinedButton(onClick = { backup.prepareAutomatic() }, enabled = !busy) { Text("Przywróć kopię automatyczną") }
             }
             Text("Zapisz przepisy, ulubione, jadłospis, zakupy, pomiary, napoje, kreatynę, profil, lokalne zdjęcia oraz klucze API w szyfrowanej kopii. Zdjęcia internetowe zachowują swoje linki.")
