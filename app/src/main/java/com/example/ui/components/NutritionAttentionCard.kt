@@ -31,6 +31,14 @@ fun NutritionAttentionCard(viewModel: DietaViewModel) {
         HorizontalDivider()
         Text("Pozostałe produkty możesz też uzupełnić pojedynczo z etykiety lub wybranej bazy. Brak kalorii nie jest zerem; przyprawy pomijamy zgodnie z Twoim ustawieniem.", style = MaterialTheme.typography.bodySmall)
         if (queue.isEmpty()) Text("Brak brakujących kalorii lub makro. Ilości sprawdzisz w szczegółach posiłków.")
+        else {
+            val quantityGaps = queue.count { it.quantityMissing }
+            val withBarcode = queue.count { it.barcode.isNotBlank() }
+            Text("Do uzupełnienia: ${queue.size} produktów • brak ilości: $quantityGaps • z kodem kreskowym: $withBarcode",
+                style = MaterialTheme.typography.bodySmall)
+            Text("Automatyczne wyszukiwanie korzysta najpierw z zapisanych produktów, a po włączeniu opcji online z Open Food Facts. Niejednoznaczne dopasowania wymagają zatwierdzenia.",
+                style = MaterialTheme.typography.bodySmall)
+        }
         OutlinedTextField(query, { query = it }, singleLine = true, label = { Text("Szukaj brakującego produktu") }, modifier = Modifier.fillMaxWidth())
         val visible = queue.filter { ProduceSupport.normalize(it.name).contains(ProduceSupport.normalize(query.trim())) }
         visible.take(visibleLimit).forEach { item -> Row(Modifier.fillMaxWidth()) {
