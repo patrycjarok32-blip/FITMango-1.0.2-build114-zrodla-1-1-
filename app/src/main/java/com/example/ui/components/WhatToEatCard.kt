@@ -24,7 +24,9 @@ fun WhatToEatCard(viewModel: DietaViewModel) {
     var selected by remember { mutableStateOf<MealSuggestion?>(null) }
     var type by remember { mutableStateOf("Przekąska") }
     var filter by remember { mutableStateOf("Wszystkie") }
-    var pantryText by remember { mutableStateOf("") }
+    val pantryContext = androidx.compose.ui.platform.LocalContext.current
+    val pantryPrefs = remember(pantryContext) { pantryContext.getSharedPreferences("fitmango_pantry", android.content.Context.MODE_PRIVATE) }
+    var pantryText by remember { mutableStateOf(pantryPrefs.getString("products", "").orEmpty()) }
     var showPantry by remember { mutableStateOf(false) }
     var showWeekPreview by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
@@ -74,7 +76,7 @@ fun WhatToEatCard(viewModel: DietaViewModel) {
         HorizontalDivider()
         TextButton(onClick = { showPantry = !showPantry }) { Text(if (showPantry) "Ukryj moją lodówkę" else "Co ugotować z mojej lodówki?") }
         if (showPantry) {
-            OutlinedTextField(value = pantryText, onValueChange = { pantryText = it },
+            OutlinedTextField(value = pantryText, onValueChange = { pantryText = it; pantryPrefs.edit().putString("products", it).apply() },
                 label = { Text("Produkty w lodówce (oddziel przecinkami)") }, modifier = Modifier.fillMaxWidth())
             val pantryMatches = remember(recipes, ingredients, pantryText) {
                 if (pantryText.isBlank()) emptyList() else PantryRecipeMatcher.match(recipes, ingredients, pantryText.split(","))
@@ -94,7 +96,15 @@ fun WhatToEatCard(viewModel: DietaViewModel) {
                 Text("Dzień ${day.dayIndex + 1} • około ${day.estimatedCalories} kcal", style = MaterialTheme.typography.titleSmall)
                 Text(day.suggestions.joinToString(" • ") { it.recipe.title })
             }
-            Text("To podgląd propozycji, nie zapisuje ani nie zmienia obecnego jadłospisu.", style = MaterialTheme.typography.bodySmall)
+            Text("Zapis nie nadpisuje istniejących posiłków. Jeśli tydzień jest już wypełniony, aplikacja poprosi o ręczne zwolnienie miejsca.", style = MaterialTheme.typography.bodySmall)
+            Button(enabled = !busy && week.isNotEmpty(), onClick = {
+                busy = true
+                viewModel.saveGeneratedWeek(week) { error ->
+                    busy = false
+                    message = error ?: "Zapisano propozycje do jadłospisu."
+                    if (error == null) showWeekPreview = false
+                }
+            }) { Text(if (busy) "Zapisywanie…" else "Zapisz proponowany tydzień") }
         }
         message?.let { Text(it) }
     }
