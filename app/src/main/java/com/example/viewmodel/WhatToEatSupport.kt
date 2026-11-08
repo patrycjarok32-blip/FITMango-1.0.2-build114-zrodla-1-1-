@@ -7,26 +7,28 @@ import com.example.data.MealPlanEntity
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-data class MealSuggestion(val recipe: RecipeEntity, val servings: Float, val calories: Int, val protein: Int, val carbs: Int, val fat: Int)
+data class MealSuggestion(val recipe: RecipeEntity, val servings: Float, val calories: Int, val protein: Int, val carbs: Int, val fat: Int, val approximate: Boolean = false)
 object WhatToEatSupport {
     fun suggest(recipes: List<RecipeEntity>, consumed: ScaledMealNutrition, profile: UserProfileEntity, ingredients: List<RecipeIngredientEntity> = emptyList()): List<MealSuggestion> {
-        if (consumed.isPartial || consumed.calories == null || consumed.protein == null || consumed.carbs == null || consumed.fat == null) return emptyList()
-        val remaining = profile.targetCalories - consumed.calories
+        val calorieOnly = consumed.isPartial || consumed.calories == null || consumed.protein == null || consumed.carbs == null || consumed.fat == null
+        val remaining = profile.targetCalories - (consumed.calories ?: 0)
         if (remaining < 30) return emptyList()
-        val proteinLeft = max(0, profile.targetProtein - consumed.protein)
-        val carbsLeft = max(0, profile.targetCarbs - consumed.carbs)
-        val fatLeft = max(0, profile.targetFat - consumed.fat)
+        val proteinLeft = max(0, profile.targetProtein - (consumed.protein ?: 0))
+        val carbsLeft = max(0, profile.targetCarbs - (consumed.carbs ?: 0))
+        val fatLeft = max(0, profile.targetFat - (consumed.fat ?: 0))
         fun score(s: MealSuggestion): Double =
-            minOf(s.protein, proteinLeft) * 4.0 - max(0, s.carbs - carbsLeft) * 0.7 - max(0, s.fat - fatLeft) * 2.0 + s.calories.toDouble() / remaining
+            (if (calorieOnly) 0.0 else minOf(s.protein, proteinLeft) * 4.0) - (if (calorieOnly) 0.0 else max(0, s.carbs - carbsLeft) * 0.7) - (if (calorieOnly) 0.0 else max(0, s.fat - fatLeft) * 2.0) + s.calories.toDouble() / remaining
         val ingredientsByRecipe = ingredients.groupBy { it.recipeId }
         return recipes.filter { it.calories > 0 && it.protein >= 0 && it.carbs >= 0 && it.fat >= 0 }.mapNotNull { recipe ->
             val baseMeal = MealPlanEntity(id = Long.MAX_VALUE, dayOfWeek = "Poniedziałek", mealType = "Obiad", recipeId = recipe.id,
                 recipeTitle = recipe.title, servings = 1f, calories = recipe.calories)
             val nutrition = IngredientSubstitutionSupport.calculateMealNutritionWithSubstitutions(baseMeal, recipe, ingredientsByRecipe[recipe.id].orEmpty())
-            if (nutrition.isPartial || nutrition.calories == null || nutrition.protein == null || nutrition.carbs == null || nutrition.fat == null) return@mapNotNull null
+            val approximate = calorieOnly || nutrition.isPartial || nutrition.calories == null || nutrition.protein == null || nutrition.carbs == null || nutrition.fat == null
+            if (!calorieOnly && approximate) return@mapNotNull null
+            val knownCalories = nutrition.calories ?: recipe.calories.takeIf { it > 0 } ?: return@mapNotNull null
             listOf(0.25f, 0.5f, 0.75f, 1f, 1.5f, 2f).map { portion ->
-                MealSuggestion(recipe, portion, (nutrition.calories * portion).roundToInt(), (nutrition.protein * portion).roundToInt(),
-                    (nutrition.carbs * portion).roundToInt(), (nutrition.fat * portion).roundToInt())
+                MealSuggestion(recipe, portion, (knownCalories * portion).roundToInt(), ((nutrition.protein ?: 0) * portion).roundToInt(),
+                    ((nutrition.carbs ?: 0) * portion).roundToInt(), ((nutrition.fat ?: 0) * portion).roundToInt(), approximate)
             }.filter { it.calories in 30..remaining }.maxByOrNull { score(it) }
         }.sortedByDescending { score(it) }.take(5)
     }
