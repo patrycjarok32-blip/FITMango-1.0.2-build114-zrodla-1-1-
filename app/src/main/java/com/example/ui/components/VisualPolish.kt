@@ -66,19 +66,50 @@ fun Modifier.mangoResultAppearance(key: Any?): Modifier {
 @Composable
 fun SuccessFeedback(event: Int, text: String = "Dodano posiłek", tag: String = "saved_action_feedback") {
     var visible by remember { mutableStateOf(false) }
-    val view = androidx.compose.ui.platform.LocalView.current
-    LaunchedEffect(event) { if (event > 0) {
-        runCatching { view.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP) }
-        visible = true; delay(1500); visible = false
-    } }
     val reduced = LocalReducedMangoMotion.current
-    AnimatedVisibility(visible, enter = fadeIn(tween(if (reduced) 0 else 160)), exit = fadeOut(tween(if (reduced) 0 else 120))) {
-        Surface(shape = MaterialTheme.shapes.medium, color = LeafGreen.copy(alpha = .15f)) {
-            Row(Modifier.fillMaxWidth().padding(10.dp)) {
-                MangoGuide(event = event, size = 26.dp)
-                Icon(Icons.Outlined.CheckCircle, null, tint = LeafGreen)
-                Spacer(Modifier.width(8.dp))
-                Text("$text ✓", color = LeafGreen, modifier = Modifier.testTag(tag))
+    val view = androidx.compose.ui.platform.LocalView.current
+    val burst = remember { Animatable(1f) }
+    LaunchedEffect(event, reduced) {
+        if (event > 0) {
+            runCatching { view.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP) }
+            visible = true
+            if (!reduced) {
+                burst.snapTo(0f)
+                burst.animateTo(1f, tween(750))
+            } else burst.snapTo(1f)
+            delay(750)
+            visible = false
+        }
+    }
+    AnimatedVisibility(
+        visible,
+        enter = fadeIn(tween(if (reduced) 0 else 160)),
+        exit = fadeOut(tween(if (reduced) 0 else 120))
+    ) {
+        Box(Modifier.fillMaxWidth()) {
+            Surface(shape = MaterialTheme.shapes.medium, color = LeafGreen.copy(alpha = .15f)) {
+                Row(Modifier.fillMaxWidth().padding(10.dp)) {
+                    MangoGuide(event = event, size = 26.dp)
+                    Icon(Icons.Outlined.CheckCircle, null, tint = LeafGreen)
+                    Spacer(Modifier.width(8.dp))
+                    Text("$text ✓", color = LeafGreen, modifier = Modifier.testTag(tag))
+                }
+            }
+            if (!reduced && burst.value < 1f) {
+                androidx.compose.foundation.Canvas(Modifier.matchParentSize().testTag("success_confetti")) {
+                    val colors = listOf(LeafGreen, MangoYellow, JuicyOrange)
+                    repeat(12) { i ->
+                        val angle = i * (2.0 * Math.PI / 12.0)
+                        val distance = size.minDimension * (0.1f + burst.value * 0.55f)
+                        val x = size.width / 2f + kotlin.math.cos(angle).toFloat() * distance
+                        val y = size.height / 2f + kotlin.math.sin(angle).toFloat() * distance
+                        drawCircle(
+                            color = colors[i % colors.size].copy(alpha = 1f - burst.value),
+                            radius = 2.5.dp.toPx(),
+                            center = androidx.compose.ui.geometry.Offset(x, y)
+                        )
+                    }
+                }
             }
         }
     }
