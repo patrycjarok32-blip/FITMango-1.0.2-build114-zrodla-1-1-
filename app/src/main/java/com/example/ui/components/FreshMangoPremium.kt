@@ -31,6 +31,13 @@ fun rememberMangoDayPhase(): MangoDayPhase {
     val preference = remember(context) { context.getSharedPreferences("FITMangoPremium", 0) }
     var automatic by remember { mutableStateOf(preference.getBoolean("automaticDayPhase", false)) }
     var hour by remember { mutableIntStateOf(LocalTime.now().hour) }
+    DisposableEffect(preference) {
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == "automaticDayPhase") automatic = preference.getBoolean("automaticDayPhase", false)
+        }
+        preference.registerOnSharedPreferenceChangeListener(listener)
+        onDispose { preference.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
     androidx.lifecycle.compose.LifecycleEventEffect(androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
         hour = LocalTime.now().hour
         automatic = preference.getBoolean("automaticDayPhase", false)
