@@ -40,6 +40,7 @@ class ReductionPlanUiTest {
         compose.setContent { MojaDietaAiTheme { Column(Modifier.verticalScroll(rememberScrollState())) {
             ReductionPlanCard(plan, LocalDate.parse("2026-11-16"), false, 1800, {}) {}
         } } }
+        compose.onNodeWithText("Zobacz pełny harmonogram").performScrollTo().performClick()
         compose.onNodeWithTag("reduction_chart").assertExists()
         compose.onNodeWithContentDescription("Plan kalorii: 1800 kcal przez 3 tygodni, 1700 kcal przez 3 tygodni").assertExists()
         compose.onNodeWithText("Do końca ostatniego etapu: 21 dni. Potem oceń dalszy plan.").performScrollTo().assertExists()
