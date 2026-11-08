@@ -166,3 +166,27 @@ fun MangoBadge(name: String, earned: Boolean) {
         MangoMotionPreview()
     }
 }
+
+/** A single, subtle brand entrance; no perpetual motion or splash delay. */
+@Composable
+fun MangoAnimatedLogo(modifier: Modifier = Modifier) {
+    val reduced = LocalReducedMangoMotion.current
+    val entrance = remember { Animatable(1f) }
+    LaunchedEffect(reduced) {
+        if (reduced) entrance.snapTo(1f)
+        else {
+            entrance.snapTo(0f)
+            entrance.animateTo(1f, tween(durationMillis = 520))
+        }
+    }
+    Text(
+        "FITMango",
+        modifier = modifier.testTag("animated_fitmango_logo").graphicsLayer {
+            alpha = if (reduced) 1f else 0.55f + 0.45f * entrance.value
+            scaleX = if (reduced) 1f else 0.94f + 0.06f * entrance.value
+            scaleY = scaleX
+        },
+        color = LeafGreen,
+        style = MaterialTheme.typography.titleMedium
+    )
+}
