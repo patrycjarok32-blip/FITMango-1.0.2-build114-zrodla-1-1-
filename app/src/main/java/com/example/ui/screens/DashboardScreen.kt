@@ -787,6 +787,7 @@ private fun MangoHalfGauge(
     label: String, value: Int?, goal: Int?, progress: Float,
     color: Color, modifier: Modifier = Modifier, subtitle: String
 ) {
+    val animatedProgress = mangoFloat(progress.coerceIn(0f, 1f))
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Text(label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
@@ -803,7 +804,7 @@ private fun MangoHalfGauge(
                     sweepAngle = 180f, useCenter = false,
                     topLeft = androidx.compose.ui.geometry.Offset(left, top), size = arcSize, style = stroke)
                 drawArc(color = color, startAngle = 180f,
-                    sweepAngle = 180f * progress.coerceIn(0f, 1f), useCenter = false,
+                    sweepAngle = 180f * animatedProgress, useCenter = false,
                     topLeft = androidx.compose.ui.geometry.Offset(left, top), size = arcSize, style = stroke)
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
