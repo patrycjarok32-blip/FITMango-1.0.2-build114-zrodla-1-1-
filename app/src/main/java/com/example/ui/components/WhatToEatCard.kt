@@ -47,14 +47,17 @@ fun WhatToEatCard(viewModel: DietaViewModel) {
         val suggestions = result?.second.orEmpty()
         if (goal == null) Text("Uzupełnij profil i dzienny cel.")
         else if (consumed == null) Text(calculationError ?: "Przygotowuję propozycje…")
-        else if (consumed.isPartial) Text("Najpierw uzupełnij brakujące dane składników. Przy niepełnym bilansie nie dopasowujemy porcji.")
         else {
-            Text("Do celu: ${(goal.targetCalories - (consumed.calories ?: 0)).coerceAtLeast(0)} kcal • B: ${(goal.targetProtein - (consumed.protein ?: 0)).coerceAtLeast(0)} g • W: ${(goal.targetCarbs - (consumed.carbs ?: 0)).coerceAtLeast(0)} g • T: ${(goal.targetFat - (consumed.fat ?: 0)).coerceAtLeast(0)} g")
+            if (consumed.isPartial || consumed.calories == null || consumed.protein == null || consumed.carbs == null || consumed.fat == null) {
+                Text("Niepełne dane żywieniowe — pokazujemy propozycje z Twoich przepisów na podstawie dostępnych kalorii. Porcje i makro są orientacyjne; nieznane wartości nie są liczone jako zero.")
+            } else {
+                Text("Do celu: ${(goal.targetCalories - consumed.calories).coerceAtLeast(0)} kcal • B: ${(goal.targetProtein - consumed.protein).coerceAtLeast(0)} g • W: ${(goal.targetCarbs - consumed.carbs).coerceAtLeast(0)} g • T: ${(goal.targetFat - consumed.fat).coerceAtLeast(0)} g")
+            }
             if (suggestions.isEmpty()) Text("Brak pasujących porcji w bazie lub dzienny cel kalorii został osiągnięty.")
             suggestions.forEach { s ->
                 Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
                     Text(s.recipe.title, style = MaterialTheme.typography.titleMedium)
-                    Text("${MealPlannerSupport.formatServingsLabel(s.servings)} • ${s.calories} kcal • B: ${s.protein} g • W: ${s.carbs} g • T: ${s.fat} g")
+                    Text(if (s.approximate) "${MealPlannerSupport.formatServingsLabel(s.servings)} • około ${s.calories} kcal (szacunek; makro może być niepełne)" else "${MealPlannerSupport.formatServingsLabel(s.servings)} • ${s.calories} kcal • B: ${s.protein} g • W: ${s.carbs} g • T: ${s.fat} g")
                     TextButton(enabled = !busy, onClick = { selected = s; message = null }, modifier = Modifier.testTag("suggestion_${s.recipe.id}")) { Text("Dodaj do dzisiejszego jadłospisu") }
                 }
             }
