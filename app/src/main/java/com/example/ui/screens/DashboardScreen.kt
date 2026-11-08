@@ -774,7 +774,17 @@ private fun FreshMangoMacroTile(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
-            Box(Modifier.size(9.dp).clip(CircleShape).background(accent))
+            val fraction = if (target > 0) (value.toFloat() / target).coerceIn(0f, 1f) else 0f
+            val animatedFraction = mangoFloat(fraction)
+            Box(Modifier.size(34.dp), contentAlignment = Alignment.Center) {
+                androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+                    val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+                        width = 4.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                    drawArc(accent.copy(alpha = 0.2f), -90f, 360f, false, style = stroke)
+                    drawArc(accent, -90f, 360f * animatedFraction, false, style = stroke)
+                }
+                Box(Modifier.size(7.dp).clip(CircleShape).background(accent))
+            }
             Text(label, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1)
             Text("$value g", fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface)
