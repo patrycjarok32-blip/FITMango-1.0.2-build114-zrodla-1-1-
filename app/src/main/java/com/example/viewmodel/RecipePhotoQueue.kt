@@ -22,7 +22,9 @@ object RecipePhotoQueue {
         (recipe.imageUrl.isBlank() || recipe.imageUrl.startsWith("file:///android_asset/recipe_ai/"))
     fun repairable(context: Context, recipe: RecipeEntity): Boolean =
         !recipe.description.contains("Zdjęcie: dodane z telefonu.") &&
-        (eligible(recipe) || RecipePhotoHealth.needsRepair(context, recipe.imageUrl))
+        (eligible(recipe) || RecipePhotoHealth.needsRepair(context, recipe.imageUrl) ||
+            recipe.description.contains("Zdjęcie: poglądowe Pixabay") ||
+            recipe.description.contains("Zdjęcie: poglądowe Wikimedia"))
     fun enqueue(context: Context, recipes: List<RecipeEntity>, retry: Boolean = false, improveExisting: Boolean = false) {
         val settings = RecipePhotoSettings(context)
         if (!settings.enabled) return
