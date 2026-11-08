@@ -141,11 +141,43 @@ fun PremiumWaterGlass(waterMl: Int, goalMl: Int = 2000, modifier: Modifier = Mod
     }
 }
 
+/** Five original, resolution-independent growth illustrations drawn directly in Compose. */
 @Composable
 fun MangoGrowthTree(activeDays: Int, modifier: Modifier = Modifier) {
     val stage = when { activeDays >= 21 -> 4; activeDays >= 14 -> 3; activeDays >= 7 -> 2; activeDays >= 3 -> 1; else -> 0 }
+    val reduced = LocalReducedMangoMotion.current
+    val growth by animateFloatAsState((stage + 1) / 5f,
+        tween(if (reduced) 0 else 650), label = "mango_tree_growth")
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(listOf("🌱","🌿","🪴","🌳","🥭")[stage], fontSize = 38.sp)
+        Canvas(Modifier.size(92.dp, 104.dp)) {
+            val cx = size.width / 2f
+            val soilY = size.height * .88f
+            val trunkTop = soilY - size.height * (.13f + growth * .42f)
+            drawOval(Color(0xFFD4A16D), topLeft = Offset(size.width * .13f, soilY),
+                size = androidx.compose.ui.geometry.Size(size.width * .74f, size.height * .1f))
+            drawLine(Color(0xFF805E42), Offset(cx, soilY), Offset(cx, trunkTop),
+                strokeWidth = 5.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+            if (stage >= 1) {
+                drawOval(Color(0xFF83C890), topLeft = Offset(cx - size.width * .31f, trunkTop),
+                    size = androidx.compose.ui.geometry.Size(size.width * .31f, size.height * .2f))
+            }
+            if (stage >= 2) {
+                drawOval(Color(0xFF57A86B), topLeft = Offset(cx, trunkTop - size.height * .03f),
+                    size = androidx.compose.ui.geometry.Size(size.width * .34f, size.height * .23f))
+            }
+            if (stage >= 3) {
+                drawCircle(Color(0xFF65B276), radius = size.width * .25f,
+                    center = Offset(cx, trunkTop + size.height * .02f))
+                drawCircle(Color(0xFF83C890), radius = size.width * .19f,
+                    center = Offset(cx - size.width * .18f, trunkTop + size.height * .09f))
+            }
+            if (stage >= 4) {
+                drawOval(mango, topLeft = Offset(cx + size.width * .07f, trunkTop + size.height * .08f),
+                    size = androidx.compose.ui.geometry.Size(size.width * .16f, size.height * .21f))
+                drawOval(coral, topLeft = Offset(cx - size.width * .27f, trunkTop + size.height * .11f),
+                    size = androidx.compose.ui.geometry.Size(size.width * .14f, size.height * .18f))
+            }
+        }
         Column {
             Text("Moje drzewko Mango", style = MaterialTheme.typography.titleSmall)
             Text("${activeDays.coerceAtLeast(0)} dni aktywności • etap ${stage+1}/5", style = MaterialTheme.typography.bodySmall)
