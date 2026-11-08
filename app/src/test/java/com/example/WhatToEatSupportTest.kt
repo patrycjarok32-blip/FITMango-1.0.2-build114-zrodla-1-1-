@@ -20,9 +20,13 @@ class WhatToEatSupportTest {
     }
     @Test fun partialAndOverBudgetDaysDoNotOfferMisleadingSuggestions() {
         val recipes = listOf(recipe(1, 400, 30))
-        assertTrue(WhatToEatSupport.suggest(recipes, ScaledMealNutrition(1500, 80, 200, 55, isPartial = true), profile).all { it.approximate })
+        val partial = WhatToEatSupport.suggest(recipes, ScaledMealNutrition(1500, 80, 200, 55, isPartial = true), profile)
+        assertTrue(partial.isNotEmpty())
+        assertTrue(partial.all { it.approximate })
         assertTrue(WhatToEatSupport.suggest(recipes, ScaledMealNutrition(1900, 80, 200, 55), profile).isEmpty())
-        assertTrue(WhatToEatSupport.suggest(recipes, ScaledMealNutrition(1500, null, 200, 55), profile).all { it.approximate })
+        val missingMacros = WhatToEatSupport.suggest(recipes, ScaledMealNutrition(1500, null, 200, 55), profile)
+        assertTrue(missingMacros.isNotEmpty())
+        assertTrue(missingMacros.all { it.approximate })
     }
     @Test fun largeRecipeLibraryStillReturnsOnlyFiveMatchingMeals() {
         val recipes = (1L..1000L).map { recipe(it, 400, 40) }
