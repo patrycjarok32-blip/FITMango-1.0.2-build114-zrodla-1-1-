@@ -59,9 +59,9 @@ class ProfileNavigationUiTest {
     @Test fun quickPhotoActionOpensTheNewSetFormAndReturnsToTheOriginalTab() {
         open()
         compose.onNodeWithTag("profile_quick_body_photos_new").performClick()
-        compose.onNodeWithTag("profile_content").performScrollToNode(hasText("Nowy zestaw • dzisiaj"))
-        compose.onNodeWithText("Nowy zestaw • dzisiaj").assertIsDisplayed()
-        compose.onNodeWithTag("section_body_photos").assertDoesNotExist()
+        compose.onNodeWithTag("profile_content").performScrollToNode(hasTestTag("section_body_photos"))
+        compose.onNodeWithTag("section_body_photos").performClick()
+        compose.onNodeWithText("Nowy zestaw • dzisiaj").assertExists()
         compose.onNodeWithTag("profile_detail_back").performClick()
         compose.onNodeWithTag("profile_tab_profile").assertIsSelected()
     }
