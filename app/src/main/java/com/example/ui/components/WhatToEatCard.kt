@@ -24,6 +24,9 @@ fun WhatToEatCard(viewModel: DietaViewModel) {
     var selected by remember { mutableStateOf<MealSuggestion?>(null) }
     var type by remember { mutableStateOf("Przekąska") }
     var filter by remember { mutableStateOf("Wszystkie") }
+    var pantryText by remember { mutableStateOf("") }
+    var showPantry by remember { mutableStateOf(false) }
+    var showWeekPreview by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     CollapsibleMangoCard("Co mogę jeszcze dziś zjeść?", "what_to_eat") {
@@ -67,6 +70,31 @@ fun WhatToEatCard(viewModel: DietaViewModel) {
                     TextButton(enabled = !busy, onClick = { selected = s; message = null }, modifier = Modifier.testTag("suggestion_${s.recipe.id}")) { Text("Dodaj do dzisiejszego jadłospisu") }
                 }
             }
+        }
+        HorizontalDivider()
+        TextButton(onClick = { showPantry = !showPantry }) { Text(if (showPantry) "Ukryj moją lodówkę" else "Co ugotować z mojej lodówki?") }
+        if (showPantry) {
+            OutlinedTextField(value = pantryText, onValueChange = { pantryText = it },
+                label = { Text("Produkty w lodówce (oddziel przecinkami)") }, modifier = Modifier.fillMaxWidth())
+            val pantryMatches = remember(recipes, ingredients, pantryText) {
+                if (pantryText.isBlank()) emptyList() else PantryRecipeMatcher.match(recipes, ingredients, pantryText.split(","))
+            }
+            pantryMatches.take(5).forEach { match ->
+                Text("${match.recipe.title}: masz ${match.available}/${match.total} składników" +
+                    if (match.missing.isEmpty()) " • masz wszystko" else " • brakuje: ${match.missing.take(3).joinToString(", ")}")
+            }
+        }
+        TextButton(onClick = { showWeekPreview = !showWeekPreview }) { Text(if (showWeekPreview) "Ukryj plan" else "Zaproponuj jadłospis na 7 dni") }
+        if (showWeekPreview && profile != null) {
+            val week = remember(recipes, ingredients, profile) {
+                SmartWeeklyPlanner.preview(recipes, ingredients, profile!!)
+            }
+            if (week.isEmpty()) Text("Brak przepisów z dostępną kalorycznością do ułożenia planu.")
+            week.forEach { day ->
+                Text("Dzień ${day.dayIndex + 1} • około ${day.estimatedCalories} kcal", style = MaterialTheme.typography.titleSmall)
+                Text(day.suggestions.joinToString(" • ") { it.recipe.title })
+            }
+            Text("To podgląd propozycji, nie zapisuje ani nie zmienia obecnego jadłospisu.", style = MaterialTheme.typography.bodySmall)
         }
         message?.let { Text(it) }
     }
