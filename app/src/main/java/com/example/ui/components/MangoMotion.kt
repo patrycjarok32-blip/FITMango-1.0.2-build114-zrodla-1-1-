@@ -190,3 +190,22 @@ fun MangoAnimatedLogo(modifier: Modifier = Modifier) {
         style = MaterialTheme.typography.titleMedium
     )
 }
+
+/** Short entrance for transient panels such as recipe details. */
+@Composable
+fun Modifier.mangoPanelEntrance(key: Any): Modifier {
+    val reduced = LocalReducedMangoMotion.current
+    val phase = remember(key) { Animatable(1f) }
+    LaunchedEffect(key, reduced) {
+        if (reduced) phase.snapTo(1f)
+        else {
+            phase.snapTo(0f)
+            phase.animateTo(1f, tween(240))
+        }
+    }
+    return this.graphicsLayer {
+        alpha = if (reduced) 1f else 0.65f + 0.35f * phase.value
+        scaleX = if (reduced) 1f else 0.97f + 0.03f * phase.value
+        scaleY = scaleX
+    }
+}
