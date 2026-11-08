@@ -23,7 +23,7 @@ class BodyPhotosUiTest {
     private fun row(id: Long) = BodyPhotoEntity(id, "${20 + id}.10.2026", "file:///missing-$id.jpg", "", "")
     @Test fun allSavedDatesCanBeReachedAndEachAngleHasARepairAction() {
         compose.setContent { MojaDietaAiTheme { Column(Modifier.verticalScroll(rememberScrollState())) {
-            BodyPhotosCard((1L..5L).map { row(it) }, { _, _, _, _, done -> done(null) } }, { _, _, _, _, done -> done(null) } }, { _, _ -> }, {})
+            BodyPhotosCard((1L..5L).map { row(it) }, { _, _, _, _, done -> done(null) }, { _, _, _, done -> done(null) }, { _, _ -> }, {})
         } } }
         compose.onNodeWithTag("body_photo_set_1").assertDoesNotExist()
         compose.onNodeWithTag("body_photos_more").performScrollTo().performClick()
@@ -34,7 +34,7 @@ class BodyPhotosUiTest {
     }
     @Test fun galleryCanCompareTwoDatesWithoutAddingNewPhotos() {
         compose.setContent { MojaDietaAiTheme { Column(Modifier.verticalScroll(rememberScrollState())) {
-            BodyPhotosCard(listOf(row(1), row(2)), { _, _, _, _, done -> done(null) } fail("Must not save") }, { _, _, _, _, done -> done(null) } }, { _, _ -> }, {})
+            BodyPhotosCard(listOf(row(1), row(2)), { _, _, _, _, _ -> fail("Must not save") }, { _, _, _, done -> done(null) }, { _, _ -> }, {})
         } } }
         // Both empty and unavailable views remain visible with explicit repair actions.
         compose.onNodeWithTag("body_photo_replace_2_FRONT").assertExists()
@@ -47,7 +47,7 @@ class BodyPhotosUiTest {
     @Test fun deletingRequiresConfirmationAndCancelLeavesTheSetUntouched() {
         var deleted: Long? = null
         compose.setContent { MojaDietaAiTheme { Column(Modifier.verticalScroll(rememberScrollState())) {
-            BodyPhotosCard(listOf(row(1)), { _, _, _, _, done -> done(null) } }, { _, _, _, _, done -> done(null) } }, { id, done -> deleted = id; done(null) }, {})
+            BodyPhotosCard(listOf(row(1)), { _, _, _, _, done -> done(null) }, { _, _, _, done -> done(null) }, { id, done -> deleted = id; done(null) }, {})
         } } }
         compose.onNodeWithText("Usuń zestaw").performScrollTo().performClick()
         assertNull(deleted)
