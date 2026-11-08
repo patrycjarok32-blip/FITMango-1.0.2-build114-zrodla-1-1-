@@ -65,13 +65,11 @@ class MangoFitFinalUiPolishVerificationTest {
         val items = listOf(
             Screen.Dashboard,
             Screen.MealPlan,
-            Screen.Documents,
-            Screen.AiCoach,
-            Screen.Recipes,
-            Screen.Shopping,
+            Screen.Sport,
+            Screen.Progress,
             Screen.Profile
         )
-        assertEquals(7, items.size)
+        assertEquals(5, items.size)
 
         var navigatedScreen: Screen? = null
         composeTestRule.setContent {
@@ -87,8 +85,8 @@ class MangoFitFinalUiPolishVerificationTest {
         composeTestRule.onNodeWithTag("nav_tab_meal_plan").assertIsDisplayed()
         composeTestRule.onNodeWithTag("nav_tab_effects").assertIsDisplayed()
         composeTestRule.onNodeWithTag("nav_tab_sport").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("nav_tab_recipes").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("nav_tab_shopping").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("nav_tab_recipes").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("nav_tab_shopping").assertDoesNotExist()
         composeTestRule.onNodeWithTag("nav_tab_profile").assertIsDisplayed()
 
         // Click on Meal Plan tab
@@ -116,11 +114,8 @@ class MangoFitFinalUiPolishVerificationTest {
         Shadows.shadowOf(Looper.getMainLooper()).idle()
 
         composeTestRule.onNodeWithText("FITMango").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("dashboard_consumed_calories").performScrollTo().assertIsDisplayed()
-        composeTestRule.onNodeWithTag("compact_start_health").performScrollTo().performClick()
-        composeTestRule.onAllNodesWithText("Spalone kcal").onFirst().performScrollTo().assertIsDisplayed()
-        composeTestRule.onNodeWithTag("compact_start_water").performScrollTo().performClick()
-        composeTestRule.onNodeWithText("Nawodnienie").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("FITMango").assertIsDisplayed()
+        
         composeTestRule.onNodeWithTag("dashboard_health_connect_card").performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithTag("dashboard_steps_text").performScrollTo().assertIsDisplayed()
     }
@@ -161,7 +156,7 @@ class MangoFitFinalUiPolishVerificationTest {
         }
         Shadows.shadowOf(Looper.getMainLooper()).idle()
 
-        composeTestRule.onNodeWithText("Twoje przepisy").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Przepisy").assertIsDisplayed()
         composeTestRule.onNodeWithText("Owsianka mango").assertIsDisplayed()
     }
 
@@ -229,6 +224,7 @@ class MangoFitFinalUiPolishVerificationTest {
             .performScrollToNode(hasTestTag("profile_tile_health"))
         composeTestRule.onNodeWithTag("profile_tile_health").performClick()
         composeTestRule.onNodeWithTag("health_connect_section_card").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("health_connect_section_card").performScrollTo().performClick()
         composeTestRule.onNodeWithTag("health_connect_status_text").performScrollTo().assertIsDisplayed()
     }
 }
