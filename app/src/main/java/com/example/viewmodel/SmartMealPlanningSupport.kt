@@ -20,9 +20,18 @@ object SmartWeeklyPlanner {
             recipes, ScaledMealNutrition(0, 0, 0, 0), profile, ingredients
         )
         if (candidates.isEmpty()) return emptyList()
+        val perMeal = (profile.targetCalories / safeMeals).coerceAtLeast(30)
         return (0 until safeDays).map { day ->
             val chosen = (0 until safeMeals).map { slot ->
-                candidates[(day * safeMeals + slot) % candidates.size]
+                val candidate = candidates[(day * safeMeals + slot) % candidates.size]
+                val adjusted = (candidate.servings * perMeal / candidate.calories.coerceAtLeast(1))
+                    .coerceIn(0.25f, 2f)
+                val ratio = adjusted / candidate.servings
+                candidate.copy(servings = adjusted,
+                    calories = (candidate.calories * ratio).toInt(),
+                    protein = (candidate.protein * ratio).toInt(),
+                    carbs = (candidate.carbs * ratio).toInt(),
+                    fat = (candidate.fat * ratio).toInt())
             }
             GeneratedDay(day, chosen, chosen.sumOf { it.calories })
         }
