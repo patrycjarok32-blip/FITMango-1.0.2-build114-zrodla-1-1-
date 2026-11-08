@@ -54,7 +54,7 @@ fun WeightTrendChart(points: List<WeightPoint>) {
     var selected by remember(points) { mutableStateOf<WeightPoint?>(null) }
     if (points.size < 2) { Text("Dodaj pomiary z co najmniej dwóch dat, aby zobaczyć wykres."); return }
     val smooth = remember(points) { EffectsSupport.smoothed(points) }
-    val motion = progressMotionEnabled()
+    val motion = progressMotionEnabled() && !LocalReducedMangoMotion.current
     var revealed by remember(points) { mutableStateOf(false) }
     LaunchedEffect(points, motion) { revealed = true }
     val drawFraction by animateFloatAsState(if (revealed || !motion) 1f else 0f, animationSpec = tween(if (motion) 650 else 0), label = "weight_line_reveal")
