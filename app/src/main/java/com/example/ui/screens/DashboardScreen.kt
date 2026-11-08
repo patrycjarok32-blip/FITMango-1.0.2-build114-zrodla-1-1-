@@ -82,6 +82,8 @@ fun DashboardScreen(
     val consumed = nutritionSnapshot?.takeIf { it.date == currentDate }?.nutrition
         ?: com.example.viewmodel.ScaledMealNutrition(0, 0, 0, 0)
     val consumedCalories = consumed.calories ?: 0
+    val incompleteNutrition = consumed.isPartial || consumed.calories == null ||
+        consumed.protein == null || consumed.carbs == null || consumed.fat == null
     val reducedMangoMotion = LocalReducedMangoMotion.current
     val calorieFraction by animateFloatAsState(
         targetValue = (consumedCalories.toFloat() / targetCalories).coerceIn(0f, 1f),
@@ -178,6 +180,13 @@ fun DashboardScreen(
                 .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            if (incompleteNutrition) {
+                Text("Niepełne dane odżywcze: wartości bilansu mogą być zaniżone. " +
+                    "Uzupełnij składniki, aby uzyskać dokładniejsze propozycje.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.testTag("dashboard_partial_nutrition"))
+            }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     MangoAnimatedLogo()
