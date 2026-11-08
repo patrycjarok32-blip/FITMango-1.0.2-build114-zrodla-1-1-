@@ -59,9 +59,11 @@ class ProfileNavigationUiTest {
     @Test fun quickPhotoActionOpensTheNewSetFormAndReturnsToTheOriginalTab() {
         open()
         compose.onNodeWithTag("profile_quick_body_photos_new").performClick()
-        compose.onNodeWithTag("profile_content").performScrollToNode(hasTestTag("section_body_photos"))
-        compose.onNodeWithTag("section_body_photos").performClick()
-        compose.onNodeWithText("Nowy zestaw • dzisiaj").assertExists()
+        // Standalone profile details show their contents without a collapsible section.
+        // Verify the actual new-set form instead of the old section tag/heading.
+        compose.onNodeWithTag("profile_content").performScrollToNode(hasText("Nowy zestaw zdjęć sylwetki"))
+        compose.onNodeWithText("Nowy zestaw zdjęć sylwetki").assertIsDisplayed()
+        compose.onNodeWithTag("body_photo_date_picker").assertExists()
         compose.onNodeWithTag("profile_detail_back").performClick()
         compose.onNodeWithTag("profile_tab_profile").assertIsSelected()
     }
