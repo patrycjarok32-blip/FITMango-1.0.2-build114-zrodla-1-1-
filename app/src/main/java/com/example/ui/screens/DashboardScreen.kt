@@ -183,6 +183,28 @@ fun DashboardScreen(
                     MangoAnimatedLogo()
                     Text("Mój dzień • Cześć! 👋", fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = MaterialTheme.colorScheme.onBackground)
                     Text("Bilans, następny posiłek i postępy w jednym miejscu", color = GoldAccent, fontSize = 13.sp)
+                    val datedWeights = remember(bodyMeasurements) {
+                        bodyMeasurements.filter { it.weightKg > 0f }.sortedBy { it.date }
+                    }
+                    val recentWeights = remember(datedWeights, today) {
+                        datedWeights.filter { entry ->
+                            runCatching {
+                                val day = java.time.LocalDate.parse(entry.date)
+                                !day.isAfter(today) && !day.isBefore(today.minusDays(30))
+                            }.getOrDefault(false)
+                        }
+                    }
+                    if (recentWeights.size >= 2) {
+                        val firstWeight = recentWeights.first().weightKg
+                        val lastWeight = recentWeights.last().weightKg
+                        val change = lastWeight - firstWeight
+                        Text("Trend wagi (30 dni): " + String.format(java.util.Locale.getDefault(), "%+.1f kg", change) +
+                            " • ${recentWeights.size} pomiarów", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        Text("Trend wagi: dodaj co najmniej 2 pomiary w ciągu 30 dni.",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
 
             }
