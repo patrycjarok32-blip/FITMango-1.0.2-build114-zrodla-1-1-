@@ -102,7 +102,8 @@ class BodyPhotoStoreTest {
         val row = dao.getBodyPhotosDirect().single(); source.delete()
         val service = BackupService(context, database)
         val target = File(directory, "backup.zip")
-        service.export(Uri.fromFile(target))
+        service.saveAutomatic()
+        service.automaticFile.copyTo(target, overwrite = true)
         val prepared = service.prepare(Uri.fromFile(target))
         try {
             assertTrue(prepared.archive.missingFiles.isEmpty())
