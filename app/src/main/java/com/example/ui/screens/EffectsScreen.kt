@@ -55,9 +55,15 @@ fun WeightTrendChart(points: List<WeightPoint>) {
     if (points.size < 2) { Text("Dodaj pomiary z co najmniej dwóch dat, aby zobaczyć wykres."); return }
     val smooth = remember(points) { EffectsSupport.smoothed(points) }
     val motion = progressMotionEnabled() && !LocalReducedMangoMotion.current
-    var revealed by remember(points) { mutableStateOf(false) }
-    LaunchedEffect(points, motion) { revealed = true }
-    val drawFraction by animateFloatAsState(if (revealed || !motion) 1f else 0f, animationSpec = tween(if (motion) 650 else 0), label = "weight_line_reveal")
+    val lineReveal = remember(points) { androidx.compose.animation.core.Animatable(1f) }
+    LaunchedEffect(points, motion) {
+        if (!motion) lineReveal.snapTo(1f)
+        else {
+            lineReveal.snapTo(0f)
+            lineReveal.animateTo(1f, tween(650))
+        }
+    }
+    val drawFraction = lineReveal.value
     val lo = points.minOf { it.kg } - .5; val hi = points.maxOf { it.kg } + .5
     val from = LocalDate.parse(points.first().date).toEpochDay(); val to = LocalDate.parse(points.last().date).toEpochDay()
     val rawColor = MangoCoral; val trendColor = MaterialTheme.colorScheme.secondary; val axis = MaterialTheme.colorScheme.outline
