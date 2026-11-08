@@ -255,6 +255,7 @@ fun DashboardScreen(
                             }
                         )
                     }
+                    PremiumCalorieRing(consumed.calories, targetCalories, incompleteNutrition, Modifier.fillMaxWidth())
                     if (consumedProtein >= targetProtein && consumedProtein > 0) {
                         MangoBadge("Cel białka", earned = true)
                     }
@@ -350,6 +351,16 @@ fun DashboardScreen(
                         style = MaterialTheme.typography.bodySmall)
                 }
             }
+            MangoDayPhaseSettings()
+            MangoGrowthTree(
+                activeDays = habitDays.count { entry ->
+                    runCatching {
+                        val d = java.time.LocalDate.parse(entry.date)
+                        !d.isAfter(today) && !d.isBefore(today.minusDays(29))
+                    }.getOrDefault(false)
+                },
+                modifier = Modifier.fillMaxWidth().padding(8.dp)
+            )
             com.example.ui.components.ReleaseNotesControl(autoShow = true)
             com.example.ui.components.MealUndoCard(viewModel)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -567,6 +578,7 @@ fun DashboardScreen(
                 "water" to {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             DailyIntakeCard(viewModel)
+            PremiumWaterGlass(waterTotal)
             MangoAnimatedWaterGlass(waterTotal)
                     }
                 },
