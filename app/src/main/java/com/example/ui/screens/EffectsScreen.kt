@@ -87,6 +87,22 @@ fun WeightTrendChart(points: List<WeightPoint>) {
         Text("Min–max: ${String.format(java.util.Locale.getDefault(), "%.1f–%.1f", minWeight, maxWeight)} kg",
             color = GoldAccent, style = MaterialTheme.typography.bodySmall)
     }
+    val firstWeek = points.filter { point ->
+        runCatching { !LocalDate.parse(point.date).isAfter(LocalDate.parse(points.first().date).plusDays(6)) }.getOrDefault(false)
+    }
+    val lastWeek = points.filter { point ->
+        runCatching { !LocalDate.parse(point.date).isBefore(LocalDate.parse(points.last().date).minusDays(6)) }.getOrDefault(false)
+    }
+    if (firstWeek.isNotEmpty() && lastWeek.isNotEmpty()) {
+        val firstAverage = firstWeek.map { it.kg }.average()
+        val lastAverage = lastWeek.map { it.kg }.average()
+        val averageDelta = lastAverage - firstAverage
+        Text("Zmiana średniej z pierwszych i ostatnich 7 dni: " +
+            String.format(java.util.Locale.getDefault(), "%+.2f kg", averageDelta),
+            style = MaterialTheme.typography.bodySmall)
+        Text("Trend jest orientacyjny. Pojedynczy pomiar i krótkie wahania wagi nie przesądzają o postępach.",
+            style = MaterialTheme.typography.bodySmall)
+    }
     Text("Liczba pomiarów: ${points.size} • zakres: ${points.first().date} – ${points.last().date}",
         style = MaterialTheme.typography.labelSmall)
     Canvas(Modifier.fillMaxWidth().height(170.dp).padding(8.dp)
