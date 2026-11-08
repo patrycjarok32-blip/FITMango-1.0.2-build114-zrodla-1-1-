@@ -1074,7 +1074,9 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                                 calories = (recipe.calories * suggestion.servings).roundToInt())
                         }
                     }
-                    pending.forEach { repository.insertMealPlan(it) }
+                    AppDatabase.getDatabase(getApplication<Application>()).withTransaction {
+                        pending.forEach { repository.insertMealPlan(it) }
+                    }
                     rebuildShoppingListInternal()
                 }
                 onResult(null)
