@@ -180,6 +180,27 @@ fun BarcodeScannerScreen(
                         .testTag("camera_preview_view")
                 )
 
+                if (!LocalReducedMangoMotion.current && !hasEmittedBarcode) {
+                    val scanTransition = androidx.compose.animation.core.rememberInfiniteTransition(label = "barcode_scan")
+                    val scanY by scanTransition.animateFloat(
+                        initialValue = 0f, targetValue = 1f,
+                        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+                            animation = androidx.compose.animation.core.tween(1800),
+                            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+                        ), label = "barcode_scan_line"
+                    )
+                    androidx.compose.foundation.Canvas(
+                        Modifier.align(Alignment.Center).fillMaxWidth(0.72f).height(170.dp)
+                            .testTag("barcode_scan_motion")
+                    ) {
+                        val y = size.height * scanY
+                        drawLine(JuicyOrange.copy(alpha = 0.72f),
+                            androidx.compose.ui.geometry.Offset(0f, y),
+                            androidx.compose.ui.geometry.Offset(size.width, y),
+                            strokeWidth = 2.dp.toPx())
+                    }
+                }
+
                 Card(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
