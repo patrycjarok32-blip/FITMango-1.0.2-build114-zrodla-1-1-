@@ -331,6 +331,25 @@ fun DashboardScreen(
                         contentDescription = null, tint = JuicyOrange)
                 }
             }
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("my_day_shortcuts"),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Mój dzień • szybkie działania", style = MaterialTheme.typography.titleMedium)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = onNavigateToMealPlan, modifier = Modifier.weight(1f)) {
+                            Text("Jadłospis", maxLines = 1)
+                        }
+                        OutlinedButton(onClick = onNavigateToEffects, modifier = Modifier.weight(1f)) {
+                            Text("Postępy", maxLines = 1)
+                        }
+                    }
+                    Text("Poniżej znajdziesz propozycje posiłków, produkty wymagające uzupełnienia, wodę i aktywność.",
+                        style = MaterialTheme.typography.bodySmall)
+                }
+            }
             com.example.ui.components.ReleaseNotesControl(autoShow = true)
             com.example.ui.components.MealUndoCard(viewModel)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
