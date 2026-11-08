@@ -29,6 +29,6 @@ class MainActivityStartupTest {
             Shadows.shadowOf(Looper.getMainLooper()).idle()
             viewModel.recipes.value.isNotEmpty() && viewModel.userProfile.value != null
         }
-        compose.onNodeWithText("FITMango").assertIsDisplayed()
+        compose.onNodeWithTag("animated_fitmango_logo").assertIsDisplayed()
     }
 }
