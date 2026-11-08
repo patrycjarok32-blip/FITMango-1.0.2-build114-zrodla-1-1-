@@ -5,6 +5,9 @@ import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.testTag
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
@@ -54,20 +57,42 @@ fun MangoAiWorking(label: String, modifier: Modifier = Modifier) {
     }
 }
 
+/** Finite, event-triggered success celebration. No infinite animation or stored state. */
 @Composable
 fun MangoSuccessEffect(event: Int, message: String = "Zapisano!", modifier: Modifier = Modifier) {
-    var visible by remember { mutableStateOf(false) }
     val reduced = LocalReducedMangoMotion.current
-    LaunchedEffect(event) {
+    var visible by remember { mutableStateOf(false) }
+    val phase = remember { Animatable(1f) }
+    LaunchedEffect(event, reduced) {
         if (event <= 0) return@LaunchedEffect
         visible = true
-        delay(if (reduced) 900 else 1700)
+        phase.snapTo(if (reduced) 1f else 0f)
+        if (!reduced) phase.animateTo(1f, tween(720, easing = FastOutSlowInEasing))
+        delay(if (reduced) 1000 else 1100)
         visible = false
     }
-    AnimatedVisibility(visible = visible, modifier = modifier, enter = fadeIn(tween(if (reduced) 0 else 280)) + slideInVertically { it / 3 }) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF388E3C))
-            Text(message, style = MaterialTheme.typography.titleSmall)
+    if (visible) {
+        Box(modifier.testTag("mango_success_effect")) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF388E3C))
+                Text(message, style = MaterialTheme.typography.titleSmall)
+            }
+            if (!reduced && phase.value < 1f) {
+                Canvas(Modifier.matchParentSize()) {
+                    val colors = listOf(Color(0xFF4CAF50), Color(0xFFFFB74D), Color(0xFFFFD54F))
+                    repeat(12) { i ->
+                        val angle = (i * 2.0 * Math.PI / 12).toFloat()
+                        val radius = size.minDimension * (0.15f + phase.value * .65f)
+                        drawCircle(
+                            color = colors[i % colors.size].copy(alpha = (1f - phase.value).coerceIn(0f, 1f)),
+                            radius = 2.5.dp.toPx(),
+                            center = Offset(size.width / 2f + kotlin.math.cos(angle) * radius,
+                                size.height / 2f + kotlin.math.sin(angle) * radius)
+                        )
+                    }
+                }
+            }
         }
     }
 }
