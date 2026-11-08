@@ -23,12 +23,13 @@ fun WhatToEatCard(viewModel: DietaViewModel) {
     val date by viewModel.currentDate.collectAsState()
     var selected by remember { mutableStateOf<MealSuggestion?>(null) }
     var type by remember { mutableStateOf("Przekąska") }
+    var filter by remember { mutableStateOf("Wszystkie") }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     CollapsibleMangoCard("Co mogę jeszcze dziś zjeść?", "what_to_eat") {
         // This content is composed only when expanded. Never scan the recipe database on the UI thread.
-        var calculationError by remember(recipes, meals, ingredients, profile, date) { mutableStateOf<String?>(null) }
-        val result by produceState<Pair<ScaledMealNutrition, List<MealSuggestion>>?>(null, recipes, meals, ingredients, profile, date) {
+        var calculationError by remember(recipes, meals, ingredients, profile, date, filter) { mutableStateOf<String?>(null) }
+        val result by produceState<Pair<ScaledMealNutrition, List<MealSuggestion>>?>(null, recipes, meals, ingredients, profile, date, filter) {
             value = null
             try {
                 value = withContext(Dispatchers.Default) {
@@ -36,12 +37,17 @@ fun WhatToEatCard(viewModel: DietaViewModel) {
                     val consumed = IngredientSubstitutionSupport.totalMealNutrition(meals.filter {
                         it.isCompleted && it.completedDate == date && MealPlannerSupport.dateForDay(it.dayOfWeek, today) == today
                     }, recipes, ingredients)
-                    consumed to profile?.let { WhatToEatSupport.suggest(recipes, consumed, it, ingredients) }.orEmpty()
+                    consumed to profile?.let { WhatToEatSupport.suggest(recipes, consumed, it, ingredients, filter) }.orEmpty()
                 }
             } catch (e: CancellationException) { throw e }
             catch (_: Exception) { calculationError = "Nie udało się przygotować propozycji. Sprawdź dane przepisów i rozwiń sekcję ponownie." }
         }
         Text("Propozycje z Twoich przepisów według dzisiejszych zjedzonych posiłków. Uwzględniamy pozostałe kalorie i brakujące makro; wartości przepisów mogą być szacunkowe.")
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            listOf("Wszystkie", "Słodkie", "Wytrawne").forEach { option ->
+                FilterChip(selected = filter == option, onClick = { filter = option }, label = { Text(option) })
+            }
+        }
         val goal = profile
         val consumed = result?.first
         val suggestions = result?.second.orEmpty()
