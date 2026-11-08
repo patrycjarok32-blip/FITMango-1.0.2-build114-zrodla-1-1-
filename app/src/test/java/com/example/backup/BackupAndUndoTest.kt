@@ -60,7 +60,8 @@ class BackupAndUndoTest {
         val original = database.backupDao().snapshot()
         val service = BackupService(context, database)
         val target = File(directory, "export.zip")
-        service.export(Uri.fromFile(target))
+        service.saveAutomatic()
+        service.automaticFile.copyTo(target, overwrite = true)
         ZipFile(target).use { zip -> assertFalse(zip.getInputStream(zip.getEntry("backup.json")).reader().readText().contains("DO_NOT_EXPORT_THIS_KEY")) }
         val prepared = service.prepare(Uri.fromFile(target))
         assertEquals(2, prepared.archive.assets.size)
@@ -89,7 +90,8 @@ class BackupAndUndoTest {
         val image = File(directory, "image.jpg").apply { writeText("original image") }
         database.dietaDao().updateRecipe(recipe.copy(imageUrl = Uri.fromFile(image).toString()))
         val service = BackupService(context, database)
-        val target = File(directory, "export.zip"); service.export(Uri.fromFile(target))
+        val target = File(directory, "export.zip"); service.saveAutomatic()
+        service.automaticFile.copyTo(target, overwrite = true)
         val before = database.backupDao().snapshot()
         val broken = File(directory, "broken.zip")
         ZipFile(target).use { zip -> ZipOutputStream(broken.outputStream()).use { output ->
@@ -155,7 +157,8 @@ class BackupAndUndoTest {
     @Test fun incompatibleVersionAndMissingRecipeAreRejectedBeforeRestore() = runBlocking {
         seed()
         val service = BackupService(context, database)
-        val target = File(directory, "valid.zip"); service.export(Uri.fromFile(target))
+        val target = File(directory, "valid.zip"); service.saveAutomatic()
+        service.automaticFile.copyTo(target, overwrite = true)
         val prepared = service.prepare(Uri.fromFile(target)); val archive = prepared.archive
         try { BackupService.validate(archive.copy(version = 99)); fail("Unsupported version accepted") } catch (_: IllegalArgumentException) { }
         try { BackupService.validate(archive.copy(data = archive.data.copy(recipes = emptyList()))); fail("Orphan meal accepted") } catch (_: IllegalArgumentException) { }
