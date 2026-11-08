@@ -1015,7 +1015,8 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
             properties = DialogProperties(usePlatformDefaultWidth = false),
             modifier = Modifier
                 .fillMaxWidth(0.95f)
-                .testTag("recipe_detail_dialog"),
+                .testTag("recipe_detail_dialog")
+                .mangoPanelEntrance(recipe.id),
             containerColor = MutedSurface1,
             title = { Text(recipe.title, fontWeight = FontWeight.Black, color = Cream, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
             text = {
