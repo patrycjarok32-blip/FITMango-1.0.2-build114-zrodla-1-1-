@@ -41,7 +41,8 @@ class NavigationAndMealCollapseTest {
         compose.onNodeWithText("FITMango").assertIsDisplayed()
         compose.onNodeWithTag("nav_tab_dashboard").performClick()
         compose.onNodeWithText("FITMango").assertIsDisplayed()
-        compose.onNodeWithTag("nav_tab_recipes").performClick()
+        // Recipes are now reached from a shortcut, not a sixth bottom tab.
+        compose.onNodeWithTag("nav_tab_profile").performClick()
         compose.onNodeWithTag("nav_tab_dashboard").performClick()
         compose.onNodeWithText("FITMango").assertIsDisplayed()
     }
