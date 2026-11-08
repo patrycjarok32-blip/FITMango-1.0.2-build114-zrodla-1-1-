@@ -38,13 +38,13 @@ class NavigationAndMealCollapseTest {
         compose.setContent { MainNavigation(viewModel) }
         compose.onNodeWithTag("nav_tab_profile").performClick()
         compose.onNodeWithTag("nav_tab_dashboard").performClick()
-        compose.onNodeWithText("FITMango").assertIsDisplayed()
+        compose.onNodeWithTag("animated_fitmango_logo").assertIsDisplayed()
         compose.onNodeWithTag("nav_tab_dashboard").performClick()
-        compose.onNodeWithText("FITMango").assertIsDisplayed()
+        compose.onNodeWithTag("animated_fitmango_logo").assertIsDisplayed()
         // Recipes are now reached from a shortcut, not a sixth bottom tab.
         compose.onNodeWithTag("nav_tab_profile").performClick()
         compose.onNodeWithTag("nav_tab_dashboard").performClick()
-        compose.onNodeWithText("FITMango").assertIsDisplayed()
+        compose.onNodeWithTag("animated_fitmango_logo").assertIsDisplayed()
     }
 
     @Test fun addingIngredientThroughDialogUpdatesSavedRecipeAndPreservesOtherIngredients() {
