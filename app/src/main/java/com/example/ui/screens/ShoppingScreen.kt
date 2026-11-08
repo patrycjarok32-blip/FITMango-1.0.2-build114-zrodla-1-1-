@@ -3,6 +3,9 @@ package com.example.ui.screens
 import com.example.ui.components.FitMangoIcon as Icon
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -192,9 +195,15 @@ fun ShoppingScreen(viewModel: DietaViewModel) {
                                 fadeOutSpec = androidx.compose.animation.core.tween(160)),
                             isSelected = item.isChecked
                         ) {
+                            val checkedScale by animateFloatAsState(
+                                targetValue = if (item.isChecked && !reducedMotion) 0.985f else 1f,
+                                animationSpec = tween(if (reducedMotion) 0 else 180),
+                                label = "shopping_item_checked"
+                            )
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .graphicsLayer { scaleX = checkedScale; scaleY = checkedScale }
                                     .padding(4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
