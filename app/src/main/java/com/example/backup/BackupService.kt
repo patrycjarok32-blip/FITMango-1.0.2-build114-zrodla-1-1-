@@ -67,11 +67,29 @@ class BackupService(private val context: Context, private val database: AppDatab
         val temp = File.createTempFile("fitmango-backup-", ".zip", context.cacheDir)
         try {
             val missing = temp.outputStream().use { writeArchive(it, includeKeys = true) }
-            context.contentResolver.openOutputStream(uri, "wt")?.use { output ->
-                encryptArchive(temp.readBytes(), password).let { output.write(it) }
-            } ?: error("Nie można zapisać pliku w wybranym miejscu.")
-            if (missing == 0) "Kopia zapisana. Przechowuj ją w bezpiecznym miejscu."
-            else "Kopia zapisana. Niedostępne pliki: $missing. Ich tekst i pozostałe dane zachowano."
+            require(temp.length() > 0L) { "Nie udało się przygotować danych kopii." }
+            // Prepare the encrypted archive before opening the destination. SAF creates
+            // an empty document immediately, even if generating the backup later fails.
+            val encrypted = encryptArchive(temp.readBytes(), password)
+            require(encrypted.isNotEmpty()) { "Nie udało się zaszyfrować kopii." }
+            try {
+                context.contentResolver.openOutputStream(uri, "wt")?.use { output ->
+                    output.write(encrypted)
+                    output.flush()
+                } ?: error("Nie można zapisać pliku w wybranym miejscu.")
+                // Some document providers acknowledge a write but do not persist it.
+                val savedSize = context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize }
+                    ?: error("Nie można sprawdzić zapisanego pliku kopii.")
+                require(savedSize == encrypted.size.toLong()) {
+                    "Plik kopii nie został zapisany w całości (oczekiwano ${encrypted.size} bajtów, zapisano $savedSize)."
+                }
+            } catch (e: Exception) {
+                // Do not leave a misleading empty or truncated backup in the destination.
+                runCatching { android.provider.DocumentsContract.deleteDocument(context.contentResolver, uri) }
+                throw e
+            }
+            if (missing == 0) "Kopia zapisana i sprawdzona (${encrypted.size} bajtów). Przechowuj ją w bezpiecznym miejscu."
+            else "Kopia zapisana i sprawdzona (${encrypted.size} bajtów). Niedostępne pliki: $missing. Ich tekst i pozostałe dane zachowano."
         } finally { temp.delete() }
     }
 
