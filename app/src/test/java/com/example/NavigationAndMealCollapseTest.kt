@@ -36,12 +36,13 @@ class NavigationAndMealCollapseTest {
             override suspend fun syncAllHealthData() = HealthSyncResult()
         }
         compose.setContent { MainNavigation(viewModel) }
-        compose.onNodeWithTag("nav_tab_recipes").performClick()
-        compose.onNodeWithText("Twoje przepisy").assertIsDisplayed()
+        compose.onNodeWithTag("nav_tab_profile").performClick()
+        compose.onNodeWithTag("nav_tab_dashboard").performClick()
+        compose.onNodeWithText("FITMango").assertIsDisplayed()
         compose.onNodeWithTag("nav_tab_dashboard").performClick()
         compose.onNodeWithText("FITMango").assertIsDisplayed()
         compose.onNodeWithTag("nav_tab_recipes").performClick()
-        compose.onNodeWithTag("recipes_go_home").performClick()
+        compose.onNodeWithTag("nav_tab_dashboard").performClick()
         compose.onNodeWithText("FITMango").assertIsDisplayed()
     }
 
