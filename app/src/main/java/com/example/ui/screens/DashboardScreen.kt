@@ -591,7 +591,6 @@ fun DashboardScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             DailyIntakeCard(viewModel)
             PremiumWaterGlass(waterTotal)
-            MangoAnimatedWaterGlass(waterTotal)
                     }
                 },
                 "suggestions" to {
