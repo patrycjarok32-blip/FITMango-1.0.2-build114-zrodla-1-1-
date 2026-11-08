@@ -180,6 +180,7 @@ fun DashboardScreen(
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
+                    MangoAnimatedLogo()
                     Text("Cześć! 👋", fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = MaterialTheme.colorScheme.onBackground)
                     Text("Sprawdź bilans i zaplanuj posiłki", color = GoldAccent, fontSize = 13.sp)
                 }
