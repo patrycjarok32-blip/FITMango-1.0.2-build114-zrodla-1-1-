@@ -313,18 +313,18 @@ fun MangoRecipeCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth().pressScaleEffect().clickable(onClick = onClick),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column {
             Box(Modifier.fillMaxWidth()) {
                 RecipePhoto(
                     imageUrl = imageUrl,
                     title = title,
-                    modifier = Modifier.fillMaxWidth().height(132.dp)
-                        .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)),
+                    modifier = Modifier.fillMaxWidth().height(156.dp)
+                        .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
                     onChoosePhoto = onPhotoClick
                 )
                 onFavoriteClick?.let { action ->
@@ -353,10 +353,10 @@ fun MangoRecipeCard(
                 }
             }
             Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(title, color = Cream, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold,
                     maxLines = 2, overflow = TextOverflow.Ellipsis, minLines = 2)
                 Text(category, color = LeafGreen, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("$calories kcal" + (protein?.let { " • B: ${it} g" } ?: ""),
+                Text((if (calories > 0) "$calories kcal" else "Kalorie nieznane") + (protein?.let { " • B: ${it} g" } ?: ""),
                     color = OrangeInk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Text(preparationMinutes?.let { "$it min" } ?: "Czas niepodany",
                     color = GoldAccent, fontSize = 11.sp)
