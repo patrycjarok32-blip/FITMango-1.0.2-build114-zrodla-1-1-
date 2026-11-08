@@ -139,6 +139,17 @@ fun HabitsHistoryCard(viewModel: DietaViewModel) {
             Text("Zjedzone: ${day.calories} / ${day.targetCalories} kcal")
             Text("B: ${day.protein} g • W: ${day.carbs} g • T: ${day.fat} g")
             Text("Napoje: ${day.drinksMl} / ${day.waterGoal} ml")
+            // A water-level indicator follows real diary values and respects reduced motion.
+            Box(Modifier.fillMaxWidth().height(24.dp)
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)) {
+                val waterFraction = if (day.waterGoal > 0)
+                    (day.drinksMl.toFloat() / day.waterGoal).coerceIn(0f, 1f) else 0f
+                Box(Modifier.fillMaxWidth(mangoFloat(waterFraction)).fillMaxHeight()
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                    .background(androidx.compose.ui.graphics.Color(0xFF40B8E8))
+                    .testTag("habits_water_fill"))
+            }
             Text("Warzywa: ${day.vegetableGrams} g • Owoce: ${day.fruitGrams} g")
             if (day.meals.isEmpty()) Text("Nie zapisano zjedzonych posiłków.")
             day.meals.forEach { Text("• $it") }
