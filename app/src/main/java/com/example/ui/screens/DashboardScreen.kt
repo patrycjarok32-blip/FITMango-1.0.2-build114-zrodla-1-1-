@@ -110,6 +110,18 @@ fun DashboardScreen(
         ?: profile?.currentWeightKg
 
 
+    val mangoPhase = rememberMangoDayPhase()
+    val mangoBackground = when (mangoPhase) {
+        MangoDayPhase.MORNING -> Color(0xFFFFB547)
+        MangoDayPhase.DAY -> Color(0xFF83C890)
+        MangoDayPhase.EVENING -> Color(0xFFFF805D)
+        MangoDayPhase.NIGHT -> Color(0xFF547B6A)
+    }
+    val backgroundMotion = rememberInfiniteTransition(label = "premium_background")
+    val backgroundPulse by backgroundMotion.animateFloat(
+        initialValue = 0.04f, targetValue = 0.13f,
+        animationSpec = infiniteRepeatable(tween(14000), RepeatMode.Reverse),
+        label = "premium_background_pulse")
     val appearanceContext = LocalContext.current
     Scaffold(
         topBar = {
@@ -173,7 +185,7 @@ fun DashboardScreen(
                 .imePadding()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(DarkBackground, MangoPremiumGlow.copy(alpha = 0.32f), DarkBackground)
+                        colors = listOf(DarkBackground, mangoBackground.copy(alpha = if (reducedMangoMotion) .06f else backgroundPulse), DarkBackground)
                     )
                 )
                 .verticalScroll(rememberScrollState())
