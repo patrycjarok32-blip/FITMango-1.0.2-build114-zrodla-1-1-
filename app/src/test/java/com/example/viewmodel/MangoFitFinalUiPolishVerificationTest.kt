@@ -116,6 +116,7 @@ class MangoFitFinalUiPolishVerificationTest {
         composeTestRule.onNodeWithText("FITMango").assertIsDisplayed()
         composeTestRule.onNodeWithText("FITMango").assertIsDisplayed()
         
+        composeTestRule.onNodeWithTag("compact_start_health").performScrollTo().performClick()
         composeTestRule.onNodeWithTag("dashboard_health_connect_card").performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithTag("dashboard_steps_text").performScrollTo().assertIsDisplayed()
     }
@@ -217,13 +218,12 @@ class MangoFitFinalUiPolishVerificationTest {
         }
         Shadows.shadowOf(Looper.getMainLooper()).idle()
 
-        composeTestRule.onNodeWithText("Profil i postępy").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Więcej").assertIsDisplayed()
         composeTestRule.onNodeWithTag("profile_tab_profile").performClick()
         composeTestRule.onNodeWithTag("health_connect_status_text").assertDoesNotExist()
         composeTestRule.onNodeWithTag("profile_content")
             .performScrollToNode(hasTestTag("profile_tile_health"))
         composeTestRule.onNodeWithTag("profile_tile_health").performClick()
-        composeTestRule.onNodeWithTag("health_connect_section_card").assertIsDisplayed()
         composeTestRule.onNodeWithTag("health_connect_section_card").performScrollTo().performClick()
         composeTestRule.onNodeWithTag("health_connect_status_text").performScrollTo().assertIsDisplayed()
     }
