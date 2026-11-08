@@ -275,6 +275,7 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
             item(span = { GridItemSpan(maxLineSpan) }) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SuccessFeedback(planFeedback)
+                MangoSuccessEffect(planFeedback, message = "Dodano do jadłospisu")
                 Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text("${recipes.size} przepisów • ${filteredRecipes.size} wyników", style = MaterialTheme.typography.bodyMedium, color = Cream)
                     TextButton(onClick = { showFridgeDialog = true }, modifier = Modifier.testTag("open_fridge_recipes")) {
