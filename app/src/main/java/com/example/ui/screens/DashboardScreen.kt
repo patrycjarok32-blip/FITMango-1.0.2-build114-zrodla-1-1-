@@ -276,7 +276,15 @@ fun DashboardScreen(
                             }
                         )
                     }
-                    PremiumCalorieRing(consumed.calories, targetCalories, incompleteNutrition, Modifier.fillMaxWidth())
+                    Box(Modifier.fillMaxWidth()) {
+                        PremiumCalorieRing(consumed.calories, targetCalories, incompleteNutrition, Modifier.fillMaxWidth())
+                        MangoGoalConfetti(
+                            goalReached = !incompleteNutrition &&
+                                consumedCalories >= (targetCalories * 0.95f).toInt() &&
+                                consumedCalories <= targetCalories,
+                            modifier = Modifier.matchParentSize()
+                        )
+                    }
                     if (consumedProtein >= targetProtein && consumedProtein > 0) {
                         MangoBadge("Cel białka", earned = true)
                     }
@@ -391,7 +399,14 @@ fun DashboardScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
             ) {
                 Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                    MangoGuide(size = 52.dp)
+                    MangoMoodIllustration(
+                        mood = when {
+                            consumedCalories >= targetCalories * 0.95f && consumedCalories <= targetCalories -> MangoMood.CELEBRATE
+                            waterTotal > 0 && weeklyActiveDays >= 3 -> MangoMood.HAPPY
+                            consumedCalories > 0 -> MangoMood.HAPPY
+                            else -> MangoMood.WELCOME
+                        }
+                    )
                     Spacer(Modifier.width(12.dp))
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text("Twój Mango-przyjaciel", style = MaterialTheme.typography.labelMedium,
