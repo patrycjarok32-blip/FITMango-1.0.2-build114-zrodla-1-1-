@@ -97,7 +97,7 @@ fun WeekComparisonCard(comparison: WeekComparison) {
     val a = comparison.older; val b = comparison.newer
     fun date(d: LocalDate) = d.format(java.time.format.DateTimeFormatter.ofPattern("dd.MM"))
     fun avg(value: Double?, suffix: String, days: Int) = value?.let { "${it.roundToInt()} $suffix\n$days dni" } ?: "—\nbrak zapisów"
-    MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    MangoCard(Modifier.fillMaxWidth().testTag("fresh_mango_weekly_charts")) { Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         SportHeading(Icons.Outlined.CompareArrows, "Porównanie tygodni")
         Text("Dwa ostatnie zakończone tygodnie pn.–nd.", style = MaterialTheme.typography.bodySmall, color = GoldAccent)
         @Composable fun row(label: String, left: String, right: String) {
