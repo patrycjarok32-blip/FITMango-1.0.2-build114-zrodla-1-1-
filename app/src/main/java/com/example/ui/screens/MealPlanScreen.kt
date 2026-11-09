@@ -1680,8 +1680,9 @@ private fun FreshMangoPlannerStat(
     value: String,
     modifier: Modifier = Modifier
 ) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(18.dp),
-        color = MutedSurface1) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.18f))) {
         Column(
             modifier = Modifier.padding(horizontal = 7.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
