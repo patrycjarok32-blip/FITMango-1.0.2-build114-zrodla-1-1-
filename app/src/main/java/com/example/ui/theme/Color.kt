@@ -39,7 +39,11 @@ val Pistachio get() = Color(0xFFA5D6A7)
 val ErrorInk get() = role(0xFFFF8C95, 0xFFB3261E)
 
 // Fresh Mango semantic accents, shared across dashboard, meal plan and navigation.
-val MangoCoral get() = Color(0xFFFF922B)
-val MangoMint get() = Color(0xFF23865A)
+val MangoCoral get() = Color(0xFFFF7950)
+val MangoMint get() = Color(0xFF43976A)
 val MangoLavender get() = Color(0xFF7866D8)
-val MangoPeach get() = Color(0xFFFFD58B)
+val MangoPeach get() = Color(0xFFFFB347)
+
+// Fresh Mango 2.0 decorative palette; semantic colors above remain accessible in both themes.
+val MangoLime get() = Color(0xFFD7EDC2)
+val MangoCreamAccent get() = Color(0xFFFFF7E9)
