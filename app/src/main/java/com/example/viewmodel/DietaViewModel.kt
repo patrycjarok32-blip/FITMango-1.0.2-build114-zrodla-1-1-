@@ -936,7 +936,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                     _pdfAnalysisStates.value = _pdfAnalysisStates.value + (
                         document.id to PdfAnalysisState.Completed(distinctRecipes.size)
                     )
-                    val summary = "Znaleziono ${distinctRecipes.size} przepisów (przeanalizowano ${outcome.totalChunks}/${outcome.totalChunks} części)."
+                    val summary = outcome.toReviewReport().summary()
                     repository.updateDocument(document.copy(aiAnalysisResult = summary))
                     if (distinctRecipes.isEmpty()) {
                         onResult(emptyList(), "Nie znaleziono przepisów w tym dokumencie.")
