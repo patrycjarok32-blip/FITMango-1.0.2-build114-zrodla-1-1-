@@ -1,6 +1,9 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
@@ -38,17 +41,38 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
         (0L..6L).map { weekStart.plusDays(it) to data.plans.firstOrNull { p -> p.date == weekStart.plusDays(it).toString() } }
     }
     MangoCard(Modifier.fillMaxWidth().testTag("sport_profile")) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             SportHeading(Icons.Outlined.FitnessCenter, "Mój profil sportowy")
+            Text("🥭 Twój plan • małe kroki, duży progres", style = MaterialTheme.typography.titleSmall, color = LeafGreen)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SportProfileSummary("Treningi", "${data.plans.count { !it.rest }}", Modifier.weight(1f))
+                SportProfileSummary("Serie", "${data.sets.size}", Modifier.weight(1f))
+                SportProfileSummary("Odpoczynek", "${data.plans.count { it.rest }}", Modifier.weight(1f))
+            }
             Text("Plan tygodnia • zapis lokalny", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             plans.forEach { (date, plan) ->
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(date.format(DateTimeFormatter.ofPattern("EEE dd.MM", Locale("pl"))),
-                        modifier = Modifier.width(100.dp), style = MaterialTheme.typography.bodySmall)
-                    Text(plan?.title ?: "Bez planu", modifier = Modifier.weight(1f),
-                        fontWeight = if (date == today) FontWeight.Bold else FontWeight.Normal)
-                    if (plan != null) TextButton(onClick = { onRemovePlan(date.toString()) }, enabled = !busy) {
-                        Icon(Icons.Outlined.Close, contentDescription = "Usuń plan z ${date}")
+                Surface(
+                    modifier = Modifier.fillMaxWidth().testTag("sport_plan_day_${date}"),
+                    shape = RoundedCornerShape(18.dp),
+                    color = if (date == today) MaterialTheme.colorScheme.secondaryContainer
+                        else MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, if (date == today) LeafGreen.copy(alpha = 0.5f)
+                        else MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically) {
+                        Text(date.format(DateTimeFormatter.ofPattern("EEE dd.MM", Locale("pl"))),
+                            modifier = Modifier.width(94.dp), style = MaterialTheme.typography.bodySmall)
+                        Column(Modifier.weight(1f)) {
+                            Text(plan?.title ?: "Bez planu",
+                                fontWeight = if (date == today) FontWeight.Bold else FontWeight.Medium,
+                                style = MaterialTheme.typography.bodyMedium)
+                            if (plan?.rest == true) Text("Regeneracja", style = MaterialTheme.typography.labelSmall)
+                        }
+                        if (plan != null) TextButton(onClick = { onRemovePlan(date.toString()) },
+                            enabled = !busy) {
+                            Icon(Icons.Outlined.Close, contentDescription = "Usuń plan z ${date}")
+                        }
                     }
                 }
             }
@@ -149,3 +173,17 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
 }
 
 private fun formatSport(value: Double) = String.format(Locale.getDefault(), "%.1f", value)
+
+@Composable
+private fun SportProfileSummary(label: String, value: String, modifier: Modifier = Modifier) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer) {
+        Column(Modifier.padding(vertical = 12.dp, horizontal = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer)
+            Text(label, style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer, maxLines = 1)
+        }
+    }
+}
