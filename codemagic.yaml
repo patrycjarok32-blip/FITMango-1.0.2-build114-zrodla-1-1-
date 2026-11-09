@@ -58,6 +58,18 @@ workflows:
           ./gradlew :app:assembleRelease --stacktrace
           mkdir -p build-artifacts
           cp app/build/outputs/apk/release/app-release.apk "build-artifacts/FITMango-Premium-build125-$(git rev-parse --short HEAD).apk"
+          # Reject an unsigned/wrongly packaged artifact before publishing it.
+          APK="app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK" || { echo "BŁĄD: brak release APK"; exit 1; }
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)"
+          test -n "$APKSIGNER" || { echo "BŁĄD: brak apksigner"; exit 1; }
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+          if [ -n "${EXPECTED_SIGNING_CERT_SHA256:-}" ]; then
+            ACTUAL_CERT=$("$APKSIGNER" verify --print-certs "$APK" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -1 | tr '[:upper:]' '[:lower:]' | tr -d ':')
+            EXPECTED_CERT=$(printf '%s' "$EXPECTED_SIGNING_CERT_SHA256" | tr '[:upper:]' '[:lower:]' | tr -d ':')
+            test "$ACTUAL_CERT" = "$EXPECTED_CERT" || { echo "BŁĄD: certyfikat APK nie pasuje do poprzedniej instalacji"; exit 1; }
+          fi
+          echo "Sprawdzono podpis APK release. Do aktualizacji NIE używaj app-debug.apk."
           echo "APK przygotowane z commita $(git rev-parse HEAD)"
 
     artifacts:
