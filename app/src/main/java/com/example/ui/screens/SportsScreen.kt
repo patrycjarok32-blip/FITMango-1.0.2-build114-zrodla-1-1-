@@ -122,6 +122,18 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
         }
         if (activitySection == "training") item {
+            FreshMangoSportSection("🏋️", "Twój trening",
+                "Plan tygodnia, zapis serii, historia aktywności i postępy siłowe")
+        }
+        if (activitySection == "progress") item {
+            FreshMangoSportSection("📈", "Twoje postępy",
+                "Rekordy, wykresy i porównania na podstawie zapisanych treningów")
+        }
+        if (activitySection == "recovery") item {
+            FreshMangoSportSection("🌿", "Czas na regenerację",
+                "Sen i samopoczucie • informacje z dostępnych pomiarów")
+        }
+        if (activitySection == "training") item {
             OutlinedButton(onClick = { showTrainingProfile = !showTrainingProfile },
                 modifier = Modifier.fillMaxWidth().testTag("sport_profile_tab")) {
                 Text(if (showTrainingProfile) "Ukryj plan siłowy" else "Plan treningów i zapis serii")
@@ -364,5 +376,24 @@ private fun SportRing(label: String, value: Int, target: Int, accent: Color, uni
         Text(label, style = MaterialTheme.typography.labelSmall)
         Text(if (label == "Cel tygodnia") "Cel: $target $unit" else "W tym tygodniu",
             style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+@Composable
+private fun FreshMangoSportSection(emoji: String, title: String, description: String) {
+    Surface(modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.primaryContainer) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(emoji, style = MaterialTheme.typography.headlineMedium)
+            Column {
+                Text(title, style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text(description, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer)
+            }
+        }
     }
 }
