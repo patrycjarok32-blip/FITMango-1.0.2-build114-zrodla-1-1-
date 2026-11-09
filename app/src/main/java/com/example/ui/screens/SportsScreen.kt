@@ -179,7 +179,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             SportProfileCards(data, today, busy,
                 onPlan = { day, title, rest -> sports.plan(day, title, rest) { saved() } },
                 onRemovePlan = { day -> sports.removePlan(day) { saved() } },
-                onAddSet = { day, exercise, reps, kg -> sports.addSet(day, exercise, reps, kg) { saved() } })
+                onAddSet = { day, exercise, reps, kg -> sports.addSet(day, exercise, reps, kg) { saved() } },
+                onSaveWeek = { plans -> sports.saveTrainingWeek(plans) { saved() } })
         }
         if (activitySection == "today") item { ActivityTodayCard(data, today, current) }
         if (activitySection == "today" || activitySection == "training") item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
