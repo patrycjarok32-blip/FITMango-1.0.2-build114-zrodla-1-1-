@@ -59,9 +59,13 @@ internal object HybridPdfTextReader {
                                 try {
                                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                                     val ocr = recognize(recognizer, InputImage.fromBitmap(bitmap, 0))
-                                    if (ocr.count { it.isLetterOrDigit() } > original.count { it.isLetterOrDigit() }) {
-                                        ocr
-                                    } else original
+                                    // Keep the embedded heading AND the OCR-only ingredients and steps.
+                                    // Illustrated cookbooks often expose only the title as PDF text.
+                                    when {
+                                        ocr.isBlank() -> original
+                                        original.isBlank() -> ocr
+                                        else -> original + "\\n" + ocr
+                                    }
                                 } finally {
                                     bitmap.recycle()
                                 }
