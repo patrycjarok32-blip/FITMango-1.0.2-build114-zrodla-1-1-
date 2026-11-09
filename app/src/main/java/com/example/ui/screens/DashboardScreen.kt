@@ -120,9 +120,17 @@ fun DashboardScreen(
     }
     val backgroundMotion = rememberInfiniteTransition(label = "premium_background")
     val backgroundPulse by backgroundMotion.animateFloat(
-        initialValue = 0.04f, targetValue = 0.13f,
-        animationSpec = infiniteRepeatable(tween(14000), RepeatMode.Reverse),
+        initialValue = 0.18f, targetValue = 0.30f,
+        animationSpec = infiniteRepeatable(tween(9000), RepeatMode.Reverse),
         label = "premium_background_pulse")
+    val waterFillFraction by animateFloatAsState(
+        targetValue = (waterTotal.toFloat() / 2000f).coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = if (reducedMangoMotion) 0 else 850),
+        label = "premium_water_fill")
+    val waterPulseScale by animateFloatAsState(
+        targetValue = 1f + waterFillFraction * 0.025f,
+        animationSpec = tween(durationMillis = if (reducedMangoMotion) 0 else 500),
+        label = "premium_water_pulse")
     val appearanceContext = LocalContext.current
     Scaffold(
         topBar = {
@@ -591,7 +599,22 @@ fun DashboardScreen(
                 "water" to {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             DailyIntakeCard(viewModel)
-            PremiumWaterGlass(waterTotal)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .scale(waterPulseScale)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.06f + waterFillFraction * 0.22f),
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(20.dp)
+                    )
+            ) {
+                PremiumWaterGlass(waterTotal)
+            }
                     }
                 },
                 "suggestions" to {
