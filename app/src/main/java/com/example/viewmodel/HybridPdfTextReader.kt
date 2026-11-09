@@ -64,7 +64,7 @@ internal object HybridPdfTextReader {
                                     when {
                                         ocr.isBlank() -> original
                                         original.isBlank() -> ocr
-                                        else -> original + "\\n" + ocr
+                                        else -> original + "\n" + ocr
                                     }
                                 } finally {
                                     bitmap.recycle()
