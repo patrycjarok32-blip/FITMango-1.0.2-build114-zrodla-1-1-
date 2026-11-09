@@ -28,7 +28,8 @@ import java.util.Locale
 @Composable
 fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
     onPlan: (String, String, Boolean) -> Unit, onRemovePlan: (String) -> Unit,
-    onAddSet: (String, String, Int, Double) -> Unit) {
+    onAddSet: (String, String, Int, Double) -> Unit,
+    onSaveWeek: (List<SportPlan>) -> Unit = {}) {
     var planDay by rememberSaveable { mutableStateOf(today.toString()) }
     var planTitle by rememberSaveable { mutableStateOf("Push") }
     var rest by rememberSaveable { mutableStateOf(false) }
@@ -37,6 +38,12 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
     var weight by rememberSaveable { mutableStateOf("0") }
     var showEditor by rememberSaveable { mutableStateOf(false) }
     var showSetEditor by rememberSaveable { mutableStateOf(false) }
+    var planMode by rememberSaveable { mutableStateOf("auto") }
+    var strengthGoal by rememberSaveable { mutableStateOf("muscle") }
+    var trainingDays by rememberSaveable { mutableStateOf("3") }
+    var experience by rememberSaveable { mutableStateOf("beginner") }
+    var trainingPlace by rememberSaveable { mutableStateOf("gym") }
+    var generatedTitles by remember { mutableStateOf<List<String>>(emptyList()) }
     val weekStart = SportsSupport.week(today)
     val plans = remember(data.plans, weekStart) {
         (0L..6L).map { weekStart.plusDays(it) to data.plans.firstOrNull { p -> p.date == weekStart.plusDays(it).toString() } }
@@ -49,6 +56,82 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                 SportProfileSummary("Treningi", "${data.plans.count { !it.rest }}", Modifier.weight(1f))
                 SportProfileSummary("Serie", "${data.sets.size}", Modifier.weight(1f))
                 SportProfileSummary("Odpoczynek", "${data.plans.count { it.rest }}", Modifier.weight(1f))
+            }
+            Text("✨ Inteligentny Plan Siłowy 3.0", style = MaterialTheme.typography.titleMedium, color = LeafGreen)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = planMode == "auto", onClick = { planMode = "auto" },
+                    label = { Text("✨ Generator") })
+                FilterChip(selected = planMode == "manual", onClick = { planMode = "manual" },
+                    label = { Text("✏️ Własny plan") })
+            }
+            if (planMode == "auto") {
+                Text("Wybierz cel, a następnie edytuj propozycję przed zapisaniem.",
+                    style = MaterialTheme.typography.bodySmall)
+                Text("Cel treningowy", style = MaterialTheme.typography.labelLarge)
+                listOf("muscle" to "Budowa mięśni", "fat" to "Redukcja", "glutes" to "Nogi i pośladki",
+                    "strength" to "Siła").chunked(2).forEach { pair ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        pair.forEach { (key, label) ->
+                            FilterChip(selected = strengthGoal == key, onClick = { strengthGoal = key },
+                                label = { Text(label) })
+                        }
+                    }
+                }
+                Text("Dni treningowe", style = MaterialTheme.typography.labelLarge)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    (2..5).forEach { count ->
+                        FilterChip(selected = trainingDays == count.toString(),
+                            onClick = { trainingDays = count.toString() }, label = { Text("$count") })
+                    }
+                }
+                Text("Doświadczenie", style = MaterialTheme.typography.labelLarge)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf("beginner" to "Start", "intermediate" to "Średni", "advanced" to "Zaaw.").forEach { (key, label) ->
+                        FilterChip(selected = experience == key, onClick = { experience = key },
+                            label = { Text(label) })
+                    }
+                }
+                Text("Miejsce treningu", style = MaterialTheme.typography.labelLarge)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf("gym" to "Siłownia", "home" to "Dom", "mixed" to "Oba").forEach { (key, label) ->
+                        FilterChip(selected = trainingPlace == key, onClick = { trainingPlace = key },
+                            label = { Text(label) })
+                    }
+                }
+                Button(onClick = {
+                    generatedTitles = StrengthPlanSuggestions.generate(strengthGoal,
+                        trainingDays.toInt(), experience, trainingPlace)
+                }, modifier = Modifier.fillMaxWidth().testTag("sport_generate_plan")) {
+                    Text("✨ Przygotuj propozycję tygodnia")
+                }
+                if (generatedTitles.isNotEmpty()) {
+                    Text("Podgląd — możesz zmienić nazwy dni przed zapisaniem.",
+                        style = MaterialTheme.typography.bodySmall)
+                    generatedTitles.forEachIndexed { index, title ->
+                        val date = weekStart.plusDays(index.toLong())
+                        OutlinedTextField(value = title,
+                            onValueChange = { value ->
+                                generatedTitles = generatedTitles.toMutableList().also { it[index] = value.take(120) }
+                            },
+                            label = { Text(date.format(DateTimeFormatter.ofPattern("EEE dd.MM", Locale("pl")))) },
+                            singleLine = true, modifier = Modifier.fillMaxWidth())
+                    }
+                    Button(onClick = {
+                        onSaveWeek(generatedTitles.mapIndexed { index, title ->
+                            SportPlan(weekStart.plusDays(index.toLong()).toString(),
+                                if (title.isBlank()) "Odpoczynek" else title, title.isBlank() || title == "Odpoczynek")
+                        })
+                    }, enabled = !busy && generatedTitles.any { it.isNotBlank() },
+                        modifier = Modifier.fillMaxWidth().testTag("sport_save_generated_plan")) {
+                        Text("Zapisz cały tydzień")
+                    }
+                    Text("Zapis zastępuje wyłącznie plan na te dni. Historia serii i Health Connect pozostają bez zmian.",
+                        style = MaterialTheme.typography.bodySmall)
+                }
+            } else {
+                Text("Ręcznie zaplanuj wybrany dzień w edytorze poniżej.",
+                    style = MaterialTheme.typography.bodySmall)
+                LaunchedEffect(planMode) { showEditor = true }
             }
             Text("Plan tygodnia • zapis lokalny", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             plans.forEach { (date, plan) ->
@@ -186,5 +269,31 @@ private fun SportProfileSummary(label: String, value: String, modifier: Modifier
             Text(label, style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSecondaryContainer, maxLines = 1)
         }
+    }
+}
+
+/** Local, deterministic suggestions; no external AI or additional permissions. */
+internal object StrengthPlanSuggestions {
+    fun generate(goal: String, days: Int, level: String, place: String): List<String> {
+        require(days in 2..5)
+        val split = when {
+            goal == "glutes" -> listOf("Nogi i pośladki", "Góra ciała", "Pośladki i tył uda",
+                "Góra ciała + core", "Nogi i pośladki")
+            goal == "strength" -> listOf("Siła • dół", "Siła • góra", "Full Body • siła",
+                "Siła • dół", "Siła • góra")
+            days <= 3 -> listOf("Full Body A", "Full Body B", "Full Body C")
+            else -> listOf("Góra ciała A", "Dół ciała A", "Góra ciała B", "Dół ciała B", "Full Body")
+        }
+        val result = MutableList(7) { "Odpoczynek" }
+        val slots = when (days) {
+            2 -> listOf(0, 3)
+            3 -> listOf(0, 2, 4)
+            4 -> listOf(0, 1, 3, 4)
+            else -> listOf(0, 1, 2, 4, 5)
+        }
+        slots.forEachIndexed { index, day ->
+            result[day] = split[index % split.size]
+        }
+        return result
     }
 }
