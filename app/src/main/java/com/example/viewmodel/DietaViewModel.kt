@@ -784,6 +784,22 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Trial mode: analyze page images using Gemini Vision, without saving to Room.
+    fun previewPdfWithVision(context: Context, document: DocumentEntity,
+                             onResult: (List<ParsedRecipe>, String?) -> Unit) {
+        _isLoadingAi.value = true
+        viewModelScope.launch {
+            try {
+                val result = PdfVisionPreview.firstThree(context, Uri.parse(document.uriString))
+                result.fold(
+                    onSuccess = { recipes -> onResult(recipes, null) },
+                    onFailure = { error -> onResult(emptyList(),
+                        "Podgląd Vision: ${error.localizedMessage ?: "Nie udało się odczytać stron."}") }
+                )
+            } finally { _isLoadingAi.value = false }
+        }
+    }
+
     // Parse recipes from PDF text with boundary-aware chunking, sequential processing, structured JSON, repair, & smart deduplication
     fun parsePdfRecipes(document: DocumentEntity, resume: Boolean = false, onResult: (List<ParsedRecipe>, String?) -> Unit) {
         val currentState = _pdfAnalysisStates.value[document.id]
