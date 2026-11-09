@@ -109,6 +109,17 @@ fun WeekComparisonCard(comparison: WeekComparison) {
             HorizontalDivider(color = WarmBrown)
         }
         row("Okres", "${date(a.from)}–${date(a.until)}\n${a.from.year}", "${date(b.from)}–${date(b.until)}\n${b.from.year}")
+        Text("Aktywność tygodniowa", style = MaterialTheme.typography.titleSmall)
+        val maxMinutes = maxOf(a.activity.minutes, b.activity.minutes, 1)
+        listOf("Poprzedni tydzień" to a.activity.minutes, "Ostatni tydzień" to b.activity.minutes).forEach { (label, minutes) ->
+            Text("$label • $minutes min", style = MaterialTheme.typography.labelMedium)
+            LinearProgressIndicator(
+                progress = { (minutes.toFloat() / maxMinutes).coerceIn(0f, 1f) },
+                modifier = Modifier.fillMaxWidth().height(10.dp),
+                color = if (label == "Ostatni tydzień") LeafGreen else OrangeInk,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        }
         row("Zapisany ruch", if (a.activity.sessions == 0) "—\nbrak sesji" else "${a.activity.minutes} min\n${a.activity.activeDays} dni", if (b.activity.sessions == 0) "—\nbrak sesji" else "${b.activity.minutes} min\n${b.activity.activeDays} dni")
         row("Średnie jedzenie", avg(a.calories, "kcal", a.approvedDays), avg(b.calories, "kcal", b.approvedDays))
         row("Średnie białko", avg(a.protein, "g", a.approvedDays), avg(b.protein, "g", b.approvedDays))
