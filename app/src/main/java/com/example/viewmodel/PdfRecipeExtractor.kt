@@ -154,31 +154,71 @@ internal object PdfRecipeExtractor {
 
 
     fun extractPageSpanningRecipes(text: String, source: String): List<ParsedRecipe> {
-        val pages = Regex("""(?m)^=== STRONA \d+ ===\s*$""").split(text)
+        val marker = Regex("""(?m)^=== STRONA (\d+) ===\s*$""")
+        val matches = marker.findAll(text).toList()
+        val pages = matches.mapIndexed { index, match ->
+            val end = matches.getOrNull(index + 1)?.range?.first ?: text.length
+            match.groupValues[1].toInt() to text.substring(match.range.last + 1, end).trim()
+        }
         val found = mutableListOf<ParsedRecipe>()
-        for (i in 1 until pages.size - 2) {
-            val title = pages[i].trim()
-            if (title.length !in 5..160 || title.lines().size > 5 || title.startsWith("PRZEPISY ", ignoreCase = true)) continue
-            val ingredientsPage = pages[i + 1]
-            val preparationPage = pages[i + 2]
-            if (!ingredientsPage.contains("Składniki", ignoreCase = true)) continue
-            // Some ebooks put the preparation on the ingredients page rather than a third page.
-            val instructionsPage = when {
-                preparationPage.contains("Przygotowanie", ignoreCase = true) -> preparationPage
-                ingredientsPage.contains("Przygotowanie", ignoreCase = true) -> ingredientsPage
+        for (i in pages.indices) {
+            val (number, heading) = pages[i]
+            val title = heading.lines().map { it.trim() }.filter { it.isNotBlank() }
+                .joinToString(" ").replace(Regex("""\s+"""), " ").trim()
+            if (title.length !in 6..145 || heading.lines().size > 7 ||
+                title.startsWith("PRZEPISY ", true) || title.startsWith("SŁOWO O ", true) ||
+                title.startsWith("WSTĘP", true) || title.contains("MONIKA CIESIELSKA", true) ||
+                title.count { it.isLetter() && it.isUpperCase() } < 4) continue
+            val ingredientPage = pages.getOrNull(i + 1)?.second.orEmpty()
+            if (!ingredientPage.contains("Składniki", true)) continue
+            val ingredientsBlock = ingredientPage.substringAfter("Składniki")
+                .substringBefore("Sugerowana liczba porcji")
+                .substringBefore("Przygotowanie")
+                .substringBefore("Cały przepis:")
+            val ingredients = ingredientsBlock.lines().map { it.trim() }
+                .filter { it.isNotBlank() && it != "•" && it != "॰" }
+                .map { it.removePrefix("•").removePrefix("॰").removePrefix("-").trim() }
+                .filter { it.isNotBlank() && !it.matches(Regex("""\d{1,3}""")) }
+            if (ingredients.size < 2) continue
+            val next = pages.getOrNull(i + 2)?.second.orEmpty()
+            val preparation = when {
+                ingredientPage.contains("Przygotowanie", true) -> ingredientPage
+                next.contains("Przygotowanie", true) -> next
                 else -> continue
             }
-            val ingredients = ingredientsPage.substringAfter("Składniki").substringBefore("Przygotowanie").substringBefore("Sugerowana liczba porcji")
-                .lines().map { it.trim() }.filter { it.startsWith("•") || it.startsWith("- ") || it.startsWith("॰") }
-                .map { it.removePrefix("•").removePrefix("-").removePrefix("॰").trim() }
-            val steps = Regex("""(?m)^\s*\d+[.)]\s+(.+)""")
-                .findAll(instructionsPage.substringAfter("Przygotowanie"))
-                .map { it.groupValues[1] }.toList()
-            if (ingredients.size < 2 || steps.isEmpty()) continue
+            val steps = mutableListOf<String>()
+            val stepRegex = Regex("""^\s*\d{1,2}[.)]\s*(.*)$""")
+            for (line in preparation.substringAfter("Przygotowanie")
+                .substringBefore("Cały przepis:").lines()) {
+                val clean = line.trim()
+                val step = stepRegex.matchEntire(clean)
+                if (step != null) steps.add(step.groupValues[1].trim())
+                else if (steps.isNotEmpty() && clean.isNotBlank() &&
+                    !clean.startsWith("•")) steps[steps.lastIndex] += " " + clean
+            }
+            if (steps.isEmpty()) continue
+            val servings = Regex("""(?i)Sugerowana liczba porcji:\s*(\d+)""")
+                .find(ingredientPage)?.groupValues?.get(1) ?: "1"
+            val nutritionText = ingredientPage + "\n" + next
+            val perPortion = nutritionText.substringAfter("Jedna porcja:", "")
+                .substringBefore("Przygotowanie")
+            val whole = nutritionText.substringAfter("Cały przepis:", "")
+                .substringBefore("Jedna porcja:").substringBefore("Przygotowanie")
+            val nutrition = if (perPortion.isNotBlank()) perPortion else whole
+            fun nutrient(name: String): Int {
+                val regex = Regex("(?i)" + Regex.escape(name) + """:\s*(\d+(?:[.,]\d+)?)""")
+                val value = regex.find(nutrition)?.groupValues?.get(1)
+                    ?.replace(',', '.')?.toDoubleOrNull() ?: return 0
+                return (if (perPortion.isNotBlank()) value else value / servings.toInt().coerceAtLeast(1))
+                    .roundToInt()
+            }
             found.add(ParsedRecipe(
-                title = title, servings = "1", ingredients = ingredients.joinToString("\n"),
-                instructions = steps.joinToString("\n"), calories = 0, protein = 0,
-                carbs = 0, fat = 0, source = source, sourcePageOrChunk = "PDF"
+                title = title, servings = servings, ingredients = ingredients.joinToString("\n"),
+                instructions = steps.mapIndexed { index, step -> (index + 1).toString() + ". " + step }
+                    .joinToString("\n"),
+                calories = nutrient("Kalorie"), protein = nutrient("Białko"),
+                carbs = nutrient("Węglowodany"), fat = nutrient("Tłuszcze"),
+                source = source, sourcePageOrChunk = "Strona " + number
             ))
         }
         return deduplicateParsedRecipes(found)
