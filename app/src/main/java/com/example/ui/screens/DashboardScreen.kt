@@ -920,7 +920,7 @@ private fun FreshMangoMacroTile(
     accent: Color,
     modifier: Modifier = Modifier
 ) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(18.dp), color = MutedSurface2) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(22.dp), color = accent.copy(alpha = 0.10f), border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = 0.24f))) {
         Column(
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
