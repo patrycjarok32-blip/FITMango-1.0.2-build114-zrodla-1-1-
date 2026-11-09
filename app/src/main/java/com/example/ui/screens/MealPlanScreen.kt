@@ -614,14 +614,42 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
         }
     }
     cookingRecipe?.let { recipe ->
-        val meal = cookingMeal
-        val cookingIngredients = if (meal != null) com.example.viewmodel.CookingIngredientsSupport.fromMeal(
-            IngredientSubstitutionSupport.resolveMealIngredientsWithSubstitutions(recipe, meal, recipeIngredients))
+        // Read the latest persisted meal so the cooking screen reflects edits immediately.
+        val meal = cookingMeal?.let { selected -> mealPlans.find { it.id == selected.id } ?: selected }
+        val resolved = if (meal != null)
+            IngredientSubstitutionSupport.resolveMealIngredientsWithSubstitutions(recipe, meal, recipeIngredients)
+            else emptyList()
+        val cookingIngredients = if (meal != null)
+            com.example.viewmodel.CookingIngredientsSupport.fromMeal(resolved)
             else com.example.viewmodel.CookingIngredientsSupport.fromRecipe(recipe, recipeIngredients)
-        CookingDialog(recipe, ingredients = cookingIngredients, initialServings = meal?.servings ?: 1f, sessionKey = "meal_${meal?.id ?: recipe.id}",
-            portionLabel = if (meal != null) "Ilości łącznie: ${MealPlannerSupport.formatQuantityNumber(meal.servings)} porcji" else "Ilości dla całego przepisu") {
-            cookingRecipe = null; cookingMeal = null
-        }
+        CookingDialog(
+            recipe = recipe,
+            ingredients = cookingIngredients,
+            initialServings = meal?.servings ?: 1f,
+            sessionKey = "meal_${meal?.id ?: recipe.id}",
+            portionLabel = if (meal != null) "Ilości łącznie: ${MealPlannerSupport.formatQuantityNumber(meal.servings)} porcji"
+                else "Ilości dla całego przepisu",
+            syncWithMealPlan = meal != null,
+            onServingsChange = { value ->
+                if (meal != null && kotlin.math.abs(value - meal.servings) > 0.001f)
+                    viewModel.updateMealPlanServings(meal, value)
+            },
+            onIngredientQuantityChange = { ingredientId, quantity ->
+                if (meal != null) {
+                    val index = ingredientId.toIntOrNull()
+                    val ingredient = index?.let { resolved.getOrNull(it) }
+                    if (ingredient != null) {
+                        val unit = ingredient.unit.lowercase()
+                        val amount = when (unit) {
+                            "kg", "l" -> quantity * 1000f
+                            else -> quantity
+                        }
+                        viewModel.editMealIngredientQuantity(meal, ingredient, amount)
+                    }
+                }
+            },
+            onDismiss = { cookingRecipe = null; cookingMeal = null }
+        )
     }
 
     if (showEatenHistory) com.example.ui.components.MangoEditSheet(onDismissRequest = { showEatenHistory = false },
