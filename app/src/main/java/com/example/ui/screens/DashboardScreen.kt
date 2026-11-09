@@ -667,39 +667,9 @@ fun DashboardScreen(
                 "water" to {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             DailyIntakeCard(viewModel)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .scale(waterPulseScale)
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.06f + waterFillFraction * 0.22f),
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0f)
-                            )
-                        ),
-                        shape = RoundedCornerShape(20.dp)
-                    )
-            ) {
-                PremiumWaterGlass(waterTotal)
-            Column(
-                Modifier.fillMaxWidth().testTag("mango_animated_water_level"),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text("Poziom nawodnienia • $waterTotal ml",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface)
-                LinearProgressIndicator(
-                    progress = { waterFillFraction },
-                    modifier = Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(12.dp)),
-                    color = WaterAccent,
-                    trackColor = WaterAccent.copy(alpha = 0.15f)
-                )
-                Text("Pasek reaguje na dodaną wodę (skala poglądowa: 2000 ml).",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            }
+            // The detailed intake card already shows water progress and creatine.
+            // Avoid a second progress bar and an overlaid decorative glass on small screens.
+
                     }
                 },
                 "suggestions" to {
