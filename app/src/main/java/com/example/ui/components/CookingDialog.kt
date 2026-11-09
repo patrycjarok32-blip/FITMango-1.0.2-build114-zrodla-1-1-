@@ -3,6 +3,10 @@ package com.example.ui.components
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -25,7 +29,7 @@ import com.example.ui.theme.*
 @OptIn(ExperimentalAnimationApi::class)
 fun CookingDialog(recipe: RecipeEntity,
     ingredients: List<CookingIngredient> = CookingIngredientsSupport.fromRecipe(recipe),
-    sessionKey: String = "recipe_${recipe.id}", portionLabel: String = "Ilości dla całego przepisu", initialServings: Float = 1f, onDismiss: () -> Unit) {
+    sessionKey: String = "recipe_${recipe.id}", portionLabel: String = "Ilości dla całego przepisu", initialServings: Float = 1f, onServingsChange: (Float) -> Unit = {}, onIngredientQuantityChange: (String, Float) -> Unit = { _, _ -> }, syncWithMealPlan: Boolean = false, onDismiss: () -> Unit) {
     var servingsInput by rememberSaveable(sessionKey) { mutableStateOf(MealPlannerSupport.formatQuantityNumber(initialServings)) }
     val servings = servingsInput.replace(',', '.').toFloatOrNull()?.takeIf { it.isFinite() && it in 0.1f..100f }
     val cookingItems = CookingIngredientsSupport.scaled(ingredients, (servings ?: initialServings) / MealPlannerSupport.safeServings(initialServings))
@@ -54,10 +58,15 @@ fun CookingDialog(recipe: RecipeEntity,
                     Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth().testTag("cooking_finished_close")) { Text("Zamknij gotowanie") }
                     Spacer(Modifier.weight(1f))
                 } else {
-                OutlinedTextField(servingsInput, { servingsInput = it.take(8) }, label = { Text("Gotuję porcji") }, singleLine = true,
+                OutlinedTextField(servingsInput, { input ->
+                    servingsInput = input.take(8)
+                    val parsed = servingsInput.replace(',', '.').toFloatOrNull()
+                    if (syncWithMealPlan && parsed != null && parsed.isFinite() && parsed in 0.1f..100f &&
+                        kotlin.math.abs(parsed - initialServings) > 0.001f) onServingsChange(parsed)
+                }, label = { Text("Gotuję porcji") }, singleLine = true,
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
                     isError = servings == null, modifier = Modifier.fillMaxWidth().testTag("cooking_servings"))
-                Text("Ilości zmieniają się tylko w trybie gotowania.", style = MaterialTheme.typography.bodySmall)
+                Text(if (syncWithMealPlan) "Zmiany porcji i gramatury zapisują się w jadłospisie." else "Zmiany dotyczą tylko tego gotowania.", style = MaterialTheme.typography.bodySmall)
                 if (steps.isEmpty()) Text("Ten przepis nie ma zapisanych kroków. Uzupełnij instrukcję w szczegółach przepisu.")
                 else {
                     Text("Krok ${step + 1} z ${steps.size}", color = MangoYellow)
@@ -83,9 +92,38 @@ fun CookingDialog(recipe: RecipeEntity,
                             val key = "$displayedStep:${ingredient.id}"; val done = key in checked
                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                 Checkbox(done, { value -> checkedIds = (if (value) checked + key else checked - key).joinToString("|") }, enabled = displayedStep == step, modifier = Modifier.testTag("cooking_check_${ingredient.id}"))
-                                Text(CookingIngredientsSupport.displayForStep(instruction, ingredient), Modifier.weight(1f),
-                                    color = if (done) GoldAccent else MaterialTheme.colorScheme.onSurface,
-                                    textDecoration = if (done) TextDecoration.LineThrough else TextDecoration.None)
+                                Column(Modifier.weight(1f)) {
+                                    Text(CookingIngredientsSupport.displayForStep(instruction, ingredient),
+                                        color = if (done) GoldAccent else MaterialTheme.colorScheme.onSurface,
+                                        textDecoration = if (done) TextDecoration.LineThrough else TextDecoration.None)
+                                    if (syncWithMealPlan && ingredient.quantity != null &&
+                                        ingredient.unit.lowercase() in setOf("g", "kg", "ml", "l")) {
+                                        var quantityInput by remember(sessionKey, ingredient.id) {
+                                            mutableStateOf(MealPlannerSupport.formatQuantityNumber(ingredient.quantity))
+                                        }
+                                        var editing by remember(sessionKey, ingredient.id) { mutableStateOf(false) }
+                                        LaunchedEffect(ingredient.quantity, editing) {
+                                            if (!editing) quantityInput = MealPlannerSupport.formatQuantityNumber(ingredient.quantity)
+                                        }
+                                        fun saveQuantity() {
+                                            val value = quantityInput.replace(',', '.').toFloatOrNull()
+                                            if (value != null && value.isFinite() && value > 0f && value <= 100000f) {
+                                                onIngredientQuantityChange(ingredient.id, value)
+                                                editing = false
+                                            }
+                                        }
+                                        OutlinedTextField(
+                                            value = quantityInput,
+                                            onValueChange = { quantityInput = it.take(10); editing = true },
+                                            label = { Text("Ilość (" + ingredient.unit + ")") },
+                                            singleLine = true,
+                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+                                            keyboardActions = KeyboardActions(onDone = { saveQuantity() }),
+                                            trailingIcon = { TextButton(onClick = { saveQuantity() }) { Text("Zapisz") } },
+                                            modifier = Modifier.fillMaxWidth().testTag("cooking_quantity_" + ingredient.id)
+                                        )
+                                    }
+                                }
                             }
                         }
                         if (matched.isNotEmpty()) {
