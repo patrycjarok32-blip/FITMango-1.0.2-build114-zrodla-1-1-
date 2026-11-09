@@ -110,6 +110,24 @@ fun DocumentsScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}) 
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             ImportSavedFeedback(savedAnimationEvent, "Zapisano")
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_vision_info"),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Fresh Mango 3.0 • Import przepisów",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        fontWeight = FontWeight.Bold)
+                    Text("Najpierw wybierz PDF, a następnie przetestuj 3 przepisy z obrazów stron (Gemini Vision). Sprawdź składniki i ilości przed zapisaniem.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    Text("Przepisy niepełne pozostają do ręcznej weryfikacji. Analiza obrazów korzysta z Twojego klucza Gemini API.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer)
+                }
+            }
             if (isLoading) {
                 ImportProgress()
             }
