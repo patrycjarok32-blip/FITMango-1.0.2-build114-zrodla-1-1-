@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -178,8 +179,8 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
             HorizontalDivider()
             var editorDate by rememberSaveable { mutableStateOf(today.toString()) }
             Text("🏋️ Trening i serie na wybrany dzień", style = MaterialTheme.typography.titleMedium)
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                (0..6).forEach { day ->
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                items(7) { day ->
                     val date = weekStart.plusDays(day.toLong())
                     FilterChip(selected = editorDate == date.toString(),
                         onClick = { editorDate = date.toString() },
