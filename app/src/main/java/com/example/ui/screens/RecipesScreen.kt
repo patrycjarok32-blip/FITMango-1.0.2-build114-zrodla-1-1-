@@ -406,9 +406,9 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
                         modifier = Modifier.testTag("recipe_card_${recipe.title}")
                             .border(
                                 width = if (recipe.isFavorite) 2.dp else 1.dp,
-                                color = if (recipe.isFavorite) MangoYellow.copy(alpha = 0.75f)
+                                color = if (recipe.isFavorite) MangoCoral.copy(alpha = 0.8f)
                                     else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-                                shape = RoundedCornerShape(22.dp)
+                                shape = RoundedCornerShape(26.dp)
                             )
                             .mangoResultAppearance("$selectedCategory|$preparationFilter|${searchResult.first}|$favoritesOnly"),
                         preparationMinutes = viewModel.usability.minutes(recipe),
