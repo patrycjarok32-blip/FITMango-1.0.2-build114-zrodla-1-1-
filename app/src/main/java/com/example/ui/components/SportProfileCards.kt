@@ -29,7 +29,8 @@ import java.util.Locale
 fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
     onPlan: (String, String, Boolean) -> Unit, onRemovePlan: (String) -> Unit,
     onAddSet: (String, String, Int, Double) -> Unit,
-    onSaveWeek: (List<SportPlan>) -> Unit = {}) {
+    onSaveWeek: (List<SportPlan>) -> Unit = {},
+    onRemoveSet: (String) -> Unit = {}) {
     var planDay by rememberSaveable { mutableStateOf(today.toString()) }
     var planTitle by rememberSaveable { mutableStateOf("Push") }
     var rest by rememberSaveable { mutableStateOf(false) }
@@ -174,6 +175,18 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                 Button(onClick = { onPlan(planDay, planTitle, rest) },
                     enabled = valid && !busy, modifier = Modifier.fillMaxWidth()) { Text("Zapisz plan") }
             }
+            HorizontalDivider()
+            var editorDate by rememberSaveable { mutableStateOf(today.toString()) }
+            Text("🏋️ Trening i serie na wybrany dzień", style = MaterialTheme.typography.titleMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                (0..6).forEach { day ->
+                    val date = weekStart.plusDays(day.toLong())
+                    FilterChip(selected = editorDate == date.toString(),
+                        onClick = { editorDate = date.toString() },
+                        label = { Text(date.format(DateTimeFormatter.ofPattern("EE", Locale("pl")))) })
+                }
+            }
+            StrengthDayEditor(LocalDate.parse(editorDate), data, busy, onAddSet, onRemoveSet)
             HorizontalDivider()
             TextButton(onClick = { showSetEditor = !showSetEditor }) {
                 Text(if (showSetEditor) "Zwiń zapis serii −" else "Zapisz serię siłową +")
