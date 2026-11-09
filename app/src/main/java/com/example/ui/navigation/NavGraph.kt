@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -74,9 +75,9 @@ fun MangoBottomNav(
         else -> MangoYellow
     }
     Surface(
-        color = MutedSurface1,
-        tonalElevation = 0.dp,
-        shadowElevation = 5.dp,
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp,
+        shadowElevation = 9.dp,
         shape = RoundedCornerShape(24.dp),
         modifier = Modifier
             .fillMaxWidth()
@@ -113,12 +114,12 @@ fun MangoBottomNav(
             val indicator by animateDpAsState(targetValue = slot * selectedIndex.coerceAtLeast(0),
                 animationSpec = tween(if (reduced) 0 else 220), label = "nav_indicator")
             if (selectedIndex >= 0) Box(Modifier.offset(x = indicator, y = 4.dp).width(slot).height(36.dp)
-                .padding(horizontal = 5.dp).clip(RoundedCornerShape(20.dp)).background(accent(items[selectedIndex].route).copy(alpha = .17f)))
+                .padding(horizontal = 5.dp).clip(RoundedCornerShape(20.dp)).background(Brush.horizontalGradient(listOf(accent(items[selectedIndex].route).copy(alpha = .24f), MangoPeach.copy(alpha = .18f)))))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
             items.forEach { screen ->
                 val isSelected = currentRoute == screen.route
                 val scale by animateFloatAsState(
-                    targetValue = if (isSelected && !reduced) 1.04f else 1f,
+                    targetValue = if (isSelected && !reduced) 1.09f else 1f,
                     animationSpec = tween(if (reduced) 0 else 150),
                     label = "navScale"
                 )
@@ -127,7 +128,7 @@ fun MangoBottomNav(
                     animationSpec = tween(if (reduced) 0 else 150), label = "navIcon"
                 )
                 val labelColor by animateColorAsState(
-                    targetValue = if (isSelected) accent(screen.route) else Cream.copy(alpha = 0.75f),
+                    targetValue = if (isSelected) accent(screen.route) else MaterialTheme.colorScheme.onSurfaceVariant,
                     animationSpec = tween(if (reduced) 0 else 150), label = "navLabel"
                 )
 
