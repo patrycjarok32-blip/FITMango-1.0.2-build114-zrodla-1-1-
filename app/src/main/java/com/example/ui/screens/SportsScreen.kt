@@ -49,6 +49,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     val confirmations by viewModel.healthConnect.weeklyEnergy.confirmations.collectAsStateWithLifecycle()
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
     var activitySection by rememberSaveable { mutableStateOf("today") }
+    var showTrainingProfile by rememberSaveable { mutableStateOf(false) }
     var showReport by rememberSaveable { mutableStateOf(false) }
     var showExtras by rememberSaveable { mutableStateOf(false) }
     var showSportNutrition by rememberSaveable { mutableStateOf(false) }
@@ -99,41 +100,54 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
 
         }
         item {
+            FreshMangoSportHeader()
+        }
+        item {
             androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(vertical = 4.dp)) {
-                item { FilterChip(selected = activitySection == "today" && !showReport && !showExtras,
-                    onClick = { activitySection = "today"; showReport = false; showExtras = false },
-                    label = { Text("Aktywność") }, modifier = Modifier.testTag("sport_activity_tab")) }
-                item { FilterChip(selected = activitySection == "profile" && !showReport && !showExtras,
-                    onClick = { activitySection = "profile"; showReport = false; showExtras = false },
-                    label = { Text("Profil sportowy") }, modifier = Modifier.testTag("sport_profile_tab")) }
-                item { FilterChip(selected = activitySection == "training" && !showReport && !showExtras,
-                    onClick = { activitySection = "training"; showReport = false; showExtras = false },
-                    label = { Text("Treningi") }, modifier = Modifier.testTag("sport_training_tab")) }
-                item { FilterChip(selected = activitySection == "recovery" && !showReport && !showExtras,
-                    onClick = { activitySection = "recovery"; showReport = false; showExtras = false },
-                    label = { Text("Regeneracja") }, modifier = Modifier.testTag("sport_recovery_tab")) }
-                item { FilterChip(selected = showReport && !showExtras,
-                    onClick = { showReport = true; showExtras = false },
-                    label = { Text("Raport") }, modifier = Modifier.testTag("sport_report_tab")) }
+                listOf("today" to "Dzisiaj", "training" to "Trening",
+                    "progress" to "Postępy", "recovery" to "Regeneracja").forEach { (key, label) ->
+                    item {
+                        FilterChip(
+                            selected = activitySection == key,
+                            onClick = { activitySection = key; showExtras = false; showReport = false },
+                            label = { Text(label) },
+                            modifier = Modifier.testTag("sport_${key}_tab")
+                        )
+                    }
+                }
             }
         }
-        item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = { showExtras = !showExtras; showReport = false }, modifier = Modifier.weight(1f).testTag("sport_personal_progress")) {
-                Text(if (showExtras) "Wróć" else "Rekordy i siła", maxLines = 1)
+        if (activitySection == "training") item {
+            OutlinedButton(onClick = { showTrainingProfile = !showTrainingProfile },
+                modifier = Modifier.fillMaxWidth().testTag("sport_profile_tab")) {
+                Text(if (showTrainingProfile) "Ukryj plan siłowy" else "Plan treningów i zapis serii")
             }
-            OutlinedButton(onClick = { showReport = true; showExtras = false }, modifier = Modifier.weight(1f).testTag("sport_report_shortcut")) {
-                Text("Raport tygodnia", maxLines = 1)
+        }
+        if (activitySection == "progress") item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { showExtras = true; showReport = false },
+                    modifier = Modifier.weight(1f).testTag("sport_personal_progress")) {
+                    Text("Rekordy i siła")
+                }
+                OutlinedButton(onClick = { showReport = true; showExtras = false },
+                    modifier = Modifier.weight(1f).testTag("sport_report_shortcut")) {
+                    Text("Raport tygodnia")
+                }
             }
-        } }
+        }
         if (showExtras) {
+            item { TextButton(onClick = { showExtras = false }) { Text("← Postępy") } }
             item { PersonalProgressCards(viewModel, data, today) }
         } else if (showReport) {
+            item { TextButton(onClick = { showReport = false }) { Text("← Postępy") } }
             item { NutritionWeekCard(viewModel) }
             item { reportNumbers?.let { numbers -> SportsWeeklyReport(numbers, profile, aiReport, aiBusy) { viewModel.runWeeklyAiAnalysis() } }
                 ?: LinearProgressIndicator(Modifier.fillMaxWidth()) }
         } else {
-        if (activitySection == "profile") item {
+        if (activitySection == "progress") item { PersonalProgressCards(viewModel, data, today) }
+        if (activitySection == "progress") item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
+        if (activitySection == "training" && showTrainingProfile) item {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("Twój profil sportowy", style = MaterialTheme.typography.titleLarge,
                     color = LeafGreen, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
@@ -287,6 +301,25 @@ private fun AddActivitySheet(today: LocalDate, busy: Boolean, message: String?, 
             item { Button(enabled = valid && !busy, onClick = { onSave(date, time, minutes.toInt(), types[kind].first, types[kind].second) },
                 modifier = Modifier.fillMaxWidth().testTag("save_manual_activity")) { Text(if (busy) "Zapisywanie…" else "Zapisz aktywność") } }
             item { TextButton(enabled = !busy, onClick = onDismiss) { Text("Anuluj") } }
+        }
+    }
+}
+
+@Composable
+private fun FreshMangoSportHeader() {
+    Surface(shape = RoundedCornerShape(26.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        modifier = Modifier.fillMaxWidth().testTag("fresh_mango_sport_hero")) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("🥭  Fresh Mango Sport 3.0",
+                style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer)
+            Text("Twój ruch, siła i regeneracja w jednym miejscu",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer)
+            Text("Dane z dziennika i Health Connect • bez podwójnego naliczania",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer)
         }
     }
 }
