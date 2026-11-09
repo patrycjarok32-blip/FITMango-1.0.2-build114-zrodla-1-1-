@@ -190,7 +190,7 @@ class HealthConnectManager(private val context: Context) : HealthConnectReader {
                     else -> "Trening"
                 }
                 com.example.viewmodel.SportSession(record.metadata.dataOrigin.packageName + "|" + record.metadata.id.ifBlank { "${record.startTime}|${record.endTime}|${record.exerciseType}" },
-                    record.title?.takeIf { it.isNotBlank() }?.take(200) ?: type, record.startTime.toString(), record.endTime.toString(),
+                    record.title?.takeIf { it.isNotBlank() && !it.trim().equals("Trening", ignoreCase = true) && !it.trim().equals("Workout", ignoreCase = true) }?.take(200) ?: type, record.startTime.toString(), record.endTime.toString(),
                     record.metadata.dataOrigin.packageName, active()?.takeIf { it.isFinite() && it >= 0 }, distance()?.takeIf { it.isFinite() && it >= 0 }, record.exerciseType)
             }
     }
