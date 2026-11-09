@@ -357,7 +357,7 @@ fun DocumentsScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}) 
                                         errorMessage = err
                                     } else if (recipes.isNotEmpty()) {
                                         parsedRecipesPreview = recipes
-                                        selectedRecipeIndices = recipes.indices.toSet()
+                                        selectedRecipeIndices = recipes.indices.filter { i -> recipes[i].ingredients.isNotBlank() && recipes[i].instructions.isNotBlank() }.toSet()
                                         selectedDoc = null
                                     }
                                 }
@@ -392,7 +392,7 @@ fun DocumentsScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}) 
                                     errorMessage = err
                                 } else if (recipes.isNotEmpty()) {
                                     parsedRecipesPreview = recipes
-                                    selectedRecipeIndices = recipes.indices.toSet()
+                                    selectedRecipeIndices = recipes.indices.filter { i -> recipes[i].ingredients.isNotBlank() && recipes[i].instructions.isNotBlank() }.toSet()
                                     selectedDoc = null
                                 }
                             }
@@ -464,6 +464,13 @@ fun DocumentsScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}) 
                         }
                     }
 
+                    val incompleteCount = recipesList.count {
+                        it.ingredients.isBlank() || it.instructions.isBlank()
+                    }
+                    if (incompleteCount > 0) {
+                        Text("Do sprawdzenia: $incompleteCount niepełnych przepisów. Nie są zaznaczone automatycznie.",
+                            color = MangoYellow, style = MaterialTheme.typography.bodySmall)
+                    }
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
