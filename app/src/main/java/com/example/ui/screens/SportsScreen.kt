@@ -102,6 +102,9 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         item {
             FreshMangoSportHeader()
         }
+        if (activitySection == "today") item {
+            FreshMangoSportRings(progress.first, progress.second, visible.size)
+        }
         item {
             androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(vertical = 4.dp)) {
@@ -155,7 +158,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     style = MaterialTheme.typography.bodySmall)
             }
         }
-        if (activitySection == "profile") item {
+        if (activitySection == "training" && showTrainingProfile) item {
             SportProfileCards(data, today, busy,
                 onPlan = { day, title, rest -> sports.plan(day, title, rest) { saved() } },
                 onRemovePlan = { day -> sports.removePlan(day) { saved() } },
@@ -321,5 +324,44 @@ private fun FreshMangoSportHeader() {
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSecondaryContainer)
         }
+    }
+}
+
+@Composable
+private fun FreshMangoSportRings(progress: Int, goal: Int, sessions: Int) {
+    Surface(modifier = Modifier.fillMaxWidth().testTag("fresh_mango_sport_rings"),
+        shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+        Row(Modifier.fillMaxWidth().padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically) {
+            SportRing("Cel tygodnia", progress, goal.coerceAtLeast(1), LeafGreen)
+            SportRing("Aktywności 30 dni", sessions, 12, OrangeInk)
+        }
+    }
+}
+
+@Composable
+private fun SportRing(label: String, value: Int, target: Int, accent: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Box(Modifier.size(88.dp), contentAlignment = Alignment.Center) {
+            val fraction = (value.toFloat() / target).coerceIn(0f, 1f)
+            val reduced = LocalReducedMangoMotion.current
+            val animated by androidx.compose.animation.core.animateFloatAsState(
+                targetValue = fraction,
+                animationSpec = androidx.compose.animation.core.tween(if (reduced) 0 else 550),
+                label = "sport ring")
+            androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+                val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+                    width = 9.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                drawArc(accent.copy(alpha = 0.20f), -90f, 360f, false, style = stroke)
+                drawArc(accent, -90f, 360f * animated, false, style = stroke)
+            }
+            Text("$value", style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold)
+        }
+        Text(label, style = MaterialTheme.typography.labelSmall)
+        Text(if (label == "Cel tygodnia") "Cel: $target" else "Ostatnie 30 dni",
+            style = MaterialTheme.typography.labelSmall)
     }
 }
