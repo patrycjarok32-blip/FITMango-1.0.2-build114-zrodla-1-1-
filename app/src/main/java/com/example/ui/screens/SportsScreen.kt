@@ -267,7 +267,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             items(visible, key = { it.id }) { session ->
                 MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp)) {
                     val duration = java.time.Duration.between(Instant.parse(session.start), Instant.parse(session.end)).toMinutes()
-                    Text(session.title, style = MaterialTheme.typography.titleMedium)
+                    Text("${sportActivityIcon(session.title)}  ${session.title}", style = MaterialTheme.typography.titleMedium)
                     Text("${sportTime(Instant.parse(session.start).toEpochMilli())} • $duration min")
                     Text("Aktywne: ${session.activeKcal?.let { "${it.toInt()} kcal" } ?: "brak danych"} • Dystans: ${session.distanceKm?.let { String.format(java.util.Locale.getDefault(), "%.2f km", it) } ?: "brak danych"}")
                     Text("Źródło: ${session.source}", style = MaterialTheme.typography.bodySmall)
@@ -395,5 +395,22 @@ private fun FreshMangoSportSection(emoji: String, title: String, description: St
                     color = MaterialTheme.colorScheme.onPrimaryContainer)
             }
         }
+    }
+}
+
+/** Decorative activity icons only; source workout records and deduplication remain unchanged. */
+private fun sportActivityIcon(title: String): String {
+    val name = title.lowercase(java.util.Locale.ROOT)
+    return when {
+        "siłow" in name || "strength" in name || "weight" in name -> "🏋️"
+        "bieżni" in name || "treadmill" in name -> "🏃"
+        "spacer" in name || "walk" in name -> "🚶"
+        "bieg" in name || "running" in name -> "🏃"
+        "rower" in name || "cycling" in name || "biking" in name -> "🚴"
+        "joga" in name || "yoga" in name -> "🧘"
+        "pływ" in name || "swim" in name -> "🏊"
+        "pilates" in name -> "🤸"
+        "taniec" in name || "dance" in name -> "💃"
+        else -> "💪"
     }
 }
