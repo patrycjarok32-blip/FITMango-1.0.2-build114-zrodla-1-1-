@@ -120,7 +120,7 @@ fun DashboardScreen(
     }
     val backgroundMotion = rememberInfiniteTransition(label = "premium_background")
     val backgroundPulse by backgroundMotion.animateFloat(
-        initialValue = 0.18f, targetValue = 0.30f,
+        initialValue = 0.12f, targetValue = 0.22f,
         animationSpec = infiniteRepeatable(tween(9000), RepeatMode.Reverse),
         label = "premium_background_pulse")
     val waterFillFraction by animateFloatAsState(
@@ -194,7 +194,7 @@ fun DashboardScreen(
                 .imePadding()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(MaterialTheme.colorScheme.background, mangoBackground.copy(alpha = if (reducedMangoMotion) .06f else backgroundPulse).compositeOver(MaterialTheme.colorScheme.background), MaterialTheme.colorScheme.background)
+                        colors = listOf(MaterialTheme.colorScheme.background, mangoBackground.copy(alpha = if (reducedMangoMotion) .14f else backgroundPulse).compositeOver(MaterialTheme.colorScheme.background), MaterialTheme.colorScheme.background)
                     )
                 )
                 .verticalScroll(rememberScrollState())
@@ -387,18 +387,24 @@ fun DashboardScreen(
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("mango_reactive_companion"),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                shape = RoundedCornerShape(20.dp)
+                shape = RoundedCornerShape(26.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
             ) {
                 Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                    MangoGuide(size = 42.dp)
+                    MangoGuide(size = 52.dp)
                     Spacer(Modifier.width(12.dp))
-                    Text(mangoMood, color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        style = MaterialTheme.typography.bodyMedium)
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Twój Mango-przyjaciel", style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary)
+                        Text(mangoMood, color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            style = MaterialTheme.typography.bodyMedium)
+                    }
                 }
             }
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("mango_weekly_summary"),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(26.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
