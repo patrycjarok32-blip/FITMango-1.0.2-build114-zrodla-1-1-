@@ -49,7 +49,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     val confirmations by viewModel.healthConnect.weeklyEnergy.confirmations.collectAsStateWithLifecycle()
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
     var activitySection by rememberSaveable { mutableStateOf("today") }
-    var showTrainingProfile by rememberSaveable { mutableStateOf(false) }
+    var showTrainingProfile by rememberSaveable { mutableStateOf(true) }
     var showReport by rememberSaveable { mutableStateOf(false) }
     var showExtras by rememberSaveable { mutableStateOf(false) }
     var showSportNutrition by rememberSaveable { mutableStateOf(false) }
@@ -103,7 +103,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             FreshMangoSportHeader()
         }
         if (activitySection == "today") item {
-            FreshMangoSportRings(progress.first, progress.second, visible.size)
+            FreshMangoSportRings(progress.first, progress.second, visible.size, ActivityRecoverySupport.unit(data))
         }
         item {
             androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -150,6 +150,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         } else {
         if (activitySection == "progress") item { PersonalProgressCards(viewModel, data, today) }
         if (activitySection == "progress") item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
+        if (activitySection == "progress") item { SportInsightsCards(data, today, reportNumbers) }
         if (activitySection == "training" && showTrainingProfile) item {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("Twój profil sportowy", style = MaterialTheme.typography.titleLarge,
@@ -328,20 +329,20 @@ private fun FreshMangoSportHeader() {
 }
 
 @Composable
-private fun FreshMangoSportRings(progress: Int, goal: Int, sessions: Int) {
+private fun FreshMangoSportRings(progress: Int, goal: Int, sessions: Int, goalUnit: String) {
     Surface(modifier = Modifier.fillMaxWidth().testTag("fresh_mango_sport_rings"),
         shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
         Row(Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically) {
-            SportRing("Cel tygodnia", progress, goal.coerceAtLeast(1), LeafGreen)
-            SportRing("Aktywności 30 dni", sessions, 12, OrangeInk)
+            SportRing("Cel tygodnia", progress, goal.coerceAtLeast(1), LeafGreen, goalUnit)
+            SportRing("Aktywności 30 dni", sessions, maxOf(sessions, 1), OrangeInk, "wpisów")
         }
     }
 }
 
 @Composable
-private fun SportRing(label: String, value: Int, target: Int, accent: Color) {
+private fun SportRing(label: String, value: Int, target: Int, accent: Color, unit: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Box(Modifier.size(88.dp), contentAlignment = Alignment.Center) {
@@ -361,7 +362,7 @@ private fun SportRing(label: String, value: Int, target: Int, accent: Color) {
                 fontWeight = FontWeight.Bold)
         }
         Text(label, style = MaterialTheme.typography.labelSmall)
-        Text(if (label == "Cel tygodnia") "Cel: $target" else "Ostatnie 30 dni",
+        Text(if (label == "Cel tygodnia") "Cel: $target $unit" else "Ostatnie 30 dni",
             style = MaterialTheme.typography.labelSmall)
     }
 }
