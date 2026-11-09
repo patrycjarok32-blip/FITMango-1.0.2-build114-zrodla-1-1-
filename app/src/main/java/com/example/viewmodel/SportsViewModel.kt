@@ -48,6 +48,17 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
     fun plan(date: String, title: String, rest: Boolean, onSaved: () -> Unit) = edit({ current ->
         current.copy(plans = current.plans.filterNot { it.date == date } + SportPlan(date, if (rest) "Odpoczynek" else title.trim(), rest))
     }, onSaved)
+    /** Saves the complete generated week atomically, without deleting recorded sets or activities. */
+    fun saveTrainingWeek(plans: List<SportPlan>, onSaved: () -> Unit) = edit({ current ->
+        require(plans.isNotEmpty() && plans.size <= 7)
+        require(plans.map { it.date }.distinct().size == plans.size)
+        plans.forEach {
+            java.time.LocalDate.parse(it.date)
+            require(it.title.isNotBlank() && it.title.length <= 120)
+        }
+        val dates = plans.map { it.date }.toSet()
+        current.copy(plans = current.plans.filterNot { it.date in dates } + plans)
+    }, onSaved)
     fun removePlan(date: String, onSaved: () -> Unit) = edit({ it.copy(plans = it.plans.filterNot { p -> p.date == date }) }, onSaved)
     fun goal(value: Int, onSaved: () -> Unit) = edit({ it.copy(goal = value) }, onSaved)
     fun setGoal(mode: String, target: Int, onSaved: () -> Unit) = edit({ current ->
