@@ -86,7 +86,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text("Centrum sportowe", style = MaterialTheme.typography.headlineSmall,
+                        Text("💪  Centrum sportowe", style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold, color = LeafGreen)
                         Text("Aktywność • siła • regeneracja", style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -108,13 +108,17 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         item {
             androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(vertical = 4.dp)) {
-                listOf("today" to "Dzisiaj", "training" to "Trening",
-                    "progress" to "Postępy", "recovery" to "Regeneracja").forEach { (key, label) ->
+                listOf(
+                    Triple("today", "☀️", "Dzisiaj"),
+                    Triple("training", "🏋️", "Trening"),
+                    Triple("progress", "📈", "Postępy"),
+                    Triple("recovery", "🌿", "Regeneracja")
+                ).forEach { (key, emoji, label) ->
                     item {
                         FilterChip(
                             selected = activitySection == key,
                             onClick = { activitySection = key; showExtras = false; showReport = false },
-                            label = { Text(label) },
+                            label = { Text("$emoji  $label") },
                             modifier = Modifier.testTag("sport_${key}_tab")
                         )
                     }
@@ -143,11 +147,11 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { showExtras = true; showReport = false },
                     modifier = Modifier.weight(1f).testTag("sport_personal_progress")) {
-                    Text("Rekordy i siła")
+                    Text("🏆  Rekordy i siła")
                 }
                 OutlinedButton(onClick = { showReport = true; showExtras = false },
                     modifier = Modifier.weight(1f).testTag("sport_report_shortcut")) {
-                    Text("Raport tygodnia")
+                    Text("📊  Raport tygodnia")
                 }
             }
         }
@@ -165,7 +169,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         if (activitySection == "progress") item { SportInsightsCards(data, today, reportNumbers) }
         if (activitySection == "training" && showTrainingProfile) item {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Twój profil sportowy", style = MaterialTheme.typography.titleLarge,
+                Text("🏋️  Twój profil sportowy", style = MaterialTheme.typography.titleLarge,
                     color = LeafGreen, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                 Text("Plan treningów, zapisane serie i rekordy. Dane pozostają w FITMango.",
                     style = MaterialTheme.typography.bodySmall)
@@ -189,7 +193,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         if (activitySection == "today" || activitySection == "training") item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
         if (activitySection == "training") item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Twój dziennik treningów", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = LeafGreen)
+                Text("📒  Twój dziennik treningów", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = LeafGreen)
                 MangoCard(Modifier.fillMaxWidth().testTag("health_connect_training_diary")) {
                 Column(Modifier.padding(14.dp).then(if (reducedMangoMotion) Modifier else Modifier.animateContentSize(animationSpec = androidx.compose.animation.core.tween(220))), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("Historia treningów • 30 dni",
@@ -197,7 +201,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     Text("Zapisane aktywności: ${visible.size}",
                         style = MaterialTheme.typography.bodyMedium)
                     OutlinedButton(onClick = { showHistory = true }, modifier = Modifier.fillMaxWidth()) {
-                        Text("Otwórz historię treningów")
+                        Text("📋  Otwórz historię treningów")
                     }
                     if (duplicates.isNotEmpty()) Text("Wykryte powtórzone wpisy: ${duplicates.size}",
                         style = MaterialTheme.typography.bodySmall, color = GoldAccent)
@@ -229,9 +233,9 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
             }
         } } }
-        if (activitySection == "training") item { Button(onClick = { add = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().testTag("sport_add_activity")) { Text("+ Dodaj wykonaną aktywność") } }
+        if (activitySection == "training") item { Button(onClick = { add = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().testTag("sport_add_activity")) { Text("➕  Dodaj wykonaną aktywność") } }
         if (activitySection == "recovery") item {
-            Text("Regeneracja i samopoczucie", style = MaterialTheme.typography.titleLarge,
+            Text("🌙  Regeneracja i samopoczucie", style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold, color = LeafGreen)
         }
         if (activitySection == "recovery") item { RecoveryCard(data, today, busy,
@@ -242,7 +246,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         if (activitySection == "training") item {
             MangoCard(Modifier.fillMaxWidth().testTag("sport_nutrition_connection")) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Sport + dieta", style = MaterialTheme.typography.titleMedium, color = LeafGreen)
+                    Text("🥗  Sport + dieta", style = MaterialTheme.typography.titleMedium, color = LeafGreen)
                     Text("Sprawdź odżywianie obok treningów. Korzystamy z istniejącego raportu diety — bez kopiowania posiłków i bez zwiększania limitu kalorii o trening.",
                         style = MaterialTheme.typography.bodySmall)
                     TextButton(onClick = { showSportNutrition = !showSportNutrition }) {
