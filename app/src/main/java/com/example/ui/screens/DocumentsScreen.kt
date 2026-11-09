@@ -346,6 +346,24 @@ fun DocumentsScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}) 
                             }
                         )
                     }
+                    OutlinedButton(
+                        enabled = !isAnalyzing,
+                        onClick = {
+                            errorMessage = null
+                            viewModel.previewPdfWithVision(context, doc) { recipes, err ->
+                                if (err != null) errorMessage = err
+                                if (recipes.isNotEmpty()) {
+                                    parsedRecipesPreview = recipes
+                                    selectedRecipeIndices = recipes.indices.filter { index ->
+                                        recipes[index].ingredients.isNotBlank() &&
+                                            recipes[index].instructions.isNotBlank()
+                                    }.toSet()
+                                    selectedDoc = null
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().testTag("pdf_vision_preview_three")
+                    ) { Text("Próbny import 3 przepisów (Vision)") }
                     MangoPrimaryButton(
                         text = "Analizuj z AI",
                         enabled = !isAnalyzing,
