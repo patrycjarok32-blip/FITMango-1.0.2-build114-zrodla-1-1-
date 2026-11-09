@@ -372,6 +372,53 @@ fun DashboardScreen(
                         style = MaterialTheme.typography.bodySmall)
                 }
             }
+            val weeklyActiveDays = habitDays.count { entry ->
+                runCatching {
+                    val day = java.time.LocalDate.parse(entry.date)
+                    !day.isAfter(today) && !day.isBefore(today.minusDays(6))
+                }.getOrDefault(false)
+            }
+            val mangoMood = when {
+                consumedCalories >= targetCalories * 0.95f && consumedCalories <= targetCalories -> "🥭 Brawo! Twój dzisiejszy cel jest blisko."
+                waterTotal > 0 && weeklyActiveDays >= 3 -> "🥭 Świetna regularność! Małe kroki się liczą."
+                consumedCalories > 0 -> "🥭 Dobrze, że zapisujesz posiłki. Tak trzymaj!"
+                else -> "🥭 Cześć! Zacznij od małego kroku dla siebie."
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("mango_reactive_companion"),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    MangoGuide(size = 42.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Text(mangoMood, color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("mango_weekly_summary"),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Twój tydzień z Mango", style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface)
+                    Text("Ostatnie 7 dni • na podstawie zapisanych aktywnych dni",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    LinearProgressIndicator(
+                        progress = { (weeklyActiveDays / 7f).coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(8.dp)),
+                        color = LeafGreen
+                    )
+                    Text("Aktywne dni: $weeklyActiveDays / 7",
+                        color = MaterialTheme.colorScheme.onSurface)
+                    Text("Dzisiaj: $consumedCalories kcal • woda $waterTotal ml",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    TextButton(onClick = onNavigateToEffects) { Text("Zobacz pełne postępy") }
+                }
+            }
             MangoDayPhaseSettings()
             MangoGrowthTree(
                 activeDays = habitDays.count { entry ->
@@ -614,6 +661,23 @@ fun DashboardScreen(
                     )
             ) {
                 PremiumWaterGlass(waterTotal)
+            Column(
+                Modifier.fillMaxWidth().testTag("mango_animated_water_level"),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text("Poziom nawodnienia • $waterTotal ml",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface)
+                LinearProgressIndicator(
+                    progress = { waterFillFraction },
+                    modifier = Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(12.dp)),
+                    color = WaterAccent,
+                    trackColor = WaterAccent.copy(alpha = 0.15f)
+                )
+                Text("Pasek reaguje na dodaną wodę (skala poglądowa: 2000 ml).",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             }
                     }
                 },
