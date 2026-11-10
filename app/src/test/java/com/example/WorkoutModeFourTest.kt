@@ -35,6 +35,14 @@ class WorkoutModeFourTest {
         assertEquals(15, result.videoMinutes)
         assertTrue(result.badges.contains("🌟 Ukończone wyzwanie"))
     }
+    @Test fun challengeAppearsInCalendarByStartDate() {
+        val challenge = VideoChallenge("a", "Plan", 7, listOf(
+            VideoWorkout("v", 2, "Walking Cardio", 15, "Cardio", "")), "2026-11-09")
+        val calendar = WorkoutInsights.calendar(java.time.LocalDate.parse("2026-11-09"),
+            SportsData(), emptyList(), listOf(challenge))
+        assertEquals(1, calendar[1].videosPlanned)
+        assertEquals(0, calendar[0].videosPlanned)
+    }
     @Test fun invalidTutorialLinkRejected() {
         try {
             ExerciseVideoLinks.validate("""{"Squat":"https://example.com/video"}""")
