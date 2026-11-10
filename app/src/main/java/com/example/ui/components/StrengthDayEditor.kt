@@ -1,6 +1,9 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
@@ -105,6 +108,9 @@ internal fun StrengthDayEditor(
     onRemoveSet: (String) -> Unit
 ) {
     var selected by rememberSaveable(date.toString()) { mutableStateOf("Hip thrust") }
+    val context = LocalContext.current
+    var tutorialUrl by rememberSaveable(selected) { mutableStateOf(ExerciseVideoLinks.read(context, selected)) }
+    var linkSaved by remember { mutableStateOf(false) }
     var group by rememberSaveable { mutableStateOf("Wszystkie") }
     var search by rememberSaveable { mutableStateOf("") }
     var repetitions by rememberSaveable(date.toString(), selected) { mutableStateOf("10") }
@@ -150,6 +156,27 @@ internal fun StrengthDayEditor(
         StrengthExerciseLibrary.exercises.firstOrNull { it.name == selected }?.let {
             Text("Technika: ${it.tip}", style = MaterialTheme.typography.bodySmall)
         }
+        Text("🎥 Biblioteka Premium • instrukcja i własne wideo",
+            style = MaterialTheme.typography.titleMedium)
+        OutlinedTextField(tutorialUrl, { tutorialUrl = it.take(500); linkSaved = false },
+            label = { Text("Twój link YouTube do ćwiczenia") },
+            modifier = Modifier.fillMaxWidth(), singleLine = true)
+        val validTutorial = tutorialUrl.isBlank() ||
+            listOf("https://youtu.be/", "https://www.youtube.com/watch?",
+                "https://youtube.com/watch?").any { tutorialUrl.startsWith(it) }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = {
+                ExerciseVideoLinks.save(context, selected, tutorialUrl)
+                linkSaved = true
+            }, enabled = validTutorial) { Text(if (linkSaved) "Zapisano ✓" else "Zapisz link") }
+            if (validTutorial && tutorialUrl.isNotBlank()) TextButton(onClick = {
+                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(tutorialUrl))) }
+            }) { Text("Otwórz film ▶") }
+        }
+        val exerciseGroup = StrengthExerciseLibrary.exercises.firstOrNull { it.name == selected }?.group
+        Text("Zamienniki: " + StrengthExerciseLibrary.exercises
+            .filter { it.group == exerciseGroup && it.name != selected }.take(3)
+            .joinToString(" • ") { it.name }, style = MaterialTheme.typography.bodySmall)
         Text("📝 Zapis serii • ${date}", style = MaterialTheme.typography.titleMedium)
         if (previous.isNotEmpty()) {
             Text("Ostatni trening: " + previous.joinToString(" • ") { "${it.kg} kg × ${it.reps}" },
