@@ -111,7 +111,7 @@ fun WorkoutModeCard(
             Text("Odczuwalny wysiłek: ${effort}/10")
             Slider(value = effort.toFloat(), onValueChange = { effort = it.toInt().coerceIn(1, 10) },
                 valueRange = 1f..10f, steps = 8)
-            Button(onClick = { onFinish(active.id, effort) }, enabled = !busy,
+            Button(onClick = { onFinish(active.id, effort) }, enabled = !busy && done > 0,
                 modifier = Modifier.fillMaxWidth()) { Text("🏁 Zakończ i zapisz podsumowanie") }
             Text("Postęp zapisuje się po każdej zatwierdzonej serii. Po powrocie do aplikacji można wznowić sesję.",
                 style = MaterialTheme.typography.bodySmall)
