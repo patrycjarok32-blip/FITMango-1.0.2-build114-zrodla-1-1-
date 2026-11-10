@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.viewmodel.VideoChallenge
+import kotlinx.coroutines.delay
 
 @Composable
 fun VideoChallengesCard(
@@ -38,6 +39,13 @@ fun VideoChallengesCard(
     var fromWeek by rememberSaveable { mutableStateOf("1") }
     var toWeek by rememberSaveable { mutableStateOf("2") }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
+    var activeVideoId by rememberSaveable { mutableStateOf("") }
+    var videoSeconds by rememberSaveable { mutableIntStateOf(0) }
+    var videoRunning by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(videoRunning, videoSeconds) {
+        if (videoRunning && videoSeconds > 0) { delay(1000); videoSeconds-- }
+        else if (videoSeconds == 0) videoRunning = false
+    }
     val selected = challenges.firstOrNull { it.id == selectedId } ?: challenges.firstOrNull()
     val context = LocalContext.current
     var ocrMessage by remember { mutableStateOf("") }
@@ -130,8 +138,21 @@ fun VideoChallengesCard(
                     Text("${if (workout.completedAt > 0) "✅" else "▶"} ${workout.title} • ${workout.minutes} min",
                         style = MaterialTheme.typography.titleSmall)
                     Text(workout.category, style = MaterialTheme.typography.bodySmall)
+                    if (activeVideoId == workout.id) {
+                        Text("⏱️ Pozostało: " + (videoSeconds / 60) + ":" +
+                            (videoSeconds % 60).toString().padStart(2, '0'))
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            TextButton(onClick = { videoRunning = !videoRunning }, enabled = videoSeconds > 0) {
+                                Text(if (videoRunning) "Pauza" else "Wznów")
+                            }
+                            TextButton(onClick = { videoRunning = false; videoSeconds = 0 }) { Text("Zatrzymaj") }
+                        }
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         if (workout.url.isNotBlank()) TextButton(onClick = {
+                            activeVideoId = workout.id
+                            videoSeconds = workout.minutes * 60
+                            videoRunning = true
                             runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(workout.url))) }
                         }) { Text("YouTube") }
                         TextButton(onClick = { onToggle(selected.id, workout.id) }, enabled = !busy) {
