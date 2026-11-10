@@ -59,6 +59,13 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         val dates = plans.map { it.date }.toSet()
         current.copy(plans = current.plans.filterNot { it.date in dates } + plans)
     }, onSaved)
+    fun updatePlannedExercises(date: String, exercises: List<PlannedExercise>, onSaved: () -> Unit) = edit({ current ->
+        require(exercises.size <= 30)
+        require(current.plans.any { it.date == date && !it.rest })
+        current.copy(plans = current.plans.map { plan ->
+            if (plan.date == date) plan.copy(exercises = exercises) else plan
+        })
+    }, onSaved)
     fun removePlan(date: String, onSaved: () -> Unit) = edit({ it.copy(plans = it.plans.filterNot { p -> p.date == date }) }, onSaved)
     fun goal(value: Int, onSaved: () -> Unit) = edit({ it.copy(goal = value) }, onSaved)
     fun setGoal(mode: String, target: Int, onSaved: () -> Unit) = edit({ current ->
