@@ -34,6 +34,7 @@ import java.time.ZoneId
 fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
     val data by sports.data.collectAsStateWithLifecycle()
     val workouts by sports.workouts.collectAsStateWithLifecycle()
+    val videoChallenges by sports.videoChallenges.collectAsStateWithLifecycle()
     val date by viewModel.currentDate.collectAsStateWithLifecycle()
     val today = LocalDate.parse(date)
     val health by viewModel.healthConnect.healthConnectSync.collectAsStateWithLifecycle()
@@ -195,6 +196,22 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                             sports.updateWorkoutEntry(id, index, reps, kg, done) { saved() }
                         },
                         onFinish = { id, effort -> sports.finishWorkout(id, effort) { saved() } })
+                }
+            }
+        }
+        if (activitySection == "training" && showTrainingProfile) item {
+            MangoCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(14.dp)) {
+                    VideoChallengesCard(videoChallenges, busy,
+                        onCreate = { title, weeks -> sports.addVideoChallenge(title, weeks) { saved() } },
+                        onDuplicate = { id -> sports.duplicateVideoChallenge(id) { saved() } },
+                        onDelete = { id -> sports.deleteVideoChallenge(id) { saved() } },
+                        onDuplicateWeek = { id, from, to -> sports.duplicateVideoWeek(id, from, to) { saved() } },
+                        onAdd = { id, day, title, minutes, category, url ->
+                            sports.addVideoWorkout(id, day, title, minutes, category, url) { saved() }
+                        },
+                        onToggle = { id, workout -> sports.toggleVideoWorkout(id, workout) { saved() } },
+                        onRemove = { id, workout -> sports.deleteVideoWorkout(id, workout) { saved() } })
                 }
             }
         }
