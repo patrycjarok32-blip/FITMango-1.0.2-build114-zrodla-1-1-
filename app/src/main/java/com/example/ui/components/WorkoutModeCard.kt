@@ -54,11 +54,17 @@ fun WorkoutModeCard(
             Text("Ćwiczenie ${index + 1}/${exercises.size}: ${selected.orEmpty()}",
                 style = MaterialTheme.typography.titleMedium)
             val previous = selected?.let { WorkoutInsights.previousKg(sports.sets, it) }
-            val suggestion = selected?.let { WorkoutInsights.suggestKg(sports.sets, it,
+            val advice = selected?.let { WorkoutInsights.coachAdvice(sports, it,
                 active.entries.firstOrNull { e -> e.exercise == it }?.reps ?: 10) }
             if (previous != null) Text("📈 Ostatni ciężar: " + previous + " kg")
-            if (suggestion != null) Text("✨ Proponowana progresja: " + suggestion +
-                " kg — tylko jeśli technika i samopoczucie pozwalają")
+            if (advice != null) {
+                Text("🧠 Trener: " + advice.recommendation)
+                if (advice.weightKg != null) Text("Orientacyjny ciężar: " + advice.weightKg + " kg")
+                if (advice.reasons.isNotEmpty()) Text(advice.reasons.joinToString(" • "),
+                    style = MaterialTheme.typography.bodySmall)
+                if (!advice.dataAvailable) Text("Brakuje aktualnych danych regeneracji — dodaj sen i samopoczucie.",
+                    style = MaterialTheme.typography.bodySmall)
+            }
             active.entries.forEachIndexed { i, entry ->
                 if (entry.exercise == selected) {
                     var kg by rememberSaveable(active.id, i) { mutableStateOf(entry.kg.toString()) }
