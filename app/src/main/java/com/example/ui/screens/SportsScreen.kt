@@ -51,6 +51,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     val confirmations by viewModel.healthConnect.weeklyEnergy.confirmations.collectAsStateWithLifecycle()
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
     var activitySection by rememberSaveable { mutableStateOf("today") }
+    var trainingPage by rememberSaveable { mutableStateOf("session") }
     var showTrainingProfile by rememberSaveable { mutableStateOf(true) }
     var showReport by rememberSaveable { mutableStateOf(false) }
     var showExtras by rememberSaveable { mutableStateOf(false) }
@@ -101,9 +102,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             permissionError?.let { Text(it, color = ErrorInk) }
 
         }
-        item {
-            FreshMangoSportHeader()
-        }
+        if (activitySection == "today") item { FreshMangoSportHeader() }
         if (activitySection == "today") item {
             FreshMangoSportRings(progress.first, progress.second, week.activeDays, ActivityRecoverySupport.unit(data))
         }
@@ -111,8 +110,9 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(vertical = 4.dp)) {
                 listOf(
-                    Triple("today", "☀️", "Dzisiaj"),
-                    Triple("training", "🏋️", "Trening"),
+                    Triple("today", "🏠", "Dzisiaj"),
+                    Triple("training", "📅", "Plan"),
+                    Triple("challenges", "🎬", "Wyzwania"),
                     Triple("progress", "📈", "Postępy"),
                     Triple("recovery", "🌿", "Regeneracja")
                 ).forEach { (key, emoji, label) ->
@@ -124,6 +124,22 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                             modifier = Modifier.testTag("sport_${key}_tab")
                         )
                     }
+                }
+            }
+        }
+        if (activitySection == "today") item {
+            SportTodayDashboard(today, data, workouts, videoChallenges,
+                onStart = { activitySection = "training"; trainingPage = "session" },
+                onPlan = { activitySection = "training"; trainingPage = "plan" },
+                onChallenges = { activitySection = "challenges" },
+                onRecovery = { activitySection = "recovery" })
+        }
+        if (activitySection == "training") item {
+            androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(Triple("session", "▶", "Trenuj"), Triple("plan", "🗓", "Edytuj plan"),
+                    Triple("diary", "📒", "Dziennik")).forEach { (key, icon, label) ->
+                    item { FilterChip(selected = trainingPage == key,
+                        onClick = { trainingPage = key }, label = { Text("$icon $label") }) }
                 }
             }
         }
@@ -139,7 +155,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             FreshMangoSportSection("🌿", "Czas na regenerację",
                 "Sen i samopoczucie • informacje z dostępnych pomiarów")
         }
-        if (activitySection == "training") item {
+        if (activitySection == "training" && trainingPage == "plan") item {
             OutlinedButton(onClick = { showTrainingProfile = !showTrainingProfile },
                 modifier = Modifier.fillMaxWidth().testTag("sport_profile_tab")) {
                 Text(if (showTrainingProfile) "Ukryj plan siłowy" else "Plan treningów i zapis serii")
@@ -169,7 +185,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         if (activitySection == "progress") item { PersonalProgressCards(viewModel, data, today) }
         if (activitySection == "progress") item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
         if (activitySection == "progress") item { SportInsightsCards(data, today, reportNumbers) }
-        if (activitySection == "training" && showTrainingProfile) item {
+        if (activitySection == "training" && trainingPage == "plan" && showTrainingProfile) item {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("🏋️  Twój profil sportowy", style = MaterialTheme.typography.titleLarge,
                     color = LeafGreen, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
@@ -177,7 +193,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     style = MaterialTheme.typography.bodySmall)
             }
         }
-        if (activitySection == "training" && showTrainingProfile) item {
+        if (activitySection == "training" && trainingPage == "session") item {
             var workoutDate by rememberSaveable { mutableStateOf(today.toString()) }
             MangoCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -199,7 +215,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 }
             }
         }
-        if (activitySection == "training" && showTrainingProfile) item {
+        if (activitySection == "training" && trainingPage == "plan" && showTrainingProfile) item {
             MangoCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(14.dp)) {
                     WorkoutOverviewCard(today, data, workouts, videoChallenges, busy,
@@ -207,7 +223,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 }
             }
         }
-        if (activitySection == "training" && showTrainingProfile) item {
+        if (activitySection == "challenges") item {
             MangoCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(14.dp)) {
                     VideoChallengesCard(videoChallenges, busy,
@@ -223,7 +239,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 }
             }
         }
-        if (activitySection == "training" && showTrainingProfile) item {
+        if (activitySection == "training" && trainingPage == "plan" && showTrainingProfile) item {
             SportProfileCards(data, today, busy,
                 onPlan = { day, title, rest -> sports.plan(day, title, rest) { saved() } },
                 onRemovePlan = { day -> sports.removePlan(day) { saved() } },
@@ -233,7 +249,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 onUpdateExercises = { date, exercises -> sports.updatePlannedExercises(date, exercises) { saved() } })
         }
         if (activitySection == "today") item { ActivityTodayCard(data, today, current) }
-        if (activitySection == "today" || activitySection == "training") item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (activitySection == "today" || (activitySection == "training" && trainingPage == "diary")) item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SportsHistoryControls(busy,
                 onPermissions = { permissionError = null; runCatching { launcher.launch(setOf(
                     HealthPermission.getReadPermission(ExerciseSessionRecord::class), HealthPermission.getReadPermission(DistanceRecord::class),
@@ -241,8 +257,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     HealthPermission.getReadPermission(SleepSessionRecord::class))) }.onFailure { permissionError = "Otwórz uprawnienia Health Connect w Profilu." } },
                 onRefresh = { permissionError = null; sports.refresh { viewModel.usability.changed() } })
         } }
-        if (activitySection == "today" || activitySection == "training") item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
-        if (activitySection == "training") item {
+        if (activitySection == "today" || (activitySection == "training" && trainingPage == "diary")) item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
+        if (activitySection == "training" && trainingPage == "diary") item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("📒  Twój dziennik treningów", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = LeafGreen)
                 MangoCard(Modifier.fillMaxWidth().testTag("health_connect_training_diary")) {
@@ -261,7 +277,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
         }
 
-        if (activitySection == "today" || activitySection == "training") item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (activitySection == "today" || (activitySection == "training" && trainingPage == "diary")) item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("Twój tydzień • $start – ${start.plusDays(6)}", style = MaterialTheme.typography.labelLarge, color = GoldAccent)
             SportGoalProgress(data, week, completed, previous, today == start)
             TextButton(onClick = { editGoal = !editGoal }) { Text(if (editGoal) "Zwiń ustawienia celu −" else "Zmień cel tygodniowy +") }
@@ -284,7 +300,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
             }
         } } }
-        if (activitySection == "training") item { Button(onClick = { add = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().testTag("sport_add_activity")) { Text("➕  Dodaj wykonaną aktywność") } }
+        if (activitySection == "training" && trainingPage == "diary") item { Button(onClick = { add = true }, enabled = !busy, modifier = Modifier.fillMaxWidth().testTag("sport_add_activity")) { Text("➕  Dodaj wykonaną aktywność") } }
         if (activitySection == "recovery") item {
             Text("🌙  Regeneracja i samopoczucie", style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold, color = LeafGreen)
@@ -294,7 +310,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             onRemove = { sports.removeRecovery(it, ::saved) }) }
         if (activitySection == "recovery") item { SportWellnessCards(data, today) }
         if (activitySection == "recovery") item { SportInsightsCards(data, today, reportNumbers) }
-        if (activitySection == "training") item {
+        if (activitySection == "training" && trainingPage == "diary") item {
             MangoCard(Modifier.fillMaxWidth().testTag("sport_nutrition_connection")) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("🥗  Sport + dieta", style = MaterialTheme.typography.titleMedium, color = LeafGreen)
@@ -306,18 +322,18 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 }
             }
         }
-        if (showSportNutrition && activitySection == "training") item { NutritionWeekCard(viewModel) }
+        if (showSportNutrition && activitySection == "training" && trainingPage == "diary") item { NutritionWeekCard(viewModel) }
 
-        if (activitySection == "training") item {
+        if (activitySection == "training" && trainingPage == "diary") item {
             TextButton(onClick = { showHistory = !showHistory }) { Text(if (showHistory) "Zwiń historię treningów −" else "Historia treningów (${visible.size}) +") }
             Text("Kalorie treningów mają charakter informacyjny. Nie zwiększają celu jedzenia i nie są ponownie dodawane do spalania ogółem.", style = MaterialTheme.typography.bodySmall)
             if (duplicates.isNotEmpty()) TextButton(onClick = { showDuplicates = !showDuplicates }) { Text("Pominięte powtórzenia: ${duplicates.size} • ${if (showDuplicates) "zwiń" else "pokaż"}") }
         }
-        if (activitySection == "training" && showDuplicates) items(duplicates, key = { "duplicate|" + it.id }) { session ->
+        if (activitySection == "training" && trainingPage == "diary" && showDuplicates) items(duplicates, key = { "duplicate|" + it.id }) { session ->
             Text("Pominięto: ${session.title} • ${sportTime(Instant.parse(session.start).toEpochMilli())} • ${session.source}", style = MaterialTheme.typography.bodySmall)
             if (ActivityRecoverySupport.manual(session)) TextButton(enabled = !busy, onClick = { sports.removeActivity(session.id, ::saved) }) { Text("Usuń ręczne powtórzenie") }
         }
-        if (activitySection == "training" && showHistory) {
+        if (activitySection == "training" && trainingPage == "diary" && showHistory) {
             if (visible.isEmpty()) item { Text("Brak zapisanych treningów z ostatnich 30 dni. Możesz dodać aktywność ręcznie lub odświeżyć Health Connect.") }
             items(visible, key = { it.id }) { session ->
                 MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp)) {
@@ -382,7 +398,7 @@ private fun FreshMangoSportHeader() {
         color = MaterialTheme.colorScheme.secondaryContainer,
         modifier = Modifier.fillMaxWidth().testTag("fresh_mango_sport_hero")) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("🥭  Fresh Mango Sport 3.0",
+            Text("🥭  Fresh Mango Sport 5.0",
                 style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSecondaryContainer)
             Text("Twój ruch, siła i regeneracja w jednym miejscu",
