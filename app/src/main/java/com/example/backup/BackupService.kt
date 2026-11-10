@@ -68,27 +68,49 @@ class BackupService(private val context: Context, private val database: AppDatab
         try {
             val missing = temp.outputStream().use { writeArchive(it, includeKeys = true) }
             require(temp.length() > 0L) { "Nie udało się przygotować danych kopii." }
-            // Prepare the encrypted archive before opening the destination. SAF creates
-            // an empty document immediately, even if generating the backup later fails.
-            val encrypted = encryptArchive(temp.readBytes(), password)
-            require(encrypted.isNotEmpty()) { "Nie udało się zaszyfrować kopii." }
+            // Encrypt to disk in a stream. Reading a 200+ MB ZIP and its AES-GCM
+            // output into RAM can exhaust the Android heap and leave a 0-byte file.
+            val encryptedFile = File.createTempFile("fitmango-encrypted-", ".bin", context.cacheDir)
             try {
+                encryptedFile.outputStream().buffered().use { output ->
+                    val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
+                    val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+                    output.write(MAGIC)
+                    output.write(salt)
+                    output.write(nonce)
+                    val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+                    cipher.init(Cipher.ENCRYPT_MODE, derivedKey(password, salt), GCMParameterSpec(128, nonce))
+                    javax.crypto.CipherOutputStream(output, cipher).use { encryptedOutput ->
+                        temp.inputStream().buffered().use { input -> input.copyTo(encryptedOutput, 64 * 1024) }
+                    }
+                }
+                val expectedSize = encryptedFile.length()
+                require(expectedSize > 48L) { "Zaszyfrowana kopia jest pusta." }
                 context.contentResolver.openOutputStream(uri, "wt")?.use { output ->
-                    output.write(encrypted)
+                    encryptedFile.inputStream().buffered().use { input -> input.copyTo(output, 64 * 1024) }
                     output.flush()
                 } ?: error("Nie można zapisać pliku w wybranym miejscu.")
-                // Some document providers acknowledge a write but do not persist it.
+                // Some document providers cannot report statSize; verify it when supported.
                 val savedSize = context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize }
-                    ?: error("Nie można sprawdzić zapisanego pliku kopii.")
-                require(savedSize == encrypted.size.toLong()) {
-                    "Plik kopii nie został zapisany w całości (oczekiwano ${encrypted.size} bajtów, zapisano $savedSize)."
+                if (savedSize != null && savedSize >= 0) {
+                    require(savedSize == expectedSize) {
+                        "Niepełna kopia: zapisano $savedSize z $expectedSize bajtów."
+                    }
                 }
+                // Verify the encrypted header is readable, without allocating the archive in RAM.
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    val header = ByteArray(4)
+                    require(input.read(header) == 4 && header.contentEquals(MAGIC)) {
+                        "Nie udało się odczytać zapisanej kopii."
+                    }
+                } ?: error("Nie można odczytać zapisanej kopii.")
             } catch (e: Exception) {
-                // Do not leave a misleading empty or truncated backup in the destination.
-                runCatching { android.provider.DocumentsContract.deleteDocument(context.contentResolver, uri) }
-                throw e
+                // Keep the failed file for diagnosis: deleting it can hide the actual error.
+                throw IllegalStateException("Nie udało się zapisać pełnej kopii: ${e.message}", e)
+            } finally {
+                encryptedFile.delete()
             }
-            if (missing == 0) "Kopia zapisana i sprawdzona (${encrypted.size} bajtów). Przechowuj ją w bezpiecznym miejscu."
+            if (missing == 0) "Kopia zapisana i sprawdzona (${context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize } ?: -1} bajtów). Przechowuj ją w bezpiecznym miejscu."
             else "Kopia zapisana i sprawdzona (${encrypted.size} bajtów). Niedostępne pliki: $missing. Ich tekst i pozostałe dane zachowano."
         } finally { temp.delete() }
     }
