@@ -29,8 +29,8 @@ object VideoChallengeStore {
             }
         }
     }
-    fun read(context: Context): List<VideoChallenge> {
-        val raw = context.getSharedPreferences("FITMangoUsability", 0).getString(KEY, "[]") ?: "[]"
+    fun validateRaw(raw: String) { parse(raw) }
+    private fun parse(raw: String): List<VideoChallenge> {
         val a = JSONArray(raw)
         require(a.length() <= 100)
         return (0 until a.length()).map { i ->
@@ -45,6 +45,7 @@ object VideoChallengeStore {
                 } })
         }.also(::validate)
     }
+    fun read(context: Context): List<VideoChallenge> = parse(context.getSharedPreferences("FITMangoUsability", 0).getString(KEY, "[]") ?: "[]")
     fun write(context: Context, challenges: List<VideoChallenge>) {
         validate(challenges)
         val a = JSONArray()
