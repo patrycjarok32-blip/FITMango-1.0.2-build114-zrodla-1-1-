@@ -115,11 +115,6 @@ fun WorkoutModeCard(
                             modifier = Modifier.weight(1f), singleLine = true)
                         OutlinedTextField(reps, { reps = it }, label = { Text("Powt.") },
                             modifier = Modifier.weight(1f), singleLine = true)
-                        val weight = kg.replace(',', '.').toDoubleOrNull()
-                        val count = reps.toIntOrNull()
-                        /* Completion uses the prominent button below; keep state persisted via onEntry. */
-                        val canComplete = !busy && weight != null &&
-                            weight.isFinite() && weight in 0.0..2000.0 && count != null && count in 1..1000
                     }
                     Button(onClick = {
                         val weight = kg.replace(',', '.').toDoubleOrNull()
