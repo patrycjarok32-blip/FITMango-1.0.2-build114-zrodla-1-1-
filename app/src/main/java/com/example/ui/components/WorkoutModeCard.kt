@@ -51,7 +51,7 @@ fun WorkoutModeCard(
             Text("Wykonano ${done}/${active.entries.size} serii")
             LinearProgressIndicator(progress = { if (active.entries.isEmpty()) 0f else done.toFloat() / active.entries.size },
                 modifier = Modifier.fillMaxWidth())
-            Text("Ćwiczenie ${index + 1}/${exercises.size}: ${selected.orEmpty()}",
+            Text("${SportExerciseIcons.forExercise(selected.orEmpty())} Ćwiczenie ${index + 1}/${exercises.size}: ${selected.orEmpty()}",
                 style = MaterialTheme.typography.titleMedium)
             val previous = selected?.let { WorkoutInsights.previousKg(sports.sets, it) }
             val advice = selected?.let { WorkoutInsights.coachAdvice(sports, it,
