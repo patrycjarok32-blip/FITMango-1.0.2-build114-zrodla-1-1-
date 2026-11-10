@@ -34,12 +34,13 @@ object WorkoutSessionStore {
             it.reps in 1..1000 && it.kg.isFinite() && it.kg in 0.0..2000.0) }
         return s
     }
-    fun read(context: Context): List<WorkoutSession> {
-        val raw = context.getSharedPreferences("FITMangoUsability", 0).getString(KEY, "[]") ?: "[]"
+    fun validateRaw(raw: String) { parse(raw) }
+    private fun parse(raw: String): List<WorkoutSession> {
         val a = JSONArray(raw)
         require(a.length() <= 200)
         return (0 until a.length()).map { decode(a.getJSONObject(it)) }
     }
+    fun read(context: Context): List<WorkoutSession> = parse(context.getSharedPreferences("FITMangoUsability", 0).getString(KEY, "[]") ?: "[]")
     fun write(context: Context, sessions: List<WorkoutSession>) {
         require(sessions.size <= 200 && sessions.count { it.ended == 0L } <= 1)
         val raw = JSONArray().also { a -> sessions.forEach { a.put(encode(it)) } }.toString()
