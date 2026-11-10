@@ -33,6 +33,7 @@ import java.time.ZoneId
 @Composable
 fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
     val data by sports.data.collectAsStateWithLifecycle()
+    val workouts by sports.workouts.collectAsStateWithLifecycle()
     val date by viewModel.currentDate.collectAsStateWithLifecycle()
     val today = LocalDate.parse(date)
     val health by viewModel.healthConnect.healthConnectSync.collectAsStateWithLifecycle()
@@ -173,6 +174,28 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     color = LeafGreen, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                 Text("Plan treningów, zapisane serie i rekordy. Dane pozostają w FITMango.",
                     style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        if (activitySection == "training" && showTrainingProfile) item {
+            var workoutDate by rememberSaveable { mutableStateOf(today.toString()) }
+            MangoCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("🎯 Rozpocznij sesję z planu", style = MaterialTheme.typography.titleMedium)
+                    androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        items(7) { offset ->
+                            val d = SportsSupport.week(today).plusDays(offset.toLong()).toString()
+                            FilterChip(selected = workoutDate == d, onClick = { workoutDate = d },
+                                label = { Text(d.substring(8)) })
+                        }
+                    }
+                    WorkoutModeCard(workoutDate, data.plans.firstOrNull { it.date == workoutDate },
+                        workouts, busy,
+                        onStart = { plan -> sports.startWorkout(plan) { saved() } },
+                        onEntry = { id, index, reps, kg, done ->
+                            sports.updateWorkoutEntry(id, index, reps, kg, done) { saved() }
+                        },
+                        onFinish = { id, effort -> sports.finishWorkout(id, effort) { saved() } })
+                }
             }
         }
         if (activitySection == "training" && showTrainingProfile) item {
