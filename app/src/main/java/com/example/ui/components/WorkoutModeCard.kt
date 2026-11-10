@@ -59,13 +59,7 @@ fun WorkoutModeCard(
             Card(shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.secondaryContainer,
-                        modifier = Modifier.size(92.dp)) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(SportExerciseIcons.forExercise(selected.orEmpty()),
-                                style = MaterialTheme.typography.headlineLarge)
-                        }
-                    }
+                    ExercisePhotoCard(selected.orEmpty(), modifier = Modifier.width(128.dp))
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                         Text(selected.orEmpty(), style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold)
@@ -84,7 +78,12 @@ fun WorkoutModeCard(
                             Text(StrengthExerciseLibrary.exercises.firstOrNull {
                                 it.name == selected
                             }?.tip ?: "Wykonuj ruch powoli i kontroluj technikę.")
-                            Text("Zdjęcie lub film instruktażowy zostanie dodany po przygotowaniu biblioteki multimediów.",
+                            Text("Etapy ruchu", style = MaterialTheme.typography.titleSmall)
+                            ExerciseMovementGuide.steps(selected.orEmpty()).forEach { step ->
+                                Text(step.title, style = MaterialTheme.typography.labelLarge)
+                                Text(step.instruction, style = MaterialTheme.typography.bodySmall)
+                            }
+                            Text("Zdjęcie dodasz z galerii na karcie ćwiczenia.",
                                 style = MaterialTheme.typography.bodySmall)
                         }
                     },
