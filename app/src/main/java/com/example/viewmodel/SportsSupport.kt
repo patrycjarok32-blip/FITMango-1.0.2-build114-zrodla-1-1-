@@ -7,7 +7,8 @@ import java.time.LocalDate
 import java.time.Instant
 
 data class SportSet(val id: String, val date: String, val exercise: String, val reps: Int, val kg: Double, val time: Long)
-data class SportPlan(val date: String, val title: String, val rest: Boolean)
+data class PlannedExercise(val name: String, val sets: Int, val reps: Int, val restSeconds: Int = 90)
+data class SportPlan(val date: String, val title: String, val rest: Boolean, val exercises: List<PlannedExercise> = emptyList())
 data class SportSession(val id: String, val title: String, val start: String, val end: String, val source: String,
     val activeKcal: Double? = null, val distanceKm: Double? = null, val activityType: Int? = null)
 data class SportsData(val sets: List<SportSet> = emptyList(), val plans: List<SportPlan> = emptyList(),
@@ -40,7 +41,7 @@ object SportsSupport {
             .put("energy", d.energy).put("fatigue", d.fatigue)) } })
         .put("sets", JSONArray().also { array -> data.sets.forEach { s -> array.put(JSONObject().put("id", s.id).put("date", s.date)
             .put("exercise", s.exercise).put("reps", s.reps).put("kg", s.kg).put("time", s.time)) } })
-        .put("plans", JSONArray().also { array -> data.plans.forEach { p -> array.put(JSONObject().put("date", p.date).put("title", p.title).put("rest", p.rest)) } })
+        .put("plans", JSONArray().also { array -> data.plans.forEach { p -> array.put(JSONObject().put("date", p.date).put("title", p.title).put("rest", p.rest).put("exercises", JSONArray().also { a -> p.exercises.forEach { e -> a.put(JSONObject().put("name", e.name).put("sets", e.sets).put("reps", e.reps).put("restSeconds", e.restSeconds)) } })) } })
         .put("history", JSONArray().also { array -> data.history.forEach { h -> array.put(JSONObject().put("id", h.id).put("title", h.title)
             .put("start", h.start).put("end", h.end).put("source", h.source).put("kcal", h.activeKcal ?: JSONObject.NULL)
             .put("km", h.distanceKm ?: JSONObject.NULL).put("type", h.activityType ?: JSONObject.NULL)) } }).toString()
@@ -53,7 +54,8 @@ object SportsSupport {
         }
         val data = SportsData(rows("sets").map { SportSet(it.getString("id"), it.getString("date"), it.getString("exercise"),
             it.getInt("reps"), it.getDouble("kg"), it.getLong("time")) },
-            rows("plans").map { SportPlan(it.getString("date"), it.getString("title"), it.getBoolean("rest")) },
+            rows("plans").map { SportPlan(it.getString("date"), it.getString("title"), it.getBoolean("rest"),
+                (it.optJSONArray("exercises") ?: JSONArray()).let { a -> (0 until a.length()).map { i -> a.getJSONObject(i).let { e -> PlannedExercise(e.getString("name"), e.getInt("sets"), e.getInt("reps"), e.optInt("restSeconds", 90)) } } }) },
             rows("history").map { SportSession(it.getString("id"), it.getString("title"), it.getString("start"), it.getString("end"),
                 it.getString("source"), if (it.isNull("kcal")) null else it.getDouble("kcal"), if (it.isNull("km")) null else it.getDouble("km"), if (it.isNull("type")) null else it.getInt("type")) },
             json.optLong("updated", 0), json.optInt("goal", 3),
@@ -74,7 +76,7 @@ object SportsSupport {
         require(data.sets.map { it.id }.distinct().size == data.sets.size && data.plans.map { it.date }.distinct().size == data.plans.size)
         require(data.history.map { it.id }.distinct().size == data.history.size)
         data.sets.forEach { require(it.id.length in 1..200 && it.exercise.length in 1..120 && it.reps in 1..1000 && it.kg.isFinite() && it.kg in 0.0..2000.0 && it.time >= 0); LocalDate.parse(it.date) }
-        data.plans.forEach { require(it.title.length in 1..120); LocalDate.parse(it.date) }
+        data.plans.forEach { require(it.title.length in 1..120); LocalDate.parse(it.date); require(it.exercises.size <= 30); it.exercises.forEach { e -> require(e.name.length in 1..120 && e.sets in 1..12 && e.reps in 1..100 && e.restSeconds in 10..3600) } }
         data.history.forEach { require(it.id.length in 1..500 && it.title.length in 1..200 && it.source.length <= 200)
             require(Instant.parse(it.end) > Instant.parse(it.start))
             require(it.activeKcal == null || it.activeKcal.isFinite() && it.activeKcal >= 0)
