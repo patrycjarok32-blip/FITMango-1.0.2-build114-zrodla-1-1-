@@ -11,7 +11,7 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun WorkoutModeCard(
-    date: String, plan: SportPlan?, workouts: List<WorkoutSession>, busy: Boolean,
+    date: String, plan: SportPlan?, workouts: List<WorkoutSession>, sports: SportsData, busy: Boolean,
     onStart: (SportPlan) -> Unit,
     onEntry: (String, Int, Int, Double, Boolean) -> Unit,
     onFinish: (String, Int) -> Unit
@@ -53,6 +53,12 @@ fun WorkoutModeCard(
                 modifier = Modifier.fillMaxWidth())
             Text("Ćwiczenie ${index + 1}/${exercises.size}: ${selected.orEmpty()}",
                 style = MaterialTheme.typography.titleMedium)
+            val previous = selected?.let { WorkoutInsights.previousKg(sports.sets, it) }
+            val suggestion = selected?.let { WorkoutInsights.suggestKg(sports.sets, it,
+                active.entries.firstOrNull { e -> e.exercise == it }?.reps ?: 10) }
+            if (previous != null) Text("📈 Ostatni ciężar: " + previous + " kg")
+            if (suggestion != null) Text("✨ Proponowana progresja: " + suggestion +
+                " kg — tylko jeśli technika i samopoczucie pozwalają")
             active.entries.forEachIndexed { i, entry ->
                 if (entry.exercise == selected) {
                     var kg by rememberSaveable(active.id, i) { mutableStateOf(entry.kg.toString()) }
