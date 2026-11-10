@@ -47,8 +47,14 @@ object WorkoutInsights {
             w.completedAt > 0 && java.time.Instant.ofEpochMilli(w.completedAt)
                 .atZone(ZoneId.systemDefault()).toLocalDate() == date
         }
+        val plannedVideos = challenges.sumOf { challenge ->
+            val startDay = runCatching { LocalDate.parse(challenge.startedOn) }.getOrNull()
+            if (startDay == null) 0 else challenge.workouts.count { workout ->
+                startDay.plusDays((workout.day - 1).toLong()) == date
+            }
+        }
         CalendarDay(date, sports.plans.count { it.date == dateString && !it.rest },
             sessions.count { it.date == dateString && it.ended > 0 },
-            video.size, 0, sports.plans.any { it.date == dateString && it.rest })
+            video.size, plannedVideos, sports.plans.any { it.date == dateString && it.rest })
     }
 }
