@@ -42,6 +42,7 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
     var showEditor by rememberSaveable { mutableStateOf(false) }
     var showSetEditor by rememberSaveable { mutableStateOf(false) }
     var planMode by rememberSaveable { mutableStateOf("auto") }
+    var showGenerator by rememberSaveable { mutableStateOf(false) }
     var strengthGoal by rememberSaveable { mutableStateOf("muscle") }
     var trainingDays by rememberSaveable { mutableStateOf("3") }
     var experience by rememberSaveable { mutableStateOf("beginner") }
@@ -60,7 +61,9 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                 SportProfileSummary("Serie", "${data.sets.size}", Modifier.weight(1f))
                 SportProfileSummary("Odpoczynek", "${data.plans.count { it.rest }}", Modifier.weight(1f))
             }
-            Text("✨ Inteligentny Plan Siłowy 3.0", style = MaterialTheme.typography.titleMedium, color = LeafGreen)
+            TextButton(onClick = { showGenerator = !showGenerator }) { Text(if (showGenerator) "Ukryj generator −" else "✨ Utwórz plan +") }
+            if (showGenerator) {
+            Text("✨ Inteligentny Plan Siłowy 5.0", style = MaterialTheme.typography.titleMedium, color = LeafGreen)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(selected = planMode == "auto", onClick = { planMode = "auto" },
                     label = { Text("✨ Generator") })
@@ -136,6 +139,7 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                 Text("Ręcznie zaplanuj wybrany dzień w edytorze poniżej.",
                     style = MaterialTheme.typography.bodySmall)
                 LaunchedEffect(planMode) { showEditor = true }
+            }
             }
             Text("Plan tygodnia • zapis lokalny", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             plans.forEach { (date, plan) ->
