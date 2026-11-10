@@ -21,11 +21,57 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
     private val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == SportsSupport.KEY || key == null) load()
     }
-    init { prefs.registerOnSharedPreferenceChangeListener(listener); load(); loadWorkouts() }
+    init { prefs.registerOnSharedPreferenceChangeListener(listener); load(); loadWorkouts(); loadVideoChallenges() }
     private fun load() { viewModelScope.launch(Dispatchers.IO) {
         try { _data.value = SportsSupport.read(getApplication<Application>()) }
         catch (_: Exception) { _message.value = "Nie można odczytać danych sportowych. Przywróć kopię danych; zapisane wpisy nie zostały usunięte." }
     } }
+    private val _videoChallenges = MutableStateFlow<List<VideoChallenge>>(emptyList())
+    val videoChallenges = _videoChallenges.asStateFlow()
+    private fun loadVideoChallenges() { viewModelScope.launch(Dispatchers.IO) {
+        runCatching { VideoChallengeStore.read(getApplication<Application>()) }
+            .onSuccess { _videoChallenges.value = it }
+            .onFailure { _message.value = "Nie udało się odczytać wyzwań wideo." }
+    } }
+    private fun editVideoChallenges(change: (List<VideoChallenge>) -> List<VideoChallenge>, onSaved: () -> Unit = {}) {
+        if (_busy.value) return
+        _busy.value = true
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) { PersonalDataGate.mutex.withLock {
+                    val next = change(VideoChallengeStore.read(getApplication<Application>()))
+                    VideoChallengeStore.write(getApplication<Application>(), next)
+                    _videoChallenges.value = next
+                } }
+                onSaved()
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) { _message.value = e.message ?: "Nie udało się zapisać wyzwania." }
+            finally { _busy.value = false }
+        }
+    }
+    fun addVideoChallenge(title: String, weeks: Int, done: () -> Unit = {}) =
+        editVideoChallenges({ VideoChallengeStore.addChallenge(it, title, weeks) }, done)
+    fun duplicateVideoChallenge(id: String, done: () -> Unit = {}) =
+        editVideoChallenges({ VideoChallengeStore.duplicate(it, id) }, done)
+    fun deleteVideoChallenge(id: String, done: () -> Unit = {}) =
+        editVideoChallenges({ it.filterNot { c -> c.id == id } }, done)
+    fun duplicateVideoWeek(id: String, from: Int, to: Int, done: () -> Unit = {}) =
+        editVideoChallenges({ VideoChallengeStore.duplicateWeek(it, id, from, to) }, done)
+    fun addVideoWorkout(id: String, day: Int, title: String, minutes: Int, category: String,
+        url: String, done: () -> Unit = {}) = editVideoChallenges({ items ->
+        items.map { c -> if (c.id != id) c else c.copy(workouts = c.workouts +
+            VideoWorkout(java.util.UUID.randomUUID().toString(), day, title.trim(), minutes, category.trim(), url.trim())) }
+    }, done)
+    fun toggleVideoWorkout(challengeId: String, workoutId: String, done: () -> Unit = {}) =
+        editVideoChallenges({ items -> items.map { c ->
+            if (c.id != challengeId) c else c.copy(workouts = c.workouts.map { w ->
+                if (w.id != workoutId) w else w.copy(completedAt = if (w.completedAt == 0L) System.currentTimeMillis() else 0)
+            })
+        } }, done)
+    fun deleteVideoWorkout(challengeId: String, workoutId: String, done: () -> Unit = {}) =
+        editVideoChallenges({ items -> items.map { c ->
+            if (c.id != challengeId) c else c.copy(workouts = c.workouts.filterNot { it.id == workoutId })
+        } }, done)
     private fun loadWorkouts() { viewModelScope.launch(Dispatchers.IO) {
         runCatching { WorkoutSessionStore.read(getApplication<Application>()) }
             .onSuccess { _workouts.value = it }
