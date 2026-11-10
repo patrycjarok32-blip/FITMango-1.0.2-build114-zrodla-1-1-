@@ -147,7 +147,7 @@ fun VideoChallengesCard(
             Text("Dzień $day • ${dayWorkouts.sumOf { it.minutes }} min")
             dayWorkouts.forEach { workout ->
                 Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text("${if (workout.completedAt > 0) "✅" else "▶"} ${workout.title} • ${workout.minutes} min",
+                    Text("${SportExerciseIcons.forExercise(workout.title)} ${workout.title} • ${workout.minutes} min",
                         style = MaterialTheme.typography.titleSmall)
                     Text(workout.category, style = MaterialTheme.typography.bodySmall)
                     if (embeddedVideoId == workout.id && workout.url.isNotBlank()) {
@@ -173,8 +173,8 @@ fun VideoChallengesCard(
                             videoRunning = true
                             runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(workout.url))) }
                         }) { Text("YouTube") }
-                        TextButton(onClick = { onToggle(selected.id, workout.id) }, enabled = !busy) {
-                            Text(if (workout.completedAt > 0) "Cofnij ✓" else "Ukończ ✓")
+                        Button(onClick = { onToggle(selected.id, workout.id) }, enabled = !busy) {
+                            Text(if (workout.completedAt > 0) "↩ Cofnij ukończenie" else "✓ Ukończ trening")
                         }
                         TextButton(onClick = { onRemove(selected.id, workout.id) }, enabled = !busy) {
                             Text("Usuń")
