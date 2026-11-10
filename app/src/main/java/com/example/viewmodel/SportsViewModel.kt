@@ -15,15 +15,80 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
     val data = _data.asStateFlow()
     private val _busy = MutableStateFlow(false); val busy = _busy.asStateFlow()
     private val _message = MutableStateFlow<String?>(null); val message = _message.asStateFlow()
+    private val _workouts = MutableStateFlow<List<WorkoutSession>>(emptyList())
+    val workouts = _workouts.asStateFlow()
     private val prefs = app.getSharedPreferences("FITMangoUsability", 0)
     private val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == SportsSupport.KEY || key == null) load()
     }
-    init { prefs.registerOnSharedPreferenceChangeListener(listener); load() }
+    init { prefs.registerOnSharedPreferenceChangeListener(listener); load(); loadWorkouts() }
     private fun load() { viewModelScope.launch(Dispatchers.IO) {
         try { _data.value = SportsSupport.read(getApplication<Application>()) }
         catch (_: Exception) { _message.value = "Nie można odczytać danych sportowych. Przywróć kopię danych; zapisane wpisy nie zostały usunięte." }
     } }
+    private fun loadWorkouts() { viewModelScope.launch(Dispatchers.IO) {
+        runCatching { WorkoutSessionStore.read(getApplication<Application>()) }
+            .onSuccess { _workouts.value = it }
+            .onFailure { _message.value = "Nie można odczytać zapisanej sesji treningowej." }
+    } }
+    private fun editWorkout(change: (List<WorkoutSession>) -> List<WorkoutSession>, onSaved: () -> Unit = {}) {
+        if (_busy.value) return
+        _busy.value = true
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) { PersonalDataGate.mutex.withLock {
+                    val next = change(WorkoutSessionStore.read(getApplication<Application>()))
+                    WorkoutSessionStore.write(getApplication<Application>(), next)
+                    _workouts.value = next
+                } }
+                onSaved()
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) { _message.value = e.message ?: "Nie udało się zapisać sesji." }
+            finally { _busy.value = false }
+        }
+    }
+    fun startWorkout(plan: SportPlan, onSaved: () -> Unit = {}) = editWorkout({ sessions ->
+        require(sessions.none { it.ended == 0L }) { "Najpierw dokończ rozpoczęty trening." }
+        (sessions + WorkoutSessionStore.create(plan, plan.date)).takeLast(200)
+    }, onSaved)
+    fun updateWorkoutEntry(id: String, index: Int, reps: Int, kg: Double, done: Boolean, onSaved: () -> Unit = {}) =
+        editWorkout({ sessions ->
+            require(reps in 1..1000 && kg.isFinite() && kg in 0.0..2000.0)
+            sessions.map { w ->
+                if (w.id != id || w.ended != 0L) w else {
+                    require(index in w.entries.indices)
+                    w.copy(entries = w.entries.toMutableList().also { it[index] =
+                        it[index].copy(reps = reps, kg = kg, done = done) })
+                }
+            }
+        }, onSaved)
+    fun finishWorkout(id: String, effort: Int, onSaved: () -> Unit = {}) {
+        if (_busy.value) return
+        _busy.value = true
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) { PersonalDataGate.mutex.withLock {
+                    val context = getApplication<Application>()
+                    val sessions = WorkoutSessionStore.read(context)
+                    val w = sessions.firstOrNull { it.id == id && it.ended == 0L } ?: error("Brak aktywnego treningu.")
+                    require(effort in 1..10)
+                    val now = System.currentTimeMillis()
+                    val sports = SportsSupport.read(context)
+                    val added = w.entries.filter { it.done }.map { e ->
+                        SportSet(java.util.UUID.randomUUID().toString(), w.date, e.exercise, e.reps, e.kg, now)
+                    }
+                    SportsSupport.write(context, sports.copy(sets = sports.sets + added))
+                    val finished = sessions.map { if (it.id == id) it.copy(ended = now, effort = effort) else it }
+                    WorkoutSessionStore.write(context, finished)
+                    _workouts.value = finished
+                    _data.value = SportsSupport.read(context)
+                } }
+                onSaved()
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) { _message.value = e.message ?: "Nie udało się zakończyć treningu." }
+            finally { _busy.value = false }
+        }
+    }
     private fun edit(change: (SportsData) -> SportsData, onSaved: () -> Unit = {}) {
         if (_busy.value) return
         _busy.value = true; _message.value = null
