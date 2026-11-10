@@ -169,6 +169,15 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                     }
                 }
             }
+            if (pendingDeleteDay != null) AlertDialog(
+                onDismissRequest = { pendingDeleteDay = null },
+                title = { Text("Usunąć plan z tego dnia?") },
+                text = { Text("Wykonane serie i historia pozostaną bez zmian.") },
+                confirmButton = { TextButton(enabled = !busy, onClick = {
+                    pendingDeleteDay?.let(onRemovePlan)
+                    pendingDeleteDay = null
+                }) { Text("Usuń plan") } },
+                dismissButton = { TextButton(onClick = { pendingDeleteDay = null }) { Text("Anuluj") } })
             TextButton(onClick = { showEditor = !showEditor }) { Text(if (showEditor) "Zamknij edycję" else "Zaplanuj trening +") }
             if (showEditor) {
                 OutlinedTextField(planDay, { planDay = it }, label = { Text("Data RRRR-MM-DD") },
