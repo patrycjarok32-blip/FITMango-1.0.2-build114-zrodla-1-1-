@@ -353,26 +353,45 @@ internal object StrengthPlanSuggestions {
 }
 
 internal object StrengthSessionGenerator {
+    /** Uses the same exercise catalogue shown in the library; never suggests unavailable equipment. */
     fun exercises(title: String, level: String, place: String): List<PlannedExercise> {
         val name = title.lowercase(Locale.ROOT)
-        val names = when {
-            "odpoczynek" in name -> emptyList()
-            "poślad" in name || "nogi" in name || "dół" in name -> listOf(
-                "Przysiad", "Hip thrust", "Martwy ciąg rumuński", "Wykroki", "Glute bridge")
-            "plecy" in name || "pull" in name -> listOf(
-                "Wiosłowanie hantlami", "Ściąganie drążka", "Uginanie na biceps", "Dead bug")
-            "push" in name || "klatka" in name -> listOf(
-                "Wyciskanie na ławce", "Wyciskanie hantli", "Unoszenie bokiem", "Prostowanie na triceps")
-            "góra" in name -> listOf(
-                "Wiosłowanie hantlami", "Wyciskanie na ławce", "Wyciskanie hantli", "Uginanie na biceps")
-            else -> listOf("Przysiad", "Wiosłowanie hantlami", "Pompki", "Hip thrust", "Plank")
+        if ("odpoczynek" in name) return emptyList()
+        val home = place == "home"
+        val pool = StrengthExerciseLibrary.exercises.filter {
+            !home || it.equipment == "Dom" || it.equipment == "Oba"
         }
-        val home = mapOf("Ściąganie drążka" to "Wiosłowanie hantlami",
-            "Wyciskanie na ławce" to "Pompki", "Prostowanie na triceps" to "Pompki")
-        return names.map { exercise ->
-            val selected = if (place == "home") home[exercise] ?: exercise else exercise
-            PlannedExercise(selected, if (level == "beginner") 2 else if (level == "advanced") 4 else 3,
-                if (level == "advanced") 8 else 10, if (level == "advanced") 120 else 90)
-        }.distinctBy { it.name }
+        val groups = when {
+            "poślad" in name -> listOf("Pośladki", "Nogi", "Pośladki", "Core", "Nogi")
+            "nogi" in name || "dół" in name -> listOf("Nogi", "Pośladki", "Nogi", "Łydki", "Core")
+            "pull" in name || "plecy" in name -> listOf("Plecy", "Plecy", "Biceps", "Plecy", "Core")
+            "push" in name || "klatka" in name -> listOf("Klatka", "Barki", "Triceps", "Klatka", "Barki")
+            "góra" in name -> listOf("Plecy", "Klatka", "Barki", "Biceps", "Triceps")
+            else -> listOf("Nogi", "Plecy", "Klatka", "Pośladki", "Core")
+        }
+        val preferred = when {
+            "poślad" in name -> listOf("Hip thrust", "Martwy ciąg rumuński", "Kickback na wyciągu")
+            "pull" in name -> listOf("Wiosłowanie hantlami", "Ściąganie drążka")
+            "push" in name -> listOf("Wyciskanie na ławce", "Wyciskanie hantli")
+            else -> emptyList()
+        }
+        val beginner = level == "beginner"
+        val advanced = level == "advanced"
+        val chosen = mutableListOf<StrengthExercise>()
+        groups.forEachIndexed { index, group ->
+            val candidates = pool.filter { it.group == group && it !in chosen }
+            val preferredCandidate = candidates.firstOrNull { it.name in preferred }
+            val selected = if (beginner && index == 0) {
+                candidates.firstOrNull { "maszynie" in it.name.lowercase(Locale.ROOT) || "Suwnica" in it.name }
+                    ?: preferredCandidate
+            } else preferredCandidate
+            val candidate = selected ?: candidates.getOrNull(
+                (if (advanced) index + 2 else index) % candidates.size.coerceAtLeast(1))
+            if (candidate != null) chosen += candidate
+        }
+        return chosen.map { exercise ->
+            PlannedExercise(exercise.name, if (beginner) 2 else if (advanced) 4 else 3,
+                if (advanced) 8 else 10, if (advanced) 120 else 90)
+        }
     }
 }
