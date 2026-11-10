@@ -149,12 +149,12 @@ internal fun StrengthDayEditor(
             }.forEach { item ->
                 TextButton(onClick = { selected = item.name; showLibrary = false },
                     modifier = Modifier.fillMaxWidth()) {
-                    Text("${item.name} • ${item.group} • ${item.equipment}")
+                    Text("${SportExerciseIcons.forGroup(item.group)} ${item.name} • ${item.group} • ${item.equipment}")
                 }
             }
         }
         StrengthExerciseLibrary.exercises.firstOrNull { it.name == selected }?.let {
-            Text("Technika: ${it.tip}", style = MaterialTheme.typography.bodySmall)
+            Text("${SportExerciseIcons.forGroup(it.group)} Technika: ${it.tip}", style = MaterialTheme.typography.bodySmall)
         }
         Text("🎥 Biblioteka Premium • instrukcja i własne wideo",
             style = MaterialTheme.typography.titleMedium)
@@ -177,7 +177,7 @@ internal fun StrengthDayEditor(
         Text("Zamienniki: " + StrengthExerciseLibrary.exercises
             .filter { it.group == exerciseGroup && it.name != selected }.take(3)
             .joinToString(" • ") { it.name }, style = MaterialTheme.typography.bodySmall)
-        Text("📝 Zapis serii • ${date}", style = MaterialTheme.typography.titleMedium)
+        Text("${SportExerciseIcons.forExercise(selected)} Zapis serii • ${date}", style = MaterialTheme.typography.titleMedium)
         if (previous.isNotEmpty()) {
             Text("Ostatni trening: " + previous.joinToString(" • ") { "${it.kg} kg × ${it.reps}" },
                 style = MaterialTheme.typography.bodySmall)
