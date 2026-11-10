@@ -1,5 +1,11 @@
 package com.example.ui.components
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.example.viewmodel.VideoPlanPhotoParser
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.*
@@ -34,6 +40,27 @@ fun VideoChallengesCard(
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     val selected = challenges.firstOrNull { it.id == selectedId } ?: challenges.firstOrNull()
     val context = LocalContext.current
+    var ocrMessage by remember { mutableStateOf("") }
+    var ocrCandidates by remember { mutableStateOf(emptyList<VideoPlanPhotoParser.Candidate>()) }
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            ocrMessage = "Rozpoznawanie tekstu ze zdjęcia…"
+            runCatching { InputImage.fromFilePath(context, uri) }
+                .onSuccess { image ->
+                    val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+                    recognizer.process(image)
+                        .addOnSuccessListener { result ->
+                            ocrCandidates = VideoPlanPhotoParser.parse(result.text)
+                            ocrMessage = if (ocrCandidates.isEmpty())
+                                "Nie rozpoznano nazw treningów. Dodaj je ręcznie." else
+                                "Sprawdź propozycje i wybierz, które dodać."
+                        }
+                        .addOnFailureListener { ocrMessage = "Nie udało się odczytać zdjęcia." }
+                        .addOnCompleteListener { recognizer.close() }
+                }
+                .onFailure { ocrMessage = "Nie udało się otworzyć zdjęcia." }
+        }
+    }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("🎬 Moje wyzwania i treningi wideo", style = MaterialTheme.typography.titleLarge)
         Text("Twórz dowolne plany, przypisuj treningi do dni i zapisuj postępy. Filmy pozostają na YouTube.",
@@ -116,6 +143,21 @@ fun VideoChallengesCard(
                     }
                 }
                 HorizontalDivider()
+            }
+            OutlinedButton(onClick = { photoPicker.launch("image/*") }, enabled = !busy) {
+                Text("📷 Dodaj propozycje ze zdjęcia planu")
+            }
+            if (ocrMessage.isNotBlank()) Text(ocrMessage, style = MaterialTheme.typography.bodySmall)
+            ocrCandidates.forEachIndexed { index, candidate ->
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(candidate.title + " • " + candidate.minutes + " min", modifier = Modifier.weight(1f))
+                    TextButton(onClick = {
+                        videoTitle = candidate.title
+                        minutes = candidate.minutes.toString()
+                        category = candidate.category
+                        ocrCandidates = ocrCandidates.filterIndexed { i, _ -> i != index }
+                    }) { Text("Wybierz") }
+                }
             }
             Text("Dodaj trening do dnia $day", style = MaterialTheme.typography.titleMedium)
             OutlinedTextField(videoTitle, { videoTitle = it.take(120) },
