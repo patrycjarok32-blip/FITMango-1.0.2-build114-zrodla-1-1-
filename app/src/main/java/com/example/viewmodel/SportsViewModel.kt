@@ -21,13 +21,14 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
     private val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == SportsSupport.KEY || key == null) load()
     }
-    init { prefs.registerOnSharedPreferenceChangeListener(listener); load(); loadWorkouts(); loadVideoChallenges() }
+    init { prefs.registerOnSharedPreferenceChangeListener(listener); load(); loadWorkouts() }
     private fun load() { viewModelScope.launch(Dispatchers.IO) {
         try { _data.value = SportsSupport.read(getApplication<Application>()) }
         catch (_: Exception) { _message.value = "Nie można odczytać danych sportowych. Przywróć kopię danych; zapisane wpisy nie zostały usunięte." }
     } }
     private val _videoChallenges = MutableStateFlow<List<VideoChallenge>>(emptyList())
     val videoChallenges = _videoChallenges.asStateFlow()
+    init { loadVideoChallenges() }
     private fun loadVideoChallenges() { viewModelScope.launch(Dispatchers.IO) {
         runCatching { VideoChallengeStore.read(getApplication<Application>()) }
             .onSuccess { _videoChallenges.value = it }
