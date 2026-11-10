@@ -26,6 +26,7 @@ fun WorkoutOverviewCard(
             val labels = buildList {
                 if (day.strengthPlanned > 0) add("siłowy w planie")
                 if (day.strengthDone > 0) add("siłowy ✓")
+                if (day.videosPlanned > 0) add("wideo w planie ${day.videosPlanned}")
                 if (day.videosDone > 0) add("wideo ✓ ${day.videosDone}")
                 if (day.recovery) add("regeneracja")
             }
