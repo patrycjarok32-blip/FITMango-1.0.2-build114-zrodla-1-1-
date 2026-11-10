@@ -1,5 +1,6 @@
 package com.example.ui.components
 
+import coil.compose.AsyncImage
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -71,6 +72,7 @@ internal fun ExercisePhotoCard(exercise: String, modifier: Modifier = Modifier) 
         }
     }
     val bitmap = remember(exercise, stage, refresh) { ExercisePhotoStore.load(context, exercise, stage) }
+    val curatedUrl = CuratedExercisePhotos.url(exercise, stage)
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text("Galeria ćwiczenia", style = MaterialTheme.typography.labelMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -82,9 +84,12 @@ internal fun ExercisePhotoCard(exercise: String, modifier: Modifier = Modifier) 
         Surface(shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.secondaryContainer,
             modifier = Modifier.fillMaxWidth().height(152.dp)
-                .clickable { if (bitmap != null) expanded = true else picker.launch("image/*") }) {
+                .clickable { if (bitmap != null || curatedUrl != null) expanded = true else picker.launch("image/*") }) {
             Box(contentAlignment = Alignment.Center) {
                 if (bitmap != null) Image(bitmap.asImageBitmap(), contentDescription = "Zdjęcie ćwiczenia $exercise",
+                    modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                else if (curatedUrl != null) AsyncImage(model = curatedUrl,
+                    contentDescription = "Fotografia poglądowa: $exercise",
                     modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 else Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(SportExerciseIcons.forExercise(exercise), style = MaterialTheme.typography.headlineLarge)
@@ -92,6 +97,8 @@ internal fun ExercisePhotoCard(exercise: String, modifier: Modifier = Modifier) 
                 }
             }
         }
+        if (bitmap == null && curatedUrl != null) Text(CuratedExercisePhotos.CREDIT,
+            style = MaterialTheme.typography.labelSmall)
         TextButton(onClick = { picker.launch("image/*") }) {
             Text(if (bitmap == null) "📷 Wybierz zdjęcie" else "📷 Zmień zdjęcie")
         }
@@ -106,10 +113,12 @@ internal fun ExercisePhotoCard(exercise: String, modifier: Modifier = Modifier) 
         ExercisePhotoFinder(exercise, stage = stage, onSaved = { refresh++ })
         if (error) Text("Nie udało się zapisać zdjęcia.", color = MaterialTheme.colorScheme.error)
     }
-    if (expanded && bitmap != null) AlertDialog(onDismissRequest = { expanded = false },
+    if (expanded && (bitmap != null || curatedUrl != null)) AlertDialog(onDismissRequest = { expanded = false },
         title = { Text(exercise) },
-        text = { Image(bitmap.asImageBitmap(), contentDescription = exercise,
-            modifier = Modifier.fillMaxWidth(), contentScale = ContentScale.Fit) },
+        text = { if (bitmap != null) Image(bitmap.asImageBitmap(), contentDescription = exercise,
+            modifier = Modifier.fillMaxWidth(), contentScale = ContentScale.Fit)
+            else AsyncImage(model = curatedUrl, contentDescription = exercise,
+                modifier = Modifier.fillMaxWidth(), contentScale = ContentScale.Fit) },
         confirmButton = { TextButton(onClick = { expanded = false }) { Text("Zamknij") } })
 }
 
