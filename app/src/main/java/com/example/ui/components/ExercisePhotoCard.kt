@@ -87,6 +87,7 @@ internal fun ExercisePhotoCard(exercise: String, modifier: Modifier = Modifier) 
         TextButton(onClick = { picker.launch("image/*") }) {
             Text(if (bitmap == null) "📷 Wybierz zdjęcie" else "📷 Zmień zdjęcie")
         }
+        ExercisePhotoFinder(exercise, onSaved = { refresh++ })
         if (error) Text("Nie udało się zapisać zdjęcia.", color = MaterialTheme.colorScheme.error)
     }
     if (expanded && bitmap != null) AlertDialog(onDismissRequest = { expanded = false },
