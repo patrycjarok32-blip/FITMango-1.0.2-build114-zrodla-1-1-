@@ -190,12 +190,20 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         }
                     }
                     WorkoutModeCard(workoutDate, data.plans.firstOrNull { it.date == workoutDate },
-                        workouts, busy,
+                        workouts, data, busy,
                         onStart = { plan -> sports.startWorkout(plan) { saved() } },
                         onEntry = { id, index, reps, kg, done ->
                             sports.updateWorkoutEntry(id, index, reps, kg, done) { saved() }
                         },
                         onFinish = { id, effort -> sports.finishWorkout(id, effort) { saved() } })
+                }
+            }
+        }
+        if (activitySection == "training" && showTrainingProfile) item {
+            MangoCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(14.dp)) {
+                    WorkoutOverviewCard(today, data, workouts, videoChallenges, busy,
+                        onRestDay = { day -> sports.plan(day, "Regeneracja", true) { saved() } })
                 }
             }
         }
