@@ -20,6 +20,8 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
     private val prefs = app.getSharedPreferences("FITMangoUsability", 0)
     private val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == SportsSupport.KEY || key == null) load()
+        if (key == "strength_workouts_v1" || key == null) loadWorkouts()
+        if (key == "video_challenges_v1" || key == null) loadVideoChallenges()
     }
     init { prefs.registerOnSharedPreferenceChangeListener(listener); load(); loadWorkouts() }
     private fun load() { viewModelScope.launch(Dispatchers.IO) {
