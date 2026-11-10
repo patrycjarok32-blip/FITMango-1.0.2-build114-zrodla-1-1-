@@ -22,19 +22,19 @@ import java.security.MessageDigest
 
 /** Local user-supplied photo, stored in app-private files rather than a temporary picker URI. */
 internal object ExercisePhotoStore {
-    private fun file(context: Context, exercise: String): File {
+    private fun file(context: Context, exercise: String, stage: Int = 0): File {
         val hash = MessageDigest.getInstance("SHA-256")
             .digest(exercise.lowercase().toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it) }
         val directory = File(context.filesDir, "exercise_photos")
-        return File(directory, "$hash.jpg")
+        return File(directory, if (stage == 0) "$hash.jpg" else "${hash}_stage${stage}.jpg")
     }
 
-    fun load(context: Context, exercise: String) =
-        runCatching { file(context, exercise).takeIf { it.exists() }?.let(BitmapFactory::decodeFileFromPath) }
+    fun load(context: Context, exercise: String, stage: Int = 0) =
+        runCatching { file(context, exercise, stage).takeIf { it.exists() }?.let(BitmapFactory::decodeFileFromPath) }
             .getOrNull()
 
-    fun save(context: Context, exercise: String, uri: Uri): Boolean = runCatching {
+    fun save(context: Context, exercise: String, uri: Uri, stage: Int = 0): Boolean = runCatching {
         val source = context.contentResolver.openInputStream(uri) ?: error("Nie można otworzyć zdjęcia")
         source.use { input ->
             val original = BitmapFactory.decodeStream(input) ?: error("Niepoprawne zdjęcie")
@@ -45,7 +45,7 @@ internal object ExercisePhotoStore {
                 original, (width * scale).toInt().coerceAtLeast(1),
                 (height * scale).toInt().coerceAtLeast(1), true
             ) else original
-            val target = file(context, exercise)
+            val target = file(context, exercise, stage)
             target.parentFile?.mkdirs()
             target.outputStream().use { output ->
                 check(resized.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, output))
@@ -63,14 +63,22 @@ internal fun ExercisePhotoCard(exercise: String, modifier: Modifier = Modifier) 
     var refresh by remember { mutableIntStateOf(0) }
     var expanded by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf(false) }
+    var stage by remember(exercise) { mutableIntStateOf(0) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) {
-            error = !ExercisePhotoStore.save(context, exercise, uri)
+            error = !ExercisePhotoStore.save(context, exercise, uri, stage)
             refresh++
         }
     }
-    val bitmap = remember(exercise, refresh) { ExercisePhotoStore.load(context, exercise) }
+    val bitmap = remember(exercise, stage, refresh) { ExercisePhotoStore.load(context, exercise, stage) }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text("Galeria ćwiczenia", style = MaterialTheme.typography.labelMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            listOf("Główne", "Start", "Ruch", "Powrót").forEachIndexed { index, title ->
+                FilterChip(selected = stage == index, onClick = { stage = index },
+                    label = { Text(title, style = MaterialTheme.typography.labelSmall) })
+            }
+        }
         Surface(shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.secondaryContainer,
             modifier = Modifier.fillMaxWidth().height(152.dp)
@@ -87,7 +95,7 @@ internal fun ExercisePhotoCard(exercise: String, modifier: Modifier = Modifier) 
         TextButton(onClick = { picker.launch("image/*") }) {
             Text(if (bitmap == null) "📷 Wybierz zdjęcie" else "📷 Zmień zdjęcie")
         }
-        ExercisePhotoFinder(exercise, onSaved = { refresh++ })
+        ExercisePhotoFinder(exercise, stage = stage, onSaved = { refresh++ })
         if (error) Text("Nie udało się zapisać zdjęcia.", color = MaterialTheme.colorScheme.error)
     }
     if (expanded && bitmap != null) AlertDialog(onDismissRequest = { expanded = false },
