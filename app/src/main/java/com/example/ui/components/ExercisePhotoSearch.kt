@@ -67,11 +67,11 @@ internal object ExercisePhotoSearch {
         }
     }
 
-    suspend fun save(context: Context, exercise: String, candidate: ExercisePhotoCandidate): Boolean =
+    suspend fun save(context: Context, exercise: String, candidate: ExercisePhotoCandidate, stage: Int = 0): Boolean =
         withContext(Dispatchers.IO) {
             runCatching {
                 val url = candidate.preview.toHttpUrl()
-                require(url.isHttps && url.host.endsWith(".pixabay.com") || url.host == "pixabay.com")
+                require(url.isHttps && (url.host.endsWith(".pixabay.com") || url.host == "pixabay.com"))
                 client.newCall(Request.Builder().url(url).build()).execute().use { response ->
                     check(response.isSuccessful)
                     val bytes = response.body?.bytes() ?: error("Puste zdjęcie")
@@ -81,7 +81,7 @@ internal object ExercisePhotoSearch {
                     val file = java.io.File.createTempFile("exercise", ".jpg", context.cacheDir)
                     try {
                         file.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, it) }
-                        ExercisePhotoStore.save(context, exercise, android.net.Uri.fromFile(file))
+                        ExercisePhotoStore.save(context, exercise, android.net.Uri.fromFile(file), stage)
                     } finally { file.delete(); bitmap.recycle() }
                 }
             }.getOrDefault(false)
@@ -89,7 +89,7 @@ internal object ExercisePhotoSearch {
 }
 
 @Composable
-internal fun ExercisePhotoFinder(exercise: String, onSaved: () -> Unit) {
+internal fun ExercisePhotoFinder(exercise: String, stage: Int = 0, onSaved: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var results by remember(exercise) { mutableStateOf(emptyList<ExercisePhotoCandidate>()) }
@@ -129,7 +129,7 @@ internal fun ExercisePhotoFinder(exercise: String, onSaved: () -> Unit) {
                     Button(onClick = {
                         saving = true
                         scope.launch {
-                            val ok = ExercisePhotoSearch.save(context, exercise, candidate)
+                            val ok = ExercisePhotoSearch.save(context, exercise, candidate, stage)
                             message = if (ok) "Zdjęcie zapisane. Źródło: " + candidate.page else "Nie udało się zapisać zdjęcia."
                             if (ok) onSaved()
                             saving = false
