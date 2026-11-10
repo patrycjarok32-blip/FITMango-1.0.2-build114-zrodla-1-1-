@@ -40,6 +40,7 @@ fun VideoChallengesCard(
     var toWeek by rememberSaveable { mutableStateOf("2") }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     var activeVideoId by rememberSaveable { mutableStateOf("") }
+    var embeddedVideoId by rememberSaveable { mutableStateOf("") }
     var videoSeconds by rememberSaveable { mutableIntStateOf(0) }
     var videoRunning by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(videoRunning, videoSeconds) {
@@ -138,6 +139,9 @@ fun VideoChallengesCard(
                     Text("${if (workout.completedAt > 0) "✅" else "▶"} ${workout.title} • ${workout.minutes} min",
                         style = MaterialTheme.typography.titleSmall)
                     Text(workout.category, style = MaterialTheme.typography.bodySmall)
+                    if (embeddedVideoId == workout.id && workout.url.isNotBlank()) {
+                        EmbeddedYoutubeWorkout(workout.url)
+                    }
                     if (activeVideoId == workout.id) {
                         Text("⏱️ Pozostało: " + (videoSeconds / 60) + ":" +
                             (videoSeconds % 60).toString().padStart(2, '0'))
@@ -149,6 +153,9 @@ fun VideoChallengesCard(
                         }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        if (workout.url.isNotBlank()) TextButton(onClick = {
+                            embeddedVideoId = if (embeddedVideoId == workout.id) "" else workout.id
+                        }) { Text(if (embeddedVideoId == workout.id) "Ukryj wideo" else "▶ W FITMango") }
                         if (workout.url.isNotBlank()) TextButton(onClick = {
                             activeVideoId = workout.id
                             videoSeconds = workout.minutes * 60
