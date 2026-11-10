@@ -44,7 +44,7 @@ internal object ExercisePhotoSearch {
         else -> "gym exercise " + name.take(35)
     }
 
-    suspend fun search(name: String, key: String): List<ExercisePhotoCandidate> = withContext(Dispatchers.IO) {
+    suspend fun search(context: Context, name: String, key: String): List<ExercisePhotoCandidate> = withContext(Dispatchers.IO) {
         require(key.isNotBlank()) { "Dodaj klucz Pixabay w ustawieniach zdjęć." }
         val url = "https://pixabay.com/api/".toHttpUrl().newBuilder()
             .addQueryParameter("key", key)
@@ -53,9 +53,21 @@ internal object ExercisePhotoSearch {
             .addQueryParameter("safesearch", "true")
             .addQueryParameter("per_page", "12")
             .build()
-        client.newCall(Request.Builder().url(url).build()).execute().use { response ->
+        val cacheKey = java.security.MessageDigest.getInstance("SHA-256")
+            .digest((key + "|" + query(name)).toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        val cacheFile = java.io.File(context.cacheDir, "exercise_pixabay_$cacheKey.json")
+        val validCache = cacheFile.takeIf {
+            it.isFile && System.currentTimeMillis() - it.lastModified() in 0L..86_400_000L
+        }?.let { runCatching { it.readText() }.getOrNull() }
+        val jsonText = validCache ?: client.newCall(Request.Builder().url(url).build()).execute().use { response ->
             check(response.isSuccessful) { "Nie udało się wyszukać fotografii." }
-            val json = JSONObject(response.body?.string().orEmpty())
+            (response.body?.string() ?: error("Brak odpowiedzi")).also { body ->
+                runCatching { cacheFile.writeText(body) }
+            }
+        }
+        run {
+            val json = JSONObject(jsonText)
             val hits = json.optJSONArray("hits") ?: return@withContext emptyList()
             (0 until hits.length()).mapNotNull { i ->
                 val hit = hits.optJSONObject(i) ?: return@mapNotNull null
@@ -101,7 +113,7 @@ internal fun ExercisePhotoFinder(exercise: String, stage: Int = 0, onSaved: () -
             scope.launch {
                 try {
                     val key = RecipePhotoSettings(context).token("pixabay")
-                    results = ExercisePhotoSearch.search(exercise, key)
+                    results = ExercisePhotoSearch.search(context, exercise, key)
                     message = if (results.isEmpty()) "Nie znaleziono zdjęć. Możesz dodać własne." else
                         "Wybierz fotografię pasującą do ćwiczenia i sprawdź jej technikę."
                 } catch (e: Exception) { message = e.message ?: "Błąd wyszukiwania." }
