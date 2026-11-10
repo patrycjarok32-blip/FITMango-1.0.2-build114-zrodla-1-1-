@@ -43,6 +43,7 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
     var showSetEditor by rememberSaveable { mutableStateOf(false) }
     var planMode by rememberSaveable { mutableStateOf("auto") }
     var showGenerator by rememberSaveable { mutableStateOf(false) }
+    var pendingDeleteDay by rememberSaveable { mutableStateOf<String?>(null) }
     var strengthGoal by rememberSaveable { mutableStateOf("muscle") }
     var trainingDays by rememberSaveable { mutableStateOf("3") }
     var experience by rememberSaveable { mutableStateOf("beginner") }
@@ -161,7 +162,7 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                                 style = MaterialTheme.typography.bodyMedium)
                             if (plan?.rest == true) Text("Regeneracja", style = MaterialTheme.typography.labelSmall)
                         }
-                        if (plan != null) TextButton(onClick = { onRemovePlan(date.toString()) },
+                        if (plan != null) TextButton(onClick = { pendingDeleteDay = date.toString() },
                             enabled = !busy) {
                             Icon(Icons.Outlined.Close, contentDescription = "Usuń plan z ${date}")
                         }
