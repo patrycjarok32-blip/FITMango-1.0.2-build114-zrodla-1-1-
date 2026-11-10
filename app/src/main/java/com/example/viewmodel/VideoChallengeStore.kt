@@ -8,7 +8,7 @@ import java.util.UUID
 data class VideoWorkout(val id: String, val day: Int, val title: String, val minutes: Int,
     val category: String, val url: String, val completedAt: Long = 0)
 data class VideoChallenge(val id: String, val title: String, val days: Int,
-    val workouts: List<VideoWorkout>)
+    val workouts: List<VideoWorkout>, val startedOn: String = "")
 
 object VideoChallengeStore {
     private const val KEY = "video_challenges_v1"
@@ -16,6 +16,7 @@ object VideoChallengeStore {
         require(challenges.size <= 100 && challenges.map { it.id }.distinct().size == challenges.size)
         challenges.forEach { c ->
             require(c.id.isNotBlank() && c.title.length in 1..120 && c.days in 1..365 &&
+                (c.startedOn.isBlank() || runCatching { java.time.LocalDate.parse(c.startedOn) }.isSuccess) &&
                 c.workouts.size <= 1000)
             require(c.workouts.map { it.id }.distinct().size == c.workouts.size)
             c.workouts.forEach { w ->
@@ -42,7 +43,7 @@ object VideoChallengeStore {
                     VideoWorkout(w.getString("id"), w.getInt("day"), w.getString("title"),
                         w.getInt("minutes"), w.optString("category", "Inne"),
                         w.optString("url", ""), w.optLong("completedAt", 0))
-                } })
+                } }, c.optString("startedOn", ""))
         }.also(::validate)
     }
     fun read(context: Context): List<VideoChallenge> = parse(context.getSharedPreferences("FITMangoUsability", 0).getString(KEY, "[]") ?: "[]")
@@ -51,6 +52,7 @@ object VideoChallengeStore {
         val a = JSONArray()
         challenges.forEach { c ->
             a.put(JSONObject().put("id", c.id).put("title", c.title).put("days", c.days)
+                .put("startedOn", c.startedOn)
                 .put("workouts", JSONArray().also { list -> c.workouts.forEach { w ->
                     list.put(JSONObject().put("id", w.id).put("day", w.day).put("title", w.title)
                         .put("minutes", w.minutes).put("category", w.category)
@@ -62,7 +64,7 @@ object VideoChallengeStore {
     }
     fun addChallenge(items: List<VideoChallenge>, title: String, weeks: Int): List<VideoChallenge> {
         require(title.trim().length in 1..120 && weeks in 1..52)
-        return items + VideoChallenge(UUID.randomUUID().toString(), title.trim(), weeks * 7, emptyList())
+        return items + VideoChallenge(UUID.randomUUID().toString(), title.trim(), weeks * 7, emptyList(), java.time.LocalDate.now().toString())
     }
     fun duplicate(items: List<VideoChallenge>, id: String): List<VideoChallenge> {
         val original = items.first { it.id == id }
