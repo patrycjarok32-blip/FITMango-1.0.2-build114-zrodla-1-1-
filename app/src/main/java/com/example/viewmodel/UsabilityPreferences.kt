@@ -20,6 +20,8 @@ class UsabilityPreferences(context: Context) {
                 MeasurementRemovalSupport.validate((0 until a.length()).map { a.getString(it) }.toSet())
             }
             if (json.has(SportsSupport.KEY)) SportsSupport.decode(json.getString(SportsSupport.KEY))
+            if (json.has("strength_workouts_v1")) WorkoutSessionStore.validateRaw(json.getString("strength_workouts_v1"))
+            if (json.has("video_challenges_v1")) VideoChallengeStore.validateRaw(json.getString("video_challenges_v1"))
             if (json.has(EffectsSupport.KEY)) EffectsSupport.decode(json.getString(EffectsSupport.KEY))
             if (json.has(ScaleMeasurementsSupport.KEY)) ScaleMeasurementsSupport.decode(json.getString(ScaleMeasurementsSupport.KEY))
             if (json.has(EnergyCalculatorSupport.KEY)) EnergyCalculatorSupport.decode(json.getString(EnergyCalculatorSupport.KEY))
