@@ -26,7 +26,7 @@ import org.json.JSONObject
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
-internal data class ExercisePhotoCandidate(val preview: String, val page: String, val author: String)
+internal data class ExercisePhotoCandidate(val preview: String, val page: String, val author: String, val id: Long)
 
 internal object ExercisePhotoSearch {
     private val client = OkHttpClient.Builder().callTimeout(20, TimeUnit.SECONDS).build()
@@ -62,7 +62,7 @@ internal object ExercisePhotoSearch {
                 val preview = hit.optString("webformatURL")
                 val page = hit.optString("pageURL")
                 if (!preview.startsWith("https://") || !page.startsWith("https://pixabay.com/")) null
-                else ExercisePhotoCandidate(preview, page, hit.optString("user"))
+                else ExercisePhotoCandidate(preview, page, hit.optString("user"), hit.optLong("id"))
             }
         }
     }
@@ -131,7 +131,10 @@ internal fun ExercisePhotoFinder(exercise: String, stage: Int = 0, onSaved: () -
                         scope.launch {
                             val ok = ExercisePhotoSearch.save(context, exercise, candidate, stage)
                             message = if (ok) "Zdjęcie zapisane. Źródło: " + candidate.page else "Nie udało się zapisać zdjęcia."
-                            if (ok) onSaved()
+                            if (ok) {
+                                if (candidate.id > 0) ExercisePhotoLibrary.approve(context, exercise, stage, candidate.id, candidate.page, candidate.author)
+                                onSaved()
+                            }
                             saving = false
                         }
                     }, enabled = !saving) { Text(if (saving) "Zapisuję…" else "Wybierz") }
