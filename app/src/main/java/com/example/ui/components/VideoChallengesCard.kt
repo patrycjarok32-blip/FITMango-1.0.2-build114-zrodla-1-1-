@@ -32,6 +32,7 @@ fun VideoChallengesCard(
     var weeks by rememberSaveable { mutableStateOf("4") }
     var selectedId by rememberSaveable { mutableStateOf("") }
     var selectedDay by rememberSaveable { mutableIntStateOf(1) }
+    var selectedWeek by rememberSaveable { mutableIntStateOf(1) }
     var videoTitle by rememberSaveable { mutableStateOf("") }
     var minutes by rememberSaveable { mutableStateOf("20") }
     var category by rememberSaveable { mutableStateOf("Cardio") }
@@ -86,7 +87,7 @@ fun VideoChallengesCard(
             LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 items(challenges, key = { it.id }) { challenge ->
                     FilterChip(selected = selected?.id == challenge.id,
-                        onClick = { selectedId = challenge.id; selectedDay = 1 },
+                        onClick = { selectedId = challenge.id; selectedDay = 1; selectedWeek = 1 },
                         label = { Text(challenge.title) })
                 }
             }
@@ -123,10 +124,20 @@ fun VideoChallengesCard(
                     from in 1..(selected.days / 7) && to in 1..(selected.days / 7)) {
                 Text("Kopiuj tydzień (zastępuje docelowy)")
             }
+            val weekCount = (selected.days + 6) / 7
+            Text("Wybierz tydzień:", style = MaterialTheme.typography.titleSmall)
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                items((1..weekCount).toList()) { week ->
+                    FilterChip(selected = selectedWeek == week,
+                        onClick = { selectedWeek = week; selectedDay = (week - 1) * 7 + 1 },
+                        label = { Text("Tydzień $week") })
+                }
+            }
             Text("Wybierz dzień:", style = MaterialTheme.typography.titleSmall)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                items((1..selected.days).toList()) { day ->
-                    val completed = selected.workouts.any { it.day == day && it.completedAt > 0 }
+                items((((selectedWeek - 1) * 7 + 1)..minOf(selectedWeek * 7, selected.days)).toList()) { day ->
+                    val forDay = selected.workouts.filter { it.day == day }
+                    val completed = forDay.isNotEmpty() && forDay.all { it.completedAt > 0 }
                     FilterChip(selected = selectedDay == day, onClick = { selectedDay = day },
                         label = { Text("${if (completed) "✓ " else ""}$day") })
                 }
