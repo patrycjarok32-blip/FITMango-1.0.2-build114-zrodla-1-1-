@@ -82,7 +82,7 @@ fun WorkoutModeCard(
                             onCheckedChange = { checked ->
                                 if (weight != null && count != null) {
                                     onEntry(active.id, i, count, weight, checked)
-                                    if (checked) { rest = 90; restRunning = true }
+                                    if (checked) { rest = 60; restRunning = true }
                                 }
                             })
                     }
@@ -96,7 +96,7 @@ fun WorkoutModeCard(
             }
             Text("⏱️ Przerwa: ${rest / 60}:${(rest % 60).toString().padStart(2, '0')}")
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                TextButton(onClick = { rest = 90; restRunning = true }) { Text("90s") }
+                TextButton(onClick = { rest = 60; restRunning = true }) { Text("60s") }
                 TextButton(onClick = { restRunning = !restRunning }, enabled = rest > 0) {
                     Text(if (restRunning) "Pauza" else "Wznów")
                 }
