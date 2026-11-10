@@ -22,6 +22,16 @@ internal object ExercisePhotoLibrary {
 
     fun allExercises(): List<String> = StrengthExerciseLibrary.exercises.map { it.name }.distinct()
 
+    /** Only exact exercise matches are eligible for automatic assignment. */
+    fun matchesLibraryExercise(name: String): Boolean =
+        allExercises().any { normalize(it) == normalize(name) }
+
+    fun approvedCount(context: Context): Int =
+        allExercises().count { isApproved(context, it, 0) }
+
+    fun missingExercises(context: Context): List<String> =
+        allExercises().filterNot { isApproved(context, it, 0) }
+
     fun isApproved(context: Context, exercise: String, stage: Int): Boolean {
         return read(context).optJSONObject(normalize(exercise))?.has(stage.toString()) == true
     }
