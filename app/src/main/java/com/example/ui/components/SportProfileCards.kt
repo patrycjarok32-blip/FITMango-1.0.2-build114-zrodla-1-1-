@@ -31,7 +31,8 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
     onPlan: (String, String, Boolean) -> Unit, onRemovePlan: (String) -> Unit,
     onAddSet: (String, String, Int, Double) -> Unit,
     onSaveWeek: (List<SportPlan>) -> Unit = {},
-    onRemoveSet: (String) -> Unit = {}) {
+    onRemoveSet: (String) -> Unit = {},
+    onUpdateExercises: (String, List<PlannedExercise>) -> Unit = { _, _ -> }) {
     var planDay by rememberSaveable { mutableStateOf(today.toString()) }
     var planTitle by rememberSaveable { mutableStateOf("Push") }
     var rest by rememberSaveable { mutableStateOf(false) }
@@ -121,7 +122,8 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                     Button(onClick = {
                         onSaveWeek(generatedTitles.mapIndexed { index, title ->
                             SportPlan(weekStart.plusDays(index.toLong()).toString(),
-                                if (title.isBlank()) "Odpoczynek" else title, title.isBlank() || title == "Odpoczynek")
+                                if (title.isBlank()) "Odpoczynek" else title, title.isBlank() || title == "Odpoczynek",
+                                if (title.isBlank() || title == "Odpoczynek") emptyList() else StrengthSessionGenerator.exercises(title, experience, trainingPlace))
                         })
                     }, enabled = !busy && generatedTitles.any { it.isNotBlank() },
                         modifier = Modifier.fillMaxWidth().testTag("sport_save_generated_plan")) {
@@ -185,6 +187,44 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                     FilterChip(selected = editorDate == date.toString(),
                         onClick = { editorDate = date.toString() },
                         label = { Text(date.format(DateTimeFormatter.ofPattern("EE", Locale("pl")))) })
+                }
+            }
+            val selectedPlan = data.plans.firstOrNull { it.date == editorDate }
+            if (selectedPlan != null && !selectedPlan.rest) {
+                Text("📋 Sesja: ${selectedPlan.title}", style = MaterialTheme.typography.titleMedium)
+                if (selectedPlan.exercises.isEmpty()) {
+                    Text("Ta sesja nie ma jeszcze dobranych ćwiczeń.")
+                    TextButton(onClick = {
+                        onUpdateExercises(editorDate, StrengthSessionGenerator.exercises(selectedPlan.title, "beginner", "gym"))
+                    }, enabled = !busy) { Text("✨ Dobierz ćwiczenia do tej sesji") }
+                }
+                selectedPlan.exercises.forEachIndexed { index, planned ->
+                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text("${index + 1}. ${planned.name} • ${planned.sets} × ${planned.reps} • przerwa ${planned.restSeconds}s")
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            TextButton(onClick = {
+                                onUpdateExercises(editorDate, selectedPlan.exercises.toMutableList().also {
+                                    it[index] = planned.copy(sets = (planned.sets - 1).coerceAtLeast(1))
+                                })
+                            }, enabled = !busy && planned.sets > 1) { Text("− seria") }
+                            TextButton(onClick = {
+                                onUpdateExercises(editorDate, selectedPlan.exercises.toMutableList().also {
+                                    it[index] = planned.copy(sets = (planned.sets + 1).coerceAtMost(12))
+                                })
+                            }, enabled = !busy && planned.sets < 12) { Text("+ seria") }
+                            TextButton(onClick = {
+                                onUpdateExercises(editorDate, selectedPlan.exercises.filterIndexed { i, _ -> i != index })
+                            }, enabled = !busy) { Text("Usuń") }
+                        }
+                    }
+                }
+                var addExercise by rememberSaveable { mutableStateOf("Hip thrust") }
+                OutlinedTextField(addExercise, { addExercise = it.take(120) },
+                    label = { Text("Dodaj ćwiczenie do sesji") }, modifier = Modifier.fillMaxWidth())
+                Button(onClick = {
+                    onUpdateExercises(editorDate, selectedPlan.exercises + PlannedExercise(addExercise.trim(), 3, 10))
+                }, enabled = !busy && addExercise.isNotBlank() && selectedPlan.exercises.size < 30) {
+                    Text("+ Dodaj do planu")
                 }
             }
             StrengthDayEditor(LocalDate.parse(editorDate), data, busy, onAddSet, onRemoveSet)
@@ -309,5 +349,30 @@ internal object StrengthPlanSuggestions {
             result[day] = split[index % split.size]
         }
         return result
+    }
+}
+
+internal object StrengthSessionGenerator {
+    fun exercises(title: String, level: String, place: String): List<PlannedExercise> {
+        val name = title.lowercase(Locale.ROOT)
+        val names = when {
+            "odpoczynek" in name -> emptyList()
+            "poślad" in name || "nogi" in name || "dół" in name -> listOf(
+                "Przysiad", "Hip thrust", "Martwy ciąg rumuński", "Wykroki", "Glute bridge")
+            "plecy" in name || "pull" in name -> listOf(
+                "Wiosłowanie hantlami", "Ściąganie drążka", "Uginanie na biceps", "Dead bug")
+            "push" in name || "klatka" in name -> listOf(
+                "Wyciskanie na ławce", "Wyciskanie hantli", "Unoszenie bokiem", "Prostowanie na triceps")
+            "góra" in name -> listOf(
+                "Wiosłowanie hantlami", "Wyciskanie na ławce", "Wyciskanie hantli", "Uginanie na biceps")
+            else -> listOf("Przysiad", "Wiosłowanie hantlami", "Pompki", "Hip thrust", "Plank")
+        }
+        val home = mapOf("Ściąganie drążka" to "Wiosłowanie hantlami",
+            "Wyciskanie na ławce" to "Pompki", "Prostowanie na triceps" to "Pompki")
+        return names.map { exercise ->
+            val selected = if (place == "home") home[exercise] ?: exercise else exercise
+            PlannedExercise(selected, if (level == "beginner") 2 else if (level == "advanced") 4 else 3,
+                if (level == "advanced") 8 else 10, if (level == "advanced") 120 else 90)
+        }.distinctBy { it.name }
     }
 }
