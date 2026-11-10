@@ -15,7 +15,7 @@ object VideoPlanPhotoParser {
         val results = mutableListOf<Candidate>()
         for (i in lines.indices) {
             val line = lines[i]
-            if (line.length !in 5..130 || heading.matches(line) ||
+            if (line.length !in 4..130 || heading.matches(line) ||
                 categoryWords.none { line.contains(it, ignoreCase = true) }) continue
             val inline = duration.find(line)?.groupValues?.get(1)?.toIntOrNull()
             val adjacent = (i + 1..minOf(i + 2, lines.lastIndex))
