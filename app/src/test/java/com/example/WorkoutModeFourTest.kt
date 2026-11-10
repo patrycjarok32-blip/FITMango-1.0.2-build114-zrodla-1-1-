@@ -43,6 +43,23 @@ class WorkoutModeFourTest {
         assertEquals(1, calendar[1].videosPlanned)
         assertEquals(0, calendar[0].videosPlanned)
     }
+    @Test fun ocrMatchesAdjacentDuration() {
+        val result = VideoPlanPhotoParser.parse("Trening nóg\\n35 min\\nJoga\\n15 min")
+        assertEquals(35, result[0].minutes)
+        assertEquals(15, result[1].minutes)
+    }
+    @Test fun lowRecoveryPreventsWeightIncrease() {
+        val data = SportsData(recovery = listOf(RecoveryCheck("2026-11-10", 1, 5)),
+            sets = listOf(SportSet("a", "2026-11-09", "Przysiad", 10, 40.0, 1000L)))
+        val advice = WorkoutInsights.coachAdvice(data, "Przysiad", 10,
+            java.time.LocalDate.parse("2026-11-10"))
+        assertTrue(advice.recommendation.contains("Regeneracja"))
+        assertTrue(advice.weightKg!! < 40.0)
+    }
+    @Test fun missingRecoveryDoesNotPretendToKnow() {
+        val advice = WorkoutInsights.coachAdvice(SportsData(), "Przysiad", 10)
+        assertFalse(advice.dataAvailable)
+    }
     @Test fun invalidTutorialLinkRejected() {
         try {
             ExerciseVideoLinks.validate("""{"Squat":"https://example.com/video"}""")
