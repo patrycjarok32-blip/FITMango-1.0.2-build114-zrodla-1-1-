@@ -17,8 +17,8 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
     workouts: List<WorkoutSession>, challenges: List<VideoChallenge>,
     onStart: () -> Unit, onPlan: () -> Unit, onChallenges: () -> Unit, onRecovery: () -> Unit) {
     val plan = data.plans.firstOrNull { it.date == today.toString() }
-    val active = workouts.firstOrNull { it.finishedAt == 0L }
-    val completed = workouts.count { it.finishedAt > 0L }
+    val active = workouts.firstOrNull { it.ended == 0L }
+    val completed = workouts.count { it.ended > 0L }
     val pendingVideos = challenges.sumOf { challenge ->
         val start = runCatching { LocalDate.parse(challenge.startedOn) }.getOrNull()
         if (start == null) 0 else challenge.workouts.count {
