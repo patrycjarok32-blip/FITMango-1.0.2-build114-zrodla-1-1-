@@ -129,6 +129,11 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
                 }
             }
         }, onSaved)
+    fun discardWorkout(id: String, onSaved: () -> Unit = {}) =
+        editWorkout({ sessions ->
+            require(sessions.any { it.id == id && it.ended == 0L }) { "Brak aktywnego treningu." }
+            sessions.filterNot { it.id == id && it.ended == 0L }
+        }, onSaved)
     fun finishWorkout(id: String, effort: Int, onSaved: () -> Unit = {}) {
         if (_busy.value) return
         _busy.value = true
