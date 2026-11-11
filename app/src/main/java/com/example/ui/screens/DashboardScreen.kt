@@ -194,7 +194,7 @@ fun DashboardScreen(
                 .imePadding()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(MaterialTheme.colorScheme.background, mangoBackground.copy(alpha = if (reducedMangoMotion) .14f else backgroundPulse).compositeOver(MaterialTheme.colorScheme.background), MaterialTheme.colorScheme.background)
+                        colors = listOf(MaterialTheme.colorScheme.background, mangoBackground.copy(alpha = if (reducedMangoMotion) .07f else backgroundPulse * .55f).compositeOver(MaterialTheme.colorScheme.background), MaterialTheme.colorScheme.background)
                     )
                 )
                 .verticalScroll(rememberScrollState())
@@ -237,6 +237,33 @@ fun DashboardScreen(
                     }
                 }
 
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("fresh_mango_3_companion"),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            ) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MangoGuide(
+                        message = when {
+                            consumedCalories >= targetCalories && !incompleteNutrition ->
+                                "Brawo! Sprawdź bilans i zaplanuj następny posiłek."
+                            sportsData.plans.any { it.date == currentDate && !it.rest } ->
+                                "Trening na dziś jest w planie. Powodzenia!"
+                            else -> "Małe kroki każdego dnia też się liczą."
+                        },
+                        event = if (consumedCalories >= targetCalories && !incompleteNutrition) 1 else 0,
+                        size = 34.dp
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = onNavigateToMealPlan, modifier = Modifier.weight(1f)) {
+                            Text("🥗 Posiłki")
+                        }
+                        OutlinedButton(onClick = onNavigateToSport, modifier = Modifier.weight(1f)) {
+                            Text("🏋️ Trening")
+                        }
+                    }
+                }
             }
             var showDailyGreeting by rememberSaveable { mutableStateOf(false) }
             TextButton(onClick = { showDailyGreeting = !showDailyGreeting },
