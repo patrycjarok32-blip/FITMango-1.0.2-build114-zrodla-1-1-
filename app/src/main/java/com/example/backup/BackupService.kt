@@ -57,9 +57,16 @@ class BackupService(private val context: Context, private val database: AppDatab
         } finally { temp.delete() }
     }
     suspend fun exportAutomatic(uri: Uri) = withContext(Dispatchers.IO) {
-        require(automaticFile.isFile) { "Brak kopii automatycznej." }
-        context.contentResolver.openOutputStream(uri, "wt")?.use { output -> automaticFile.inputStream().use { it.copyTo(output) } }
-            ?: error("Nie można zapisać pliku.")
+        require(automaticFile.isFile && automaticFile.length() > 0L) { "Brak prawidłowej kopii automatycznej." }
+        val expected = automaticFile.length()
+        context.contentResolver.openOutputStream(uri, "wt")?.use { output ->
+            automaticFile.inputStream().buffered().use { input ->
+                val copied = input.copyTo(output, 64 * 1024)
+                require(copied == expected) { "Niepełny eksport kopii lokalnej." }
+            }
+            output.flush()
+        } ?: error("Nie można zapisać pliku.")
+        verifyExportedFile(uri, expected, encrypted = false)
     }
 
     suspend fun export(uri: Uri, password: String): String = withContext(Dispatchers.IO) {
@@ -90,20 +97,7 @@ class BackupService(private val context: Context, private val database: AppDatab
                     encryptedFile.inputStream().buffered().use { input -> input.copyTo(output, 64 * 1024) }
                     output.flush()
                 } ?: error("Nie można zapisać pliku w wybranym miejscu.")
-                // Some document providers cannot report statSize; verify it when supported.
-                val savedSize = context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize }
-                if (savedSize != null && savedSize >= 0) {
-                    require(savedSize == expectedSize) {
-                        "Niepełna kopia: zapisano $savedSize z $expectedSize bajtów."
-                    }
-                }
-                // Verify the encrypted header is readable, without allocating the archive in RAM.
-                context.contentResolver.openInputStream(uri)?.use { input ->
-                    val header = ByteArray(4)
-                    require(input.read(header) == 4 && header.contentEquals(MAGIC)) {
-                        "Nie udało się odczytać zapisanej kopii."
-                    }
-                } ?: error("Nie można odczytać zapisanej kopii.")
+                verifyExportedFile(uri, expectedSize, encrypted = true)
             } catch (e: Exception) {
                 // Keep the failed file for diagnosis: deleting it can hide the actual error.
                 throw IllegalStateException("Nie udało się zapisać pełnej kopii: ${e.message}", e)
@@ -113,6 +107,42 @@ class BackupService(private val context: Context, private val database: AppDatab
             if (missing == 0) "Kopia zapisana i sprawdzona (${context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize } ?: -1} bajtów). Przechowuj ją w bezpiecznym miejscu."
             else "Kopia zapisana i sprawdzona (${context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize } ?: -1} bajtów). Niedostępne pliki: $missing. Ich tekst i pozostałe dane zachowano."
         } finally { temp.delete() }
+    }
+
+    /** Verify the actual exported bytes even when the document provider reports an unknown size. */
+    private fun verifyExportedFile(uri: Uri, expected: Long, encrypted: Boolean) {
+        require(expected > 0L) { "Nie można potwierdzić pustej kopii." }
+        val reported = context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize }
+        if (reported != null && reported >= 0L) {
+            require(reported == expected) {
+                "Niepełna kopia: zapisano $reported z $expected bajtów."
+            }
+        }
+        val input = context.contentResolver.openInputStream(uri)
+            ?: error("Nie można ponownie odczytać zapisanej kopii.")
+        input.buffered().use { stream ->
+            val header = ByteArray(4)
+            var offset = 0
+            while (offset < header.size) {
+                val read = stream.read(header, offset, header.size - offset)
+                require(read > 0) { "Zapisany plik jest pusty lub niepełny." }
+                offset += read
+            }
+            require(header.contentEquals(if (encrypted) MAGIC else byteArrayOf(80, 75, 3, 4))) {
+                "Zapisany plik nie ma prawidłowego nagłówka kopii."
+            }
+            var count = header.size.toLong()
+            val buffer = ByteArray(64 * 1024)
+            while (true) {
+                val n = stream.read(buffer)
+                if (n < 0) break
+                count += n
+                require(count <= expected) { "Zapisany plik ma nieoczekiwany rozmiar." }
+            }
+            require(count == expected) {
+                "Niepełna kopia: odczytano $count z $expected bajtów."
+            }
+        }
     }
 
     // Also used before a restore, so the previous data can be recovered locally.
