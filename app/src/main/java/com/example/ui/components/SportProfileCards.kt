@@ -13,6 +13,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -54,6 +55,8 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
     var showGenerator by rememberSaveable { mutableStateOf(false) }
     var pendingDeleteDay by rememberSaveable { mutableStateOf<String?>(null) }
     var weekOffset by rememberSaveable { mutableIntStateOf(0) }
+    var calendarMode by rememberSaveable { mutableStateOf("week") }
+    var expandedCalendar by rememberSaveable { mutableStateOf(false) }
     var copyCount by rememberSaveable { mutableIntStateOf(1) }
     var showCopyConfirm by rememberSaveable { mutableStateOf(false) }
     var showShiftConfirm by rememberSaveable { mutableStateOf(false) }
@@ -210,10 +213,73 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                 },
                 dismissButton = { TextButton(onClick = { showShiftConfirm = false }) { Text("Anuluj") } }
             )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = calendarMode == "week", onClick = { calendarMode = "week" },
+                    label = { Text("Tydzień") })
+                FilterChip(selected = calendarMode == "month", onClick = { calendarMode = "month" },
+                    label = { Text("Miesiąc") })
+                TextButton(onClick = { expandedCalendar = !expandedCalendar }) {
+                    Text(if (expandedCalendar) "Zwiń" else "Lista dni")
+                }
+            }
+            if (calendarMode == "month") {
+                val first = weekStart.withDayOfMonth(1)
+                val gridStart = SportsSupport.week(first)
+                val count = ((java.time.temporal.ChronoUnit.DAYS.between(gridStart,
+                    first.plusMonths(1).minusDays(1)) + 7) / 7).toInt()
+                (0 until count).forEach { rowIndex ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        (0..6).forEach { column ->
+                            val day = gridStart.plusDays((rowIndex * 7 + column).toLong())
+                            val scheduled = data.plans.firstOrNull { it.date == day.toString() }
+                            Surface(modifier = Modifier.weight(1f).clickable {
+                                weekOffset = java.time.temporal.ChronoUnit.WEEKS.between(
+                                    SportsSupport.week(today), SportsSupport.week(day)).toInt()
+                                expandedCalendar = true
+                            }, shape = RoundedCornerShape(8.dp),
+                                color = if (scheduled != null) LeafGreen.copy(alpha = 0.15f)
+                                    else MaterialTheme.colorScheme.surfaceVariant) {
+                                Column(Modifier.padding(vertical = 7.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(day.dayOfMonth.toString(), style = MaterialTheme.typography.labelSmall,
+                                        color = if (day.month == first.month) MaterialTheme.colorScheme.onSurface
+                                            else MaterialTheme.colorScheme.outline)
+                                    Text(when {
+                                        scheduled?.rest == true -> "🌿"
+                                        scheduled != null -> "●"
+                                        else -> " "
+                                    }, style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                        }
+                    }
+                }
+                Text("Dotknij dnia, aby przejść do jego tygodnia.", style = MaterialTheme.typography.bodySmall)
+            } else {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    plans.forEach { (date, plan) ->
+                        Surface(modifier = Modifier.weight(1f).clickable {
+                            expandedCalendar = true
+                            planDay = date.toString()
+                        }, shape = RoundedCornerShape(10.dp),
+                            color = if (plan != null) LeafGreen.copy(alpha = 0.16f)
+                                else MaterialTheme.colorScheme.surfaceVariant) {
+                            Column(Modifier.padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(date.format(DateTimeFormatter.ofPattern("EE", Locale("pl"))),
+                                    style = MaterialTheme.typography.labelSmall)
+                                Text(date.dayOfMonth.toString(), style = MaterialTheme.typography.bodyMedium)
+                                Text(if (plan?.rest == true) "🌿" else if (plan != null) "●" else " ",
+                                    style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
+                }
+                Text("Dotknij dnia, aby rozwinąć listę i przenieść trening.",
+                    style = MaterialTheme.typography.bodySmall)
+            }
             Text("Plan tygodnia • zapis lokalny", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("Przytrzymaj kafelek treningu i przeciągnij na inny dzień. Zmiana wymaga potwierdzenia.",
                 style = MaterialTheme.typography.bodySmall)
-            plans.forEach { (date, plan) ->
+            if (expandedCalendar) plans.forEach { (date, plan) ->
                 Surface(
                     modifier = Modifier.fillMaxWidth().testTag("sport_plan_day_${date}")
                         .onGloballyPositioned { dayBounds[date.toString()] = it.boundsInRoot() }
