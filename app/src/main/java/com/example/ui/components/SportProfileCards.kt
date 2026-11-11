@@ -212,6 +212,8 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                 },
                 dismissButton = { TextButton(onClick = { showShiftConfirm = false }) { Text("Anuluj") } }
             )
+            Text("🗓️ Twój rytm treningów", style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(selected = calendarMode == "week", onClick = { calendarMode = "week" },
                     label = { Text("Tydzień") })
@@ -236,7 +238,8 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                                     SportsSupport.week(today), SportsSupport.week(day)).toInt()
                                 expandedCalendar = true
                             }, shape = RoundedCornerShape(8.dp),
-                                color = if (scheduled != null) LeafGreen.copy(alpha = 0.15f)
+                                color = if (day == today) MaterialTheme.colorScheme.primaryContainer
+                                    else if (scheduled != null) LeafGreen.copy(alpha = 0.15f)
                                     else MaterialTheme.colorScheme.surfaceVariant) {
                                 Column(Modifier.padding(vertical = 7.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(day.dayOfMonth.toString(), style = MaterialTheme.typography.labelSmall,
@@ -260,7 +263,8 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                             expandedCalendar = true
                             planDay = date.toString()
                         }, shape = RoundedCornerShape(10.dp),
-                            color = if (plan != null) LeafGreen.copy(alpha = 0.16f)
+                            color = if (date == today) MaterialTheme.colorScheme.primaryContainer
+                                else if (plan != null) LeafGreen.copy(alpha = 0.16f)
                                 else MaterialTheme.colorScheme.surfaceVariant) {
                             Column(Modifier.padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(date.format(DateTimeFormatter.ofPattern("EE", Locale("pl"))),
