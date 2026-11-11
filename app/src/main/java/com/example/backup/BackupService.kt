@@ -120,7 +120,9 @@ class BackupService(private val context: Context, private val database: AppDatab
         val data = database.backupDao().snapshot()
         val uris = (data.recipes.map { it.imageUrl } + data.documents.map { it.uriString } +
             data.photos.flatMap { listOf(it.frontUri, it.sideUri, it.backUri) })
-            .filter { it.startsWith("content://") || it.startsWith("file://") && !it.startsWith("file:///android_asset/") || it.startsWith(context.filesDir.absolutePath + "/") }
+            .filter { it.startsWith("content://") || it.startsWith("file://") && !it.startsWith("file:///android_asset/") ||
+                it.startsWith(context.filesDir.absolutePath + "/") ||
+                it.startsWith("https://cdn.pixabay.com/") || it.startsWith("https://pixabay.com/") }
             .distinct()
         require(uris.size < 20_000) { "Za dużo zdjęć i dokumentów do jednej kopii." }
         val assets = linkedMapOf<String, BackupAsset>()
@@ -131,10 +133,21 @@ class BackupService(private val context: Context, private val database: AppDatab
                 val staged = File.createTempFile("backup-asset-", ".bin", context.cacheDir)
                 try {
                     try {
-                        val input = if (source.startsWith(context.filesDir.absolutePath + "/")) File(source).inputStream()
-                            else if (source.startsWith("file://")) File(Uri.parse(source).path ?: "").inputStream()
-                            else context.contentResolver.openInputStream(Uri.parse(source)) ?: error("Niedostępny plik")
-                        input.use { stream -> staged.outputStream().use { copyLimited(stream, it, MAX_ASSET) } }
+                        if (source.startsWith("https://cdn.pixabay.com/") || source.startsWith("https://pixabay.com/")) {
+                            // Trusted Pixabay image only; bounded download, no credentials in URL.
+                            val bytes = com.example.viewmodel.RecipePhotoService().download(
+                                com.example.viewmodel.AutomaticPhoto(source, "", false))
+                            val options = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                            android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+                            require(options.outWidth in 1..4096 && options.outHeight in 1..4096 &&
+                                options.outMimeType in listOf("image/jpeg", "image/png", "image/webp"))
+                            staged.writeBytes(bytes)
+                        } else {
+                            val input = if (source.startsWith(context.filesDir.absolutePath + "/")) File(source).inputStream()
+                                else if (source.startsWith("file://")) File(Uri.parse(source).path ?: "").inputStream()
+                                else context.contentResolver.openInputStream(Uri.parse(source)) ?: error("Niedostępny plik")
+                            input.use { stream -> staged.outputStream().use { copyLimited(stream, it, MAX_ASSET) } }
+                        }
                     } catch (e: CancellationException) { throw e }
                     catch (_: Exception) { missing.add(source); continue }
                     total += staged.length()
