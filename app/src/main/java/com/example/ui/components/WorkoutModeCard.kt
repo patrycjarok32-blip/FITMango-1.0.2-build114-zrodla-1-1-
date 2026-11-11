@@ -10,8 +10,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
-import android.content.Intent
 import android.net.Uri
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.compose.ui.viewinterop.AndroidView
 import com.example.viewmodel.*
 import kotlinx.coroutines.delay
 
@@ -35,7 +37,7 @@ fun WorkoutModeCard(
     var restRunning by rememberSaveable { mutableStateOf(false) }
     var showFinishConfirmation by rememberSaveable { mutableStateOf(false) }
     var showExitChoice by rememberSaveable { mutableStateOf(false) }
-    val context = LocalContext.current
+    var showVideo by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(restRunning, rest) {
         if (restRunning && rest > 0) { delay(1000); rest-- }
         else if (rest == 0) restRunning = false
@@ -82,14 +84,27 @@ fun WorkoutModeCard(
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(selected.orEmpty(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     // Full-width photograph instead of the former narrow gallery column.
-                    OutlinedButton(onClick = {
-                        val query = Uri.encode(selected.orEmpty() + " prawidłowa technika ćwiczenia")
-                        val intent = Intent(Intent.ACTION_VIEW,
-                            Uri.parse("https://www.youtube.com/results?search_query=$query"))
-                        runCatching { context.startActivity(intent) }
-                    }, modifier = Modifier.fillMaxWidth()) {
-                        Text("▶ Obejrzyj film instruktażowy")
+                    OutlinedButton(onClick = { showVideo = true }, modifier = Modifier.fillMaxWidth()) {
+                        Text("▶ Obejrzyj film w FITMango")
                     }
+                    if (showVideo) AlertDialog(
+                        onDismissRequest = { showVideo = false },
+                        title = { Text("Technika: " + selected.orEmpty()) },
+                        text = {
+                            val query = Uri.encode(selected.orEmpty() + " ćwiczenie technika")
+                            AndroidView(
+                                factory = { context ->
+                                    WebView(context).apply {
+                                        settings.javaScriptEnabled = true
+                                        webViewClient = WebViewClient()
+                                        loadUrl("https://www.youtube.com/results?search_query=$query")
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth().height(360.dp)
+                            )
+                        },
+                        confirmButton = { TextButton(onClick = { showVideo = false }) { Text("Wróć do serii") } }
+                    )
                     Text("Ćwiczenie ${index + 1} z ${exercises.size}", style = MaterialTheme.typography.labelLarge)
                     TextButton(onClick = { showTechnique = true }) { Text("ⓘ Technika i wskazówki") }
                 }
