@@ -53,6 +53,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     var activitySection by rememberSaveable { mutableStateOf("training") }
     var trainingPage by rememberSaveable { mutableStateOf("session") }
     var showTrainingProfile by rememberSaveable { mutableStateOf(true) }
+    var selectedImportedProgram by rememberSaveable { mutableStateOf("home") }
+    var confirmImportedProgram by rememberSaveable { mutableStateOf(false) }
     var showReport by rememberSaveable { mutableStateOf(false) }
     var showExtras by rememberSaveable { mutableStateOf(false) }
     var showSportNutrition by rememberSaveable { mutableStateOf(false) }
@@ -153,6 +155,50 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         if (activitySection == "recovery") item {
             FreshMangoSportSection("🌿", "Czas na regenerację",
                 "Sen i samopoczucie • informacje z dostępnych pomiarów")
+        }
+        if (activitySection == "training" && trainingPage == "plan") item {
+            val program = ImportedTrainingPrograms.all.first { it.id == selectedImportedProgram }
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("📚 Moje plany z dokumentów", style = MaterialTheme.typography.titleLarge)
+                    Text("Wybierz osobny plan domowy lub siłowniany. Podgląd nie zmienia Twojego kalendarza.")
+                    ImportedTrainingPrograms.all.forEach { option ->
+                        OutlinedButton(
+                            onClick = { selectedImportedProgram = option.id },
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text((if (selectedImportedProgram == option.id) "✓ " else "") + option.name) }
+                    }
+                    Text(program.source + " • " + program.days.size + " treningi")
+                    program.days.forEach { day ->
+                        Text(day.title + " — " + day.exercises.size + " ćwiczeń", style = MaterialTheme.typography.titleMedium)
+                        day.exercises.forEach { exercise ->
+                            Text("• " + exercise.name + " · " + exercise.sets + " × " + exercise.reps)
+                        }
+                    }
+                    Text("Zakresy powtórzeń z PDF zapisano jako dolną wartość (np. 8–10 → 8). Plank: 60 oznacza sekundy. Sprawdź plan przed zastosowaniem.")
+                    Button(onClick = { confirmImportedProgram = true }, enabled = !busy,
+                        modifier = Modifier.fillMaxWidth()) { Text("Zastosuj ten plan w kalendarzu") }
+                }
+            }
+            if (confirmImportedProgram) AlertDialog(
+                onDismissRequest = { confirmImportedProgram = false },
+                title = { Text("Zastosować: " + program.name + "?") },
+                text = { Text("Plan zostanie przypisany do kolejnych " + program.days.size +
+                    " dni treningowych (co drugi dzień), począwszy od dzisiaj. Istniejące plany na tych datach zostaną zastąpione. Zapisane treningi i wyniki pozostaną bez zmian.") },
+                confirmButton = {
+                    Button(onClick = {
+                        val days = program.days.mapIndexed { index, template ->
+                            SportPlan(today.plusDays(index.toLong() * 2).toString(),
+                                template.title, false, template.exercises)
+                        }
+                        sports.saveTrainingWeek(days) { saved() }
+                        confirmImportedProgram = false
+                    }, enabled = !busy) { Text("Tak, zastosuj") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { confirmImportedProgram = false }) { Text("Anuluj") }
+                }
+            )
         }
         if (activitySection == "training" && trainingPage == "plan") item {
             OutlinedButton(onClick = { showTrainingProfile = !showTrainingProfile },
