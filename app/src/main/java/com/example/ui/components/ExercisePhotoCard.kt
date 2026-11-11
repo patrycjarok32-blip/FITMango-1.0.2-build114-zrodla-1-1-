@@ -32,7 +32,7 @@ internal object ExercisePhotoStore {
     }
 
     fun load(context: Context, exercise: String, stage: Int = 0) =
-        runCatching { file(context, exercise, stage).takeIf { it.exists() }?.let(BitmapFactory::decodeFileFromPath) }
+        runCatching { file(context, exercise, stage).takeIf { it.exists() }?.let({ path -> BitmapFactory.decodeFile(path) }) }
             .getOrNull()
 
     fun save(context: Context, exercise: String, uri: Uri, stage: Int = 0): Boolean = runCatching {
