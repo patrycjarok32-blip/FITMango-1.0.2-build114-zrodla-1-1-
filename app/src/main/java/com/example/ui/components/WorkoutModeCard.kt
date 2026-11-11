@@ -9,6 +9,9 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import android.net.Uri
 import com.example.viewmodel.*
 import kotlinx.coroutines.delay
 
@@ -18,6 +21,7 @@ fun WorkoutModeCard(
     onStart: (SportPlan) -> Unit,
     onEntry: (String, Int, Int, Double, Boolean) -> Unit,
     onFinish: (String, Int) -> Unit,
+    onDiscard: (String) -> Unit,
     onReplaceExercise: (String, String, String) -> Unit
 ) {
     val active = workouts.firstOrNull { it.ended == 0L }
@@ -30,6 +34,8 @@ fun WorkoutModeCard(
     var rest by rememberSaveable { mutableIntStateOf(0) }
     var restRunning by rememberSaveable { mutableStateOf(false) }
     var showFinishConfirmation by rememberSaveable { mutableStateOf(false) }
+    var showExitChoice by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
     LaunchedEffect(restRunning, rest) {
         if (restRunning && rest > 0) { delay(1000); rest-- }
         else if (rest == 0) restRunning = false
@@ -76,7 +82,14 @@ fun WorkoutModeCard(
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(selected.orEmpty(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     // Full-width photograph instead of the former narrow gallery column.
-                    ExercisePhotoCard(selected.orEmpty(), modifier = Modifier.fillMaxWidth())
+                    OutlinedButton(onClick = {
+                        val query = Uri.encode(selected.orEmpty() + " prawidłowa technika ćwiczenia")
+                        val intent = Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://www.youtube.com/results?search_query=$query"))
+                        runCatching { context.startActivity(intent) }
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Text("▶ Obejrzyj film instruktażowy")
+                    }
                     Text("Ćwiczenie ${index + 1} z ${exercises.size}", style = MaterialTheme.typography.labelLarge)
                     TextButton(onClick = { showTechnique = true }) { Text("ⓘ Technika i wskazówki") }
                 }
@@ -196,8 +209,20 @@ fun WorkoutModeCard(
             Text("Odczuwalny wysiłek: ${effort}/10")
             Slider(value = effort.toFloat(), onValueChange = { effort = it.toInt().coerceIn(1, 10) },
                 valueRange = 1f..10f, steps = 8)
-            Button(onClick = { showFinishConfirmation = true }, enabled = !busy && done > 0,
-                modifier = Modifier.fillMaxWidth()) { Text("🏁 Zakończ i zapisz podsumowanie") }
+            Button(onClick = { showExitChoice = true }, enabled = !busy,
+                modifier = Modifier.fillMaxWidth()) { Text("🏁 Zakończ trening") }
+            if (showExitChoice) AlertDialog(
+                onDismissRequest = { showExitChoice = false },
+                title = { Text("Co zrobić z treningiem?") },
+                text = { Text("Zapisz wykonane serie w dzienniku lub odrzuć sesję próbną bez zapisywania. Twój plan pozostanie bez zmian.") },
+                confirmButton = { Button(onClick = { showExitChoice = false; showFinishConfirmation = true }, enabled = done > 0) { Text("Zapisz trening") } },
+                dismissButton = {
+                    Column {
+                        TextButton(onClick = { showExitChoice = false; onDiscard(active.id) }) { Text("Nie zapisuj — odrzuć trening") }
+                        TextButton(onClick = { showExitChoice = false }) { Text("Kontynuuj trening") }
+                    }
+                }
+            )
             if (showFinishConfirmation) AlertDialog(
                 onDismissRequest = { showFinishConfirmation = false },
                 title = { Text("Zakończyć trening?") },
