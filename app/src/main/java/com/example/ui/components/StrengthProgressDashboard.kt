@@ -194,9 +194,10 @@ fun StrengthWeeklyReview(data: SportsData, today: LocalDate) {
     Card(Modifier.fillMaxWidth().animateContentSize(), shape = RoundedCornerShape(20.dp)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("📅 Podsumowanie tygodnia", style = MaterialTheme.typography.titleLarge)
-            Text("Treningi z zapisanymi seriami: " + days + " / " + planned + " zaplanowanych")
-            Text("Wykonane serie: " + sets.size)
-            Text("Łączna objętość: " + "%.1f".format(volume) + " kg")
+            Text("🏋️ " + days + " dni treningowych  •  " + sets.size + " serii",
+                style = MaterialTheme.typography.titleMedium)
+            Text("Plan: " + planned + " dni  •  objętość: " + "%.1f".format(volume) + " kg",
+                style = MaterialTheme.typography.bodySmall)
             LinearProgressIndicator(progress = {
                 if (planned == 0) 0f else (days.toFloat() / planned).coerceIn(0f, 1f)
             }, modifier = Modifier.fillMaxWidth())
@@ -206,7 +207,7 @@ fun StrengthWeeklyReview(data: SportsData, today: LocalDate) {
                 days >= 1 -> "✨ Pierwszy trening tygodnia zapisany!"
                 else -> "Zapisz trening, aby zdobyć pierwsze osiągnięcie."
             }
-            Text(achievement)
+            if (days > 0) Text(achievement, style = MaterialTheme.typography.bodySmall)
             TextButton(onClick = { expanded = !expanded }) {
                 Text(if (expanded) "Ukryj szczegóły" else "Pokaż szczegóły")
             }
