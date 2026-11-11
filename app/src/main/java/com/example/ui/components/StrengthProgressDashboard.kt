@@ -34,6 +34,7 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
     var rangeDays by remember { mutableIntStateOf(90) }
     var selectedPoint by remember { mutableIntStateOf(-1) }
     var showExerciseHistory by remember { mutableStateOf(false) }
+    var historyLimit by remember { mutableIntStateOf(10) }
     val chosen = selected.takeIf { it in exercises } ?: exercises.firstOrNull()
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -90,7 +91,8 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
                         Text("📍 " + point.first + " • " + "%.1f".format(point.second) +
                             " kg • objętość " + "%.1f".format(point.third) + " kg")
                     }
-                    Canvas(Modifier.fillMaxWidth().height(145.dp)
+                    Text("Dotknij punktu lub wybierz datę poniżej.", style = MaterialTheme.typography.bodySmall)
+                    Canvas(Modifier.fillMaxWidth().height(170.dp)
                         .semantics { contentDescription = "Wykres ciężaru. Wybierz datę z przycisków poniżej." }
                         .pointerInput(visibleHistory) {
                             detectTapGestures { offset ->
@@ -99,10 +101,18 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
                             }
                         }) {
                         val top = (points.maxOrNull() ?: 0.0).coerceAtLeast(1.0)
+                        val bottom = (points.minOrNull() ?: 0.0).coerceAtLeast(0.0)
+                        val spread = (top - bottom).coerceAtLeast(1.0)
+                        val padding = 14.dp.toPx()
+                        for (fraction in listOf(0f, 0.5f, 1f)) {
+                            val y = padding + fraction * (size.height - 2 * padding)
+                            drawLine(tint.copy(alpha = .15f), Offset(0f, y),
+                                Offset(size.width, y), strokeWidth = 1.dp.toPx())
+                        }
                         val coords = points.mapIndexed { index, value ->
                             Offset(
                                 if (points.size == 1) size.width / 2 else index * size.width / (points.size - 1),
-                                (size.height - (value / top).toFloat() * (size.height - 12.dp.toPx()) - 6.dp.toPx())
+                                (size.height - padding - ((value - bottom) / spread).toFloat() * (size.height - 2 * padding))
                             )
                         }
                         if (coords.size > 1) {
@@ -129,7 +139,7 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
                         style = MaterialTheme.typography.bodySmall)
                 }
                 HorizontalDivider()
-                TextButton(onClick = { showExerciseHistory = !showExerciseHistory },
+                TextButton(onClick = { showExerciseHistory = !showExerciseHistory; historyLimit = 10 },
                     modifier = Modifier.fillMaxWidth()) {
                     Text(if (showExerciseHistory) "▲ Ukryj historię ćwiczenia" else "▼ Pełna historia ćwiczenia")
                 }
@@ -141,7 +151,8 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
                         Text("Zapisane serie, również spoza zakresu wykresu.",
                             style = MaterialTheme.typography.bodySmall)
                         if (allSets.isEmpty()) Text("Nie ma jeszcze zapisanych serii.")
-                        allSets.groupBy { it.date }.entries.take(20).forEach { (date, sets) ->
+                        val sessions = allSets.groupBy { it.date }.entries.toList()
+                        sessions.take(historyLimit).forEach { (date, sets) ->
                             Card(colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                                 Column(Modifier.fillMaxWidth().padding(12.dp),
@@ -155,9 +166,12 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
                                 }
                             }
                         }
-                        if (allSets.map { it.date }.distinct().size > 20)
-                            Text("Pokazano 20 ostatnich dni treningowych.",
-                                style = MaterialTheme.typography.bodySmall)
+                        if (sessions.size > historyLimit)
+                            OutlinedButton(onClick = { historyLimit += 10 },
+                                modifier = Modifier.fillMaxWidth()) {
+                                Text("Pokaż kolejne 10 dni (" + historyLimit.coerceAtMost(sessions.size) +
+                                    " z " + sessions.size + ")")
+                            }
                     }
                 }
             }
