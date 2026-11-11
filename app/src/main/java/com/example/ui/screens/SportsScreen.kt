@@ -1,5 +1,8 @@
 package com.example.ui.screens
 
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
@@ -55,6 +58,30 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     var showTrainingProfile by rememberSaveable { mutableStateOf(true) }
     var selectedImportedProgram by rememberSaveable { mutableStateOf("home") }
     var confirmImportedProgram by rememberSaveable { mutableStateOf(false) }
+    val importContext = LocalContext.current
+    val importScope = rememberCoroutineScope()
+    var importedDays by remember { mutableStateOf<List<ImportedWorkoutTemplate>>(emptyList()) }
+    var importError by remember { mutableStateOf<String?>(null) }
+    var importBusy by remember { mutableStateOf(false) }
+    var confirmCustomImport by remember { mutableStateOf(false) }
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            importBusy = true
+            importError = null
+            importScope.launch {
+                try {
+                    val text = UniversalWorkoutImporter.read(importContext, uri,
+                        importContext.contentResolver.getType(uri))
+                    importedDays = UniversalWorkoutImporter.parse(text)
+                    if (importedDays.isEmpty()) importError =
+                        "Nie rozpoznano ćwiczeń w formacie nazwa + serie × powtórzenia. Nie zapisano żadnych zmian."
+                } catch (e: Exception) {
+                    importedDays = emptyList()
+                    importError = e.message ?: "Nie udało się odczytać pliku."
+                } finally { importBusy = false }
+            }
+        }
+    }
     var showReport by rememberSaveable { mutableStateOf(false) }
     var showExtras by rememberSaveable { mutableStateOf(false) }
     var showSportNutrition by rememberSaveable { mutableStateOf(false) }
@@ -161,6 +188,31 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("📚 Biblioteka planów treningowych", style = MaterialTheme.typography.titleLarge)
+                    OutlinedButton(
+                        onClick = { importLauncher.launch(arrayOf("application/pdf",
+                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            "image/*")) },
+                        enabled = !busy && !importBusy,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text(if (importBusy) "Rozpoznawanie planu…" else "📄 Importuj plan z PDF, DOCX lub zdjęcia") }
+                    importError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    if (importedDays.isNotEmpty()) {
+                        Text("Podgląd rozpoznanego planu — nic nie zostało zapisane",
+                            style = MaterialTheme.typography.titleMedium)
+                        importedDays.forEach { day ->
+                            Text(day.title + " • " + day.exercises.size + " ćwiczeń")
+                            day.exercises.forEach { exercise ->
+                                Text("• " + exercise.name + " — " + exercise.sets + " × " + exercise.reps)
+                            }
+                        }
+                        Text("Sprawdź nazwy, serie i powtórzenia. Nierozpoznane pozycje nie są dodawane.")
+                        Button(onClick = { confirmCustomImport = true }, enabled = !busy) {
+                            Text("Zatwierdź i zastosuj rozpoznany plan")
+                        }
+                        TextButton(onClick = { importedDays = emptyList(); importError = null }) {
+                            Text("Odrzuć import")
+                        }
+                    }
                     Text("Dwa gotowe plany z przesłanych dokumentów. Wybór i podgląd nie zmieniają zapisanych treningów.")
                     ImportedTrainingPrograms.all.forEach { option ->
                         OutlinedButton(
@@ -181,6 +233,23 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         modifier = Modifier.fillMaxWidth()) { Text("Zastosuj ten plan w kalendarzu") }
                 }
             }
+            if (confirmCustomImport) AlertDialog(
+                onDismissRequest = { confirmCustomImport = false },
+                title = { Text("Zastosować zaimportowany plan?") },
+                text = { Text("Rozpoznane dni zastąpią plany w kalendarzu co drugi dzień od dzisiaj. Historia treningów i zapisane serie pozostaną bez zmian.") },
+                confirmButton = {
+                    Button(onClick = {
+                        val plans = importedDays.mapIndexed { index, day ->
+                            SportPlan(today.plusDays(index.toLong() * 2).toString(),
+                                day.title, false, day.exercises)
+                        }
+                        sports.saveTrainingWeek(plans) { saved() }
+                        confirmCustomImport = false
+                        importedDays = emptyList()
+                    }, enabled = !busy && importedDays.isNotEmpty()) { Text("Zapisz plan") }
+                },
+                dismissButton = { TextButton(onClick = { confirmCustomImport = false }) { Text("Anuluj") } }
+            )
             if (confirmImportedProgram) AlertDialog(
                 onDismissRequest = { confirmImportedProgram = false },
                 title = { Text("Zastosować: " + program.name + "?") },
