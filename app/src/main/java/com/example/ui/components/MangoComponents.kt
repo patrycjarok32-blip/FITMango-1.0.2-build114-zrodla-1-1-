@@ -234,8 +234,8 @@ fun MangoMealCard(
                     imageUrl = imageUrl,
                     title = recipeTitle,
                     modifier = Modifier
-                        .size(60.dp)
-                        .clip(RoundedCornerShape(14.dp))
+                        .size(72.dp)
+                        .clip(RoundedCornerShape(18.dp))
                 )
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
@@ -243,7 +243,7 @@ fun MangoMealCard(
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        color = Cream
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "$calories kcal • B: ${protein}g • T: ${fat}g • W: ${carbs}g",
@@ -313,18 +313,18 @@ fun MangoRecipeCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth().pressScaleEffect().clickable(onClick = onClick),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .6f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column {
             Box(Modifier.fillMaxWidth()) {
                 RecipePhoto(
                     imageUrl = imageUrl,
                     title = title,
-                    modifier = Modifier.fillMaxWidth().height(156.dp)
-                        .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
+                    modifier = Modifier.fillMaxWidth().height(176.dp)
+                        .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)),
                     onChoosePhoto = onPhotoClick
                 )
                 onFavoriteClick?.let { action ->
@@ -352,10 +352,14 @@ fun MangoRecipeCard(
                     }
                 }
             }
-            Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold,
                     maxLines = 2, overflow = TextOverflow.Ellipsis, minLines = 2)
-                Text(category, color = LeafGreen, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
+                    Text(category, color = MaterialTheme.colorScheme.onSecondaryContainer, fontSize = 11.sp,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp))
+                }
                 Text((if (calories > 0) "$calories kcal" else "Kalorie nieznane") + (protein?.let { " • B: ${it} g" } ?: ""),
                     color = OrangeInk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Text(preparationMinutes?.let { "$it min" } ?: "Czas niepodany",
