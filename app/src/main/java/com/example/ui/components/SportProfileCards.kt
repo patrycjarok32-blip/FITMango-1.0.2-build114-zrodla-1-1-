@@ -339,6 +339,22 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                 selectedPlan.exercises.forEachIndexed { index, planned ->
                     Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Text("${index + 1}. ${planned.name} • ${planned.sets} × ${planned.reps} • przerwa ${planned.restSeconds}s")
+                        val prior = SportsSupport.previous(data, planned.name, editorDate)
+                        if (prior.isNotEmpty()) {
+                            val best = prior.maxByOrNull { it.kg * it.reps }
+                            if (best != null) {
+                                Text("Poprzednio: $"+"{best.kg} kg × $"+"{best.reps} powtórzeń",
+                                    style = MaterialTheme.typography.bodySmall)
+                                Text("Progresja: jeśli wszystkie serie wykonujesz poprawnie i z zapasem 1–2 powtórzeń, rozważ +1 powtórzenie lub mały wzrost ciężaru.",
+                                    style = MaterialTheme.typography.bodySmall)
+                                if (planned.reps < 100) TextButton(onClick = {
+                                    onUpdateExercises(editorDate, selectedPlan.exercises.toMutableList().also {
+                                        it[index] = planned.copy(reps = planned.reps + 1)
+                                    })
+                                }, enabled = !busy) { Text("✓ Zastosuj +1 powtórzenie w planie") }
+                            }
+                        }
+
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             TextButton(onClick = {
                                 onUpdateExercises(editorDate, selectedPlan.exercises.toMutableList().also {
