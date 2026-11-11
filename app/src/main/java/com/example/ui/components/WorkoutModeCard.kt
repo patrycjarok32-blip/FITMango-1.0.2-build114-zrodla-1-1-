@@ -40,6 +40,8 @@ fun WorkoutModeCard(
         else if (rest == 0) restRunning = false
     }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        MangoGuide(message = if (active == null) "Gotowa na trening?" else "Trening trwa — skup się na następnej serii.",
+            event = if (active?.entries?.all { it.done } == true) 1 else 0, size = 32.dp)
         Text("🏋️ Trening w toku", style = MaterialTheme.typography.titleLarge)
         if (active == null) {
             if (plan != null && !plan.rest && plan.exercises.isNotEmpty()) {
@@ -83,8 +85,11 @@ fun WorkoutModeCard(
             }
             LinearProgressIndicator(progress = { animatedCompletion },
                 modifier = Modifier.fillMaxWidth())
-            if (!allCompleted) Card(shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
+            if (!allCompleted) Card(shape = RoundedCornerShape(24.dp), modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("TERAZ ĆWICZYSZ", style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer)
                     Text(selected.orEmpty(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     val videoUrl = ImportedExerciseVideos.forExercise(selected.orEmpty())
                     if (videoUrl != null) {
@@ -191,7 +196,7 @@ fun WorkoutModeCard(
                         }
                     }, enabled = !busy && kg.replace(',', '.').toDoubleOrNull()?.let { it.isFinite() && it in 0.0..2000.0 } == true &&
                         reps.toIntOrNull()?.let { it in 1..1000 } == true,
-                        modifier = Modifier.fillMaxWidth()) {
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp)) {
                         Text(if (entry.done) "↩ Cofnij ukończenie serii" else "✓ Zakończ serię")
                     }
                 }
