@@ -218,7 +218,19 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                             Text(plan?.title ?: "Bez planu",
                                 fontWeight = if (date == today) FontWeight.Bold else FontWeight.Medium,
                                 style = MaterialTheme.typography.bodyMedium)
-                            if (plan?.rest == true) Text("Regeneracja", style = MaterialTheme.typography.labelSmall)
+                            if (plan?.rest == true) Text("🌿 Odpoczynek", style = MaterialTheme.typography.labelSmall)
+                            if (plan != null && !plan.rest) {
+                                val completedSets = data.sets.count { it.date == date.toString() }
+                                val plannedSets = plan.exercises.sumOf { it.sets }
+                                val status = when {
+                                    plannedSets > 0 && completedSets >= plannedSets -> "✓ Wykonany"
+                                    completedSets > 0 -> "◐ W trakcie: ${completedSets}/${plannedSets} serii"
+                                    date.isBefore(today) -> "○ Pominięty / bez zapisu"
+                                    else -> "◷ Zaplanowany"
+                                }
+                                Text(status, style = MaterialTheme.typography.labelSmall,
+                                    color = if (completedSets > 0) LeafGreen else MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
                         if (plan != null) TextButton(onClick = {
                             movingDay = date.toString()
