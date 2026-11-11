@@ -64,6 +64,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     var importError by remember { mutableStateOf<String?>(null) }
     var importBusy by remember { mutableStateOf(false) }
     var confirmCustomImport by remember { mutableStateOf(false) }
+    var editImportedPlan by remember { mutableStateOf(false) }
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             importBusy = true
@@ -199,14 +200,63 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     if (importedDays.isNotEmpty()) {
                         Text("Podgląd rozpoznanego planu — nic nie zostało zapisane",
                             style = MaterialTheme.typography.titleMedium)
-                        importedDays.forEach { day ->
-                            Text(day.title + " • " + day.exercises.size + " ćwiczeń")
-                            day.exercises.forEach { exercise ->
-                                Text("• " + exercise.name + " — " + exercise.sets + " × " + exercise.reps)
+                        TextButton(onClick = { editImportedPlan = !editImportedPlan }) {
+                            Text(if (editImportedPlan) "Zakończ edycję" else "✎ Popraw rozpoznany plan")
+                        }
+                        importedDays.forEachIndexed { dayIndex, day ->
+                            if (editImportedPlan) {
+                                OutlinedTextField(
+                                    value = day.title,
+                                    onValueChange = { name ->
+                                        importedDays = importedDays.toMutableList().also {
+                                            it[dayIndex] = day.copy(title = name.take(120))
+                                        }
+                                    },
+                                    label = { Text("Nazwa treningu") },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            } else Text(day.title + " • " + day.exercises.size + " ćwiczeń")
+                            day.exercises.forEachIndexed { exerciseIndex, exercise ->
+                                if (editImportedPlan) {
+                                    OutlinedTextField(value = exercise.name, onValueChange = { name ->
+                                        importedDays = importedDays.toMutableList().also { days ->
+                                            val exercises = days[dayIndex].exercises.toMutableList()
+                                            exercises[exerciseIndex] = exercise.copy(name = name.take(120))
+                                            days[dayIndex] = days[dayIndex].copy(exercises = exercises)
+                                        }
+                                    }, label = { Text("Ćwiczenie") }, modifier = Modifier.fillMaxWidth())
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        OutlinedTextField(value = exercise.sets.toString(), onValueChange = { raw ->
+                                            raw.toIntOrNull()?.takeIf { it in 1..12 }?.let { count ->
+                                                importedDays = importedDays.toMutableList().also { days ->
+                                                    val exercises = days[dayIndex].exercises.toMutableList()
+                                                    exercises[exerciseIndex] = exercise.copy(sets = count)
+                                                    days[dayIndex] = days[dayIndex].copy(exercises = exercises)
+                                                }
+                                            }
+                                        }, label = { Text("Serie") }, modifier = Modifier.weight(1f))
+                                        OutlinedTextField(value = exercise.reps.toString(), onValueChange = { raw ->
+                                            raw.toIntOrNull()?.takeIf { it in 1..100 }?.let { count ->
+                                                importedDays = importedDays.toMutableList().also { days ->
+                                                    val exercises = days[dayIndex].exercises.toMutableList()
+                                                    exercises[exerciseIndex] = exercise.copy(reps = count)
+                                                    days[dayIndex] = days[dayIndex].copy(exercises = exercises)
+                                                }
+                                            }
+                                        }, label = { Text("Powtórzenia") }, modifier = Modifier.weight(1f))
+                                    }
+                                    TextButton(onClick = {
+                                        importedDays = importedDays.toMutableList().also { days ->
+                                            val exercises = days[dayIndex].exercises.toMutableList()
+                                            exercises.removeAt(exerciseIndex)
+                                            days[dayIndex] = days[dayIndex].copy(exercises = exercises)
+                                        }
+                                    }) { Text("Usuń ćwiczenie") }
+                                } else Text("• " + exercise.name + " — " + exercise.sets + " × " + exercise.reps)
                             }
                         }
                         Text("Sprawdź nazwy, serie i powtórzenia. Nierozpoznane pozycje nie są dodawane.")
-                        Button(onClick = { confirmCustomImport = true }, enabled = !busy) {
+                        Button(onClick = { confirmCustomImport = true }, enabled = !busy && importedDays.all { day -> day.title.isNotBlank() && day.exercises.isNotEmpty() && day.exercises.all { it.name.isNotBlank() } }) {
                             Text("Zatwierdź i zastosuj rozpoznany plan")
                         }
                         TextButton(onClick = { importedDays = emptyList(); importError = null }) {
