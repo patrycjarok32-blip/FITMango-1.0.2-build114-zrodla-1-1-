@@ -3,6 +3,9 @@ package com.example.ui.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -25,6 +28,7 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
     }
     var selected by remember { mutableStateOf("") }
     var rangeDays by remember { mutableIntStateOf(90) }
+    var selectedPoint by remember { mutableIntStateOf(-1) }
     val chosen = selected.takeIf { it in exercises } ?: exercises.firstOrNull()
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -70,10 +74,23 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
                 }
                 Text("Wykres maksymalnego ciężaru • ostatnie 12 dni treningowych",
                     style = MaterialTheme.typography.labelMedium)
-                val points = history.takeLast(12).map { it.second }
+                val visibleHistory = history.takeLast(12)
+                val points = visibleHistory.map { it.second }
                 val tint = MaterialTheme.colorScheme.primary
                 if (points.isNotEmpty()) {
-                    Canvas(Modifier.fillMaxWidth().height(110.dp)) {
+                    val pointIndex = selectedPoint.takeIf { it in visibleHistory.indices }
+                    if (pointIndex != null) {
+                        val point = visibleHistory[pointIndex]
+                        Text("📍 " + point.first + " • " + "%.1f".format(point.second) +
+                            " kg • objętość " + "%.1f".format(point.third) + " kg")
+                    }
+                    Canvas(Modifier.fillMaxWidth().height(110.dp)
+                        .pointerInput(visibleHistory) {
+                            detectTapGestures { offset ->
+                                val fraction = (offset.x / size.width).coerceIn(0f, 1f)
+                                selectedPoint = ((visibleHistory.size - 1) * fraction).roundToInt()
+                            }
+                        }) {
                         val top = (points.maxOrNull() ?: 0.0).coerceAtLeast(1.0)
                         val coords = points.mapIndexed { index, value ->
                             Offset(
@@ -90,7 +107,7 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
                         }
                         coords.forEach { drawCircle(tint, 4.dp.toPx(), it) }
                     }
-                    Text("Od " + history.takeLast(12).first().first + " do " + history.last().first,
+                    Text("Dotknij wykresu, aby zobaczyć szczegóły. Od " + visibleHistory.first().first + " do " + visibleHistory.last().first,
                         style = MaterialTheme.typography.bodySmall)
                 }
             }
