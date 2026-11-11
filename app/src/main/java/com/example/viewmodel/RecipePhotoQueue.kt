@@ -20,11 +20,10 @@ object RecipePhotoQueue {
     fun eligible(recipe: RecipeEntity): Boolean =
         !recipe.description.contains("Zdjęcie: dodane z telefonu.") &&
         (recipe.imageUrl.isBlank() || recipe.imageUrl.startsWith("file:///android_asset/recipe_ai/"))
+    /** Preserve any healthy existing photograph, including manually approved photos. */
     fun repairable(context: Context, recipe: RecipeEntity): Boolean =
         !recipe.description.contains("Zdjęcie: dodane z telefonu.") &&
-        (eligible(recipe) || RecipePhotoHealth.needsRepair(context, recipe.imageUrl) ||
-            recipe.description.contains("Zdjęcie: poglądowe Pixabay") ||
-            recipe.description.contains("Zdjęcie: poglądowe Wikimedia"))
+        (eligible(recipe) || RecipePhotoHealth.needsRepair(context, recipe.imageUrl))
     fun enqueue(context: Context, recipes: List<RecipeEntity>, retry: Boolean = false, improveExisting: Boolean = false) {
         val settings = RecipePhotoSettings(context)
         if (!settings.enabled) return
@@ -69,11 +68,11 @@ class RecipePhotoWorker(context: Context, params: WorkerParameters) : CoroutineW
                 }
                 if (event == null && token.isNotBlank() && !settings.blocked("pixabay")) {
                     try {
-                        val englishQuery = RecipePhotoMatching.query(recipe.title) ?: run {
+                        val englishQuery = RecipePhotoMatching.queryForRecipe(recipe.title, recipe.ingredients) ?: run {
                             val queryKey = "english_query_$fingerprint"
                             prefs.getString(queryKey, null) ?: kotlinx.coroutines.withTimeoutOrNull(12_000) {
                                 com.example.ai.callGemini(
-                                    prompt = "Translate this recipe title into a short English food-photo search query (maximum 8 words). Title: ${recipe.title.take(180)}",
+                                    prompt = "Translate this recipe title into a short English food-photo search query (maximum 8 words). Title: ${recipe.title.take(180)}. Main ingredients: ${recipe.ingredients.take(400)}",
                                     systemPrompt = "Return only English words describing the dish and main ingredient. No explanations, quotes or instructions.")
                                     .getOrNull()?.let(RecipePhotoMatching::cleanEnglishQuery)
                             }?.also { prefs.edit().putString(queryKey, it).apply() }
@@ -93,7 +92,7 @@ class RecipePhotoWorker(context: Context, params: WorkerParameters) : CoroutineW
                     catch (_: Exception) { photo = null; settings.status("Zdjęcie z Pixabay jest niedostępne. Szukamy innego źródła.") }
                 }
                 if (photo == null && event == null) {
-                    val query = RecipePhotoMatching.query(recipe.title)
+                    val query = RecipePhotoMatching.queryForRecipe(recipe.title, recipe.ingredients)
                     val fallback = if (query == null) null else runCatching {
                         RecipePhotoSearch.search(query).filter { RecipePhotoMatching.matchesEnglish(query, it.title) }
                             .maxByOrNull { RecipePhotoMatching.score(query, it.title, recipe.ingredients) }
