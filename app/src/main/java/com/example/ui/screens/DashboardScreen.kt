@@ -134,6 +134,9 @@ fun DashboardScreen(
         targetValue = 1f + waterFillFraction * 0.025f,
         animationSpec = tween(durationMillis = if (reducedMangoMotion) 0 else 500),
         label = "premium_water_pulse")
+    val usabilityRevision by viewModel.usability.revision.collectAsStateWithLifecycle()
+    val compactDashboard = remember(usabilityRevision) { viewModel.usability.compactDashboard() }
+    val showDashboardTips = remember(usabilityRevision) { viewModel.usability.showDashboardTips() }
     val appearanceContext = LocalContext.current
     Scaffold(
         topBar = {
@@ -241,7 +244,7 @@ fun DashboardScreen(
                 }
 
             }
-            Card(
+            if (!compactDashboard && showDashboardTips) Card(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_3_companion"),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
@@ -249,8 +252,12 @@ fun DashboardScreen(
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     MangoGuide(
                         message = when {
-                            consumedCalories >= targetCalories && !incompleteNutrition ->
-                                "Brawo! Sprawdź bilans i zaplanuj następny posiłek."
+                            incompleteNutrition ->
+                                "Niektóre wartości odżywcze są niepełne. Sprawdź składniki przed oceną bilansu."
+                            consumedCalories >= targetCalories ->
+                                "Cel kalorii został osiągnięty. Sprawdź bilans i zaplanuj następny posiłek."
+                            waterTotal < 500 && consumedCalories > 0 ->
+                                "W dzienniku zapisano niewiele napojów. Sprawdź, czy wpisy są aktualne."
                             sportsData.plans.any { it.date == currentDate && !it.rest } ->
                                 "Trening na dziś jest w planie. Powodzenia!"
                             else -> "Małe kroki każdego dnia też się liczą."
@@ -268,13 +275,28 @@ fun DashboardScreen(
                     }
                 }
             }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                FilterChip(
+                    selected = compactDashboard,
+                    onClick = { viewModel.usability.setCompactDashboard(!compactDashboard) },
+                    label = { Text("Kompaktowy pulpit") },
+                    modifier = Modifier.testTag("dashboard_compact_toggle")
+                )
+                FilterChip(
+                    selected = showDashboardTips,
+                    onClick = { viewModel.usability.setShowDashboardTips(!showDashboardTips) },
+                    label = { Text("Wskazówki Mango") },
+                    modifier = Modifier.testTag("dashboard_tips_toggle")
+                )
+            }
             var showDailyGreeting by rememberSaveable { mutableStateOf(false) }
-            TextButton(onClick = { showDailyGreeting = !showDailyGreeting },
+            if (!compactDashboard) TextButton(onClick = { showDailyGreeting = !showDailyGreeting },
                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                 modifier = Modifier.testTag("dashboard_daily_greeting_toggle")) {
                 Text(if (showDailyGreeting) "Ukryj motywację −" else "Motywacja dnia +")
             }
-            if (showDailyGreeting) MangoDailyGreeting(
+            if (!compactDashboard && showDailyGreeting) MangoDailyGreeting(
                 today = today,
                 activeDates = habitDays.map { it.date },
                 waterMl = waterTotal,
