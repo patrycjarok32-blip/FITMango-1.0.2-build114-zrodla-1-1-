@@ -341,6 +341,12 @@ fun DashboardScreen(
                 FreshMangoDestinationCard("Postępy", "Wyniki", Icons.Default.TrendingUp,
                     Modifier.weight(1f), onNavigateToEffects)
             }
+            var showDashboardExtras by rememberSaveable { mutableStateOf(false) }
+            TextButton(onClick = { showDashboardExtras = !showDashboardExtras },
+                modifier = Modifier.fillMaxWidth().testTag("dashboard_more_toggle")) {
+                Text(if (showDashboardExtras) "▲ Ukryj dodatkowe skróty" else "▼ Więcej skrótów i import przepisów")
+            }
+            if (showDashboardExtras) {
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("dashboard_import_recipe")
                     .clickable(onClick = onNavigateToRecipeImport),
@@ -360,6 +366,7 @@ fun DashboardScreen(
                     androidx.compose.material3.Icon(Icons.Default.ChevronRight,
                         contentDescription = null, tint = JuicyOrange)
                 }
+            }
             }
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_meal_preview")
@@ -391,6 +398,7 @@ fun DashboardScreen(
                         contentDescription = null, tint = JuicyOrange)
                 }
             }
+            if (showDashboardExtras) {
             Card(
                 modifier = Modifier.fillMaxWidth().testTag("my_day_shortcuts"),
                 shape = RoundedCornerShape(20.dp),
@@ -409,6 +417,7 @@ fun DashboardScreen(
                     Text("Poniżej znajdziesz propozycje posiłków, produkty wymagające uzupełnienia, wodę i aktywność.",
                         style = MaterialTheme.typography.bodySmall)
                 }
+            }
             }
             val weeklyActiveDays = habitDays.count { entry ->
                 runCatching {
