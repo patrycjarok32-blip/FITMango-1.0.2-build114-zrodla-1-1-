@@ -114,6 +114,18 @@ class UsabilityPreferences(context: Context) {
     fun hidden(id: String) = prefs.getStringSet("hidden", emptySet())!!.contains(id)
     fun show(id: String, show: Boolean) { val hidden = prefs.getStringSet("hidden", emptySet())!!.toMutableSet(); if (show) hidden.remove(id) else hidden.add(id); prefs.edit().putStringSet("hidden", hidden).apply(); changed() }
     fun move(id: String, delta: Int) { val list = order().toMutableList(); val i = list.indexOf(id); val j = (i + delta).coerceIn(0, list.lastIndex); if (i >= 0) { list.removeAt(i); list.add(j, id); prefs.edit().putString("order", list.joinToString(",")).apply(); changed() } }
+    // Dashboard presentation settings live in the existing backup-exported
+    // FITMangoUsability preferences; no database migration is necessary.
+    fun compactDashboard(): Boolean = prefs.getBoolean("dashboard_compact_v1", false)
+    fun setCompactDashboard(enabled: Boolean) {
+        prefs.edit().putBoolean("dashboard_compact_v1", enabled).apply()
+        changed()
+    }
+    fun showDashboardTips(): Boolean = prefs.getBoolean("dashboard_tips_v1", true)
+    fun setShowDashboardTips(enabled: Boolean) {
+        prefs.edit().putBoolean("dashboard_tips_v1", enabled).apply()
+        changed()
+    }
     fun minutes(recipe: RecipeEntity): Int? = prefs.getInt("minutes_${recipe.id}", -1).takeIf { it in 0..1440 }
         ?: RecipeFilterSupport.providedMinutes(recipe)
     fun tag(id: Long, tag: String) = prefs.getBoolean("tag_${id}_$tag", false)
