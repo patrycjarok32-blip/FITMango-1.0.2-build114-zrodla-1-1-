@@ -127,7 +127,7 @@ fun WorkoutModeCard(
             val advice = selected?.let { WorkoutInsights.coachAdvice(sports, it,
                 active.entries.firstOrNull { e -> e.exercise == it }?.reps ?: 10) }
             if (previous != null) Text("📈 Poprzedni wynik: " + previous + " kg • sprawdź powtórzenia w dzienniku")
-            if (false && advice != null) {
+            if (advice != null) {
                 Text("🧠 Trener: " + advice.recommendation)
                 if (advice.weightKg != null) Text("Orientacyjny ciężar: " + advice.weightKg + " kg")
                 if (advice.reasons.isNotEmpty()) Text(advice.reasons.joinToString(" • "),
