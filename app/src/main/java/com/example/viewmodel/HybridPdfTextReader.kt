@@ -52,7 +52,16 @@ internal object HybridPdfTextReader {
                         val containsRecipeDetails = original.contains("składniki", ignoreCase = true) ||
                             original.contains("przygotowanie", ignoreCase = true) ||
                             original.contains("sposób przygotowania", ignoreCase = true)
-                        val pageText = if (original.count { it.isLetterOrDigit() } >= 180 && containsRecipeDetails) {
+                        val originalLines = original.lines().map { it.trim() }.filter { it.isNotBlank() }
+                        val headingOnly = originalLines.size in 1..4 &&
+                            original.count { it.isLetterOrDigit() } in 6..145 &&
+                            !containsRecipeDetails &&
+                            originalLines.all { line ->
+                                line.count { it.isLetter() } == 0 ||
+                                    line.count { it.isUpperCase() } >= line.count { it.isLetter() } / 2
+                            }
+                        val pageText = if (headingOnly ||
+                            (original.count { it.isLetterOrDigit() } >= 180 && containsRecipeDetails)) {
                             original
                         } else {
                             renderer.openPage(index).use { page ->
