@@ -24,6 +24,7 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
         data.sets.map { it.exercise.trim() }.filter { it.isNotBlank() }.distinct().sorted()
     }
     var selected by remember { mutableStateOf("") }
+    var rangeDays by remember { mutableIntStateOf(90) }
     val chosen = selected.takeIf { it in exercises } ?: exercises.firstOrNull()
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -45,8 +46,15 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
                         }
                     }
                 }
-                val history = remember(data.sets, chosen) {
-                    data.sets.filter { it.exercise.trim() == chosen }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(30 to "30 dni", 90 to "90 dni", 3650 to "Całość").forEach { (days, label) ->
+                        FilterChip(selected = rangeDays == days, onClick = { rangeDays = days },
+                            label = { Text(label) })
+                    }
+                }
+                val history = remember(data.sets, chosen, rangeDays, today) {
+                    val from = today.minusDays(rangeDays.toLong()).toString()
+                    data.sets.filter { it.exercise.trim() == chosen && it.date >= from && it.date <= today.toString() }
                         .groupBy { it.date }.toSortedMap()
                         .map { (date, sets) ->
                             Triple(date, sets.maxOf { it.kg }, sets.sumOf { it.kg * it.reps })
@@ -54,9 +62,13 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
                 }
                 val maxKg = history.maxOfOrNull { it.second } ?: 0.0
                 val maxVolume = history.maxOfOrNull { it.third } ?: 0.0
-                Text("🏆 Rekord ciężaru: " + "%.1f".format(maxKg) + " kg")
-                Text("🏅 Największa objętość sesji: " + "%.1f".format(maxVolume) + " kg")
-                Text("Wykres maksymalnego ciężaru • ostatnie 12 sesji",
+                if (history.isEmpty()) {
+                    Text("Brak zapisanych serii w wybranym okresie. Wybierz dłuższy zakres dat.")
+                } else {
+                    Text("🏆 Rekord ciężaru: " + "%.1f".format(maxKg) + " kg")
+                    Text("🏅 Największa objętość sesji: " + "%.1f".format(maxVolume) + " kg")
+                }
+                Text("Wykres maksymalnego ciężaru • ostatnie 12 dni treningowych",
                     style = MaterialTheme.typography.labelMedium)
                 val points = history.takeLast(12).map { it.second }
                 val tint = MaterialTheme.colorScheme.primary
