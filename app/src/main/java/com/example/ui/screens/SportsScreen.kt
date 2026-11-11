@@ -50,7 +50,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     val foodDays by viewModel.habits.days.collectAsStateWithLifecycle()
     val confirmations by viewModel.healthConnect.weeklyEnergy.confirmations.collectAsStateWithLifecycle()
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
-    var activitySection by rememberSaveable { mutableStateOf("today") }
+    var activitySection by rememberSaveable { mutableStateOf("training") }
     var trainingPage by rememberSaveable { mutableStateOf("session") }
     var showTrainingProfile by rememberSaveable { mutableStateOf(true) }
     var showReport by rememberSaveable { mutableStateOf(false) }
@@ -111,7 +111,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 contentPadding = PaddingValues(vertical = 4.dp)) {
                 listOf(
                     Triple("today", "🏠", "Dzisiaj"),
-                    Triple("training", "📅", "Plan"),
+                    Triple("training", "🏋️", "Trening"),
                     Triple("challenges", "🎬", "Wyzwania"),
                     Triple("progress", "📈", "Postępy"),
                     Triple("recovery", "🌿", "Regeneracja")
@@ -143,7 +143,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 }
             }
         }
-        if (activitySection == "training") item {
+        if (activitySection == "training" && trainingPage != "session") item {
             FreshMangoSportSection("🏋️", "Twój trening",
                 "Plan tygodnia, zapis serii, historia aktywności i postępy siłowe")
         }
@@ -195,10 +195,10 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         }
         if (activitySection == "training" && trainingPage == "session") item {
             var workoutDate by rememberSaveable { mutableStateOf(today.toString()) }
-            MangoCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("🎯 Rozpocznij sesję z planu", style = MaterialTheme.typography.titleMedium)
-                    androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(if (workouts.any { it.ended == 0L }) "▶ Trening w toku" else "▶ Wybierz trening i rozpocznij", style = MaterialTheme.typography.titleMedium)
+                    if (workouts.none { it.ended == 0L }) androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         items(7) { offset ->
                             val d = SportsSupport.week(today).plusDays(offset.toLong()).toString()
                             FilterChip(selected = workoutDate == d, onClick = { workoutDate = d },
