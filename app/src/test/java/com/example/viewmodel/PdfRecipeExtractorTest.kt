@@ -35,6 +35,39 @@ class PdfRecipeExtractorTest {
         com.example.ai.SecureKeyStorage.saveKey("FAKE_TESTING_KEY")
     }
 
+    @Test
+    fun cookbookRecipeAcrossTitleIngredientsAndPreparationPages() {
+        val text = """
+            === STRONA 12 ===
+            NUGGETSY Z KURCZAKA
+            === STRONA 13 ===
+            13 Przepisy wytrawne
+            Składniki
+            • 400 g fileta z kurczaka
+            • 75 g jogurtu naturalnego
+            • 65 g płatków kukurydzianych
+            Sugerowana liczba porcji: 2
+            === STRONA 14 ===
+            14 Przepisy wytrawne
+            Przygotowanie
+            1. Pokrój kurczaka w kostkę.
+            2. Wymieszaj składniki marynaty.
+            3. Piecz kurczaka przez 14 minut.
+            Cały przepis:
+            Kalorie: 804,3 kcal
+            Białko: 98 g
+            Węglowodany: 65,2 g
+            Tłuszcze: 15,7 g
+        """.trimIndent()
+        val recipes = PdfRecipeExtractor.extractPageSpanningRecipes(text, "Niedietetyczne 2")
+        assertEquals(1, recipes.size)
+        assertEquals("NUGGETSY Z KURCZAKA", recipes.single().title)
+        assertEquals("2", recipes.single().servings)
+        assertTrue(recipes.single().ingredients.contains("400 g fileta"))
+        assertTrue(recipes.single().instructions.contains("Piecz kurczaka"))
+        assertEquals(402, recipes.single().calories)
+    }
+
     private data class SeedRecipeSpec(
         val title: String,
         val servings: String,
