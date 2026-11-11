@@ -821,18 +821,11 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                     return@launch
                 }
 
-                if (!resume) {
-                    val localRecipes = PdfRecipeExtractor.extractPageSpanningRecipes(text, document.title)
-                    if (localRecipes.isNotEmpty()) {
-                        _pdfFoundRecipes.value = _pdfFoundRecipes.value + (document.id to localRecipes)
-                        _pdfRawFoundRecipes.value = _pdfRawFoundRecipes.value + (document.id to localRecipes)
-                        _pdfAnalysisStates.value = _pdfAnalysisStates.value + (document.id to PdfAnalysisState.Completed(localRecipes.size))
-                        repository.updateDocument(document.copy(aiAnalysisResult = "Znaleziono " + localRecipes.size + " przepisów bez AI."))
-                        _isLoadingAi.value = false
-                        onResult(localRecipes, null)
-                        return@launch
-                    }
-                }
+                // Multi-page cookbooks may have only some recipes readable locally.
+                // Keep those results, but continue the full analysis instead of
+                // incorrectly marking the entire book as completed.
+                val localRecipes = if (resume) emptyList() else
+                    PdfRecipeExtractor.extractPageSpanningRecipes(text, document.title)
                 val cachedChunks = if (resume) _pdfChunksCache.value[document.id] else null
                 val chunks = if (!cachedChunks.isNullOrEmpty()) {
                     cachedChunks
@@ -846,13 +839,13 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
                 val startChunk = if (resume) (_pdfNextChunkIndex.value[document.id] ?: 0) else 0
-                val initialRaw = if (resume) (_pdfRawFoundRecipes.value[document.id] ?: emptyList()) else emptyList()
+                val initialRaw = if (resume) (_pdfRawFoundRecipes.value[document.id] ?: emptyList()) else localRecipes
                 val initialCounts = if (resume) (_pdfChunkRecipeCounts.value[document.id] ?: emptyMap()) else emptyMap()
 
                 if (!resume) {
                     _pdfNextChunkIndex.value = _pdfNextChunkIndex.value + (document.id to 0)
-                    _pdfFoundRecipes.value = _pdfFoundRecipes.value + (document.id to emptyList())
-                    _pdfRawFoundRecipes.value = _pdfRawFoundRecipes.value + (document.id to emptyList())
+                    _pdfFoundRecipes.value = _pdfFoundRecipes.value + (document.id to localRecipes)
+                    _pdfRawFoundRecipes.value = _pdfRawFoundRecipes.value + (document.id to localRecipes)
                     _pdfChunkRecipeCounts.value = _pdfChunkRecipeCounts.value + (document.id to emptyMap())
                 }
 
