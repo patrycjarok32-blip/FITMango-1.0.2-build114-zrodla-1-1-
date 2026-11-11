@@ -55,7 +55,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
     var activitySection by rememberSaveable { mutableStateOf("today") }
     var trainingPage by rememberSaveable { mutableStateOf("session") }
-    var showTrainingProfile by rememberSaveable { mutableStateOf(true) }
+    var showTrainingProfile by rememberSaveable { mutableStateOf(false) }
+    var showProgramLibrary by rememberSaveable { mutableStateOf(false) }
     var selectedImportedProgram by rememberSaveable { mutableStateOf("home") }
     var confirmImportedProgram by rememberSaveable { mutableStateOf(false) }
     val importContext = LocalContext.current
@@ -187,6 +188,12 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 "Sen i samopoczucie • informacje z dostępnych pomiarów")
         }
         if (activitySection == "training" && trainingPage == "plan") item {
+            OutlinedButton(onClick = { showProgramLibrary = !showProgramLibrary },
+                modifier = Modifier.fillMaxWidth()) {
+                Text(if (showProgramLibrary) "📚 Zwiń bibliotekę planów" else "📚 Biblioteka planów • import i gotowe programy")
+            }
+        }
+        if (activitySection == "training" && trainingPage == "plan" && showProgramLibrary) item {
             val program = ImportedTrainingPrograms.all.first { it.id == selectedImportedProgram }
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -405,7 +412,52 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 onRemoveSet = { id -> sports.removeSet(id) { saved() } },
                 onUpdateExercises = { date, exercises -> sports.updatePlannedExercises(date, exercises) { saved() } })
         }
+        if (activitySection == "today") item {
+            val todayPlan = data.plans.firstOrNull { it.date == today.toString() }
+            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("🏋️ Twój trening na dziś", style = MaterialTheme.typography.titleLarge)
+                    Text(when {
+                        todayPlan == null -> "Nie masz zaplanowanej sesji na dziś."
+                        todayPlan.rest -> "Dzisiaj regeneracja • odpoczynek jest częścią planu."
+                        else -> todayPlan.title + " • " + todayPlan.exercises.size + " ćwiczeń"
+                    })
+                    Button(onClick = {
+                        activitySection = "training"
+                        trainingPage = if (todayPlan != null && !todayPlan.rest) "session" else "plan"
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (todayPlan != null && !todayPlan.rest) "▶ Przejdź do treningu" else "🗓 Otwórz plan")
+                    }
+                }
+            }
+        }
         if (activitySection == "today") item { StrengthWeeklyReview(data, today) }
+        if (activitySection == "today") item {
+            val check = data.recovery.firstOrNull { it.date == today.toString() }
+            var quickEnergy by rememberSaveable { mutableIntStateOf(check?.energy ?: 3) }
+            var quickFatigue by rememberSaveable { mutableIntStateOf(check?.fatigue ?: 3) }
+            var quickExpanded by rememberSaveable { mutableStateOf(false) }
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = { quickExpanded = !quickExpanded }) {
+                        Text(if (quickExpanded) "🌿 Zwiń ocenę samopoczucia" else
+                            "🌿 Samopoczucie • " + (if (check == null) "brak pomiaru, dodaj" else "zapisano dziś"))
+                    }
+                    if (quickExpanded) {
+                        Text("Energia: " + quickEnergy + "/5")
+                        Slider(value = quickEnergy.toFloat(), onValueChange = { quickEnergy = it.toInt().coerceIn(1,5) },
+                            valueRange = 1f..5f, steps = 3)
+                        Text("Zmęczenie: " + quickFatigue + "/5")
+                        Slider(value = quickFatigue.toFloat(), onValueChange = { quickFatigue = it.toInt().coerceIn(1,5) },
+                            valueRange = 1f..5f, steps = 3)
+                        Button(onClick = {
+                            sports.recovery(today.toString(), quickEnergy, quickFatigue) { saved(); quickExpanded = false }
+                        }, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("Zapisz samopoczucie") }
+                    }
+                }
+            }
+        }
         if (activitySection == "today") item { StrengthRecoverySuggestion(data, today, onShift = { sports.shiftUpcomingWorkouts(today.toString(), 1) { saved() } }, busy = busy) }
         if (activitySection == "today") item { ActivityTodayCard(data, today, current) }
         if (activitySection == "today" || (activitySection == "training" && trainingPage == "diary")) item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
