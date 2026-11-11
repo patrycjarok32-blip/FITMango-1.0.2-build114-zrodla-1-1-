@@ -45,9 +45,13 @@ internal object HybridPdfTextReader {
                         val pageNumber = index + 1
                         val original = embeddedByPage[pageNumber].orEmpty()
                         // A page with only a recipe heading must still undergo OCR.
-                        val containsRecipeDetails = original.contains("składniki", ignoreCase = true) &&
-                            (original.contains("przygotowanie", ignoreCase = true) ||
-                                original.contains("sposób przygotowania", ignoreCase = true))
+                        // In illustrated cookbooks ingredients and preparation often live
+                        // on separate pages. A sufficiently long ingredient OR instruction
+                        // page already has embedded text and must not be OCRed again:
+                        // appending OCR duplicates paragraphs and corrupts parsing.
+                        val containsRecipeDetails = original.contains("składniki", ignoreCase = true) ||
+                            original.contains("przygotowanie", ignoreCase = true) ||
+                            original.contains("sposób przygotowania", ignoreCase = true)
                         val pageText = if (original.count { it.isLetterOrDigit() } >= 180 && containsRecipeDetails) {
                             original
                         } else {
