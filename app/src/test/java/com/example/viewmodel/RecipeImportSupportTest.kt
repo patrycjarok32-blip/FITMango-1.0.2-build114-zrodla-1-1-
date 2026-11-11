@@ -576,6 +576,10 @@ class RecipeImportSupportTest {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("planner_day_Poniedziałek").performClick()
         composeTestRule.waitForIdle()
+        // Meal slots are intentionally collapsed by default to shorten the planner.
+        // Expand the target slot before checking the imported recipe card.
+        composeTestRule.onNodeWithTag("meal_slot_expand_Śniadanie").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
 
         composeTestRule.waitUntil(timeoutMillis = 5000) {
             Shadows.shadowOf(Looper.getMainLooper()).idle()
