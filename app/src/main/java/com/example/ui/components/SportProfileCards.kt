@@ -32,6 +32,8 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
     onAddSet: (String, String, Int, Double) -> Unit,
     onSaveWeek: (List<SportPlan>) -> Unit = {},
     onMovePlan: (String, String, Boolean) -> Unit = { _, _, _ -> },
+    onCopyWeeks: (String, Int) -> Unit = { _, _ -> },
+    onShiftUpcoming: (String, Int) -> Unit = { _, _ -> },
     onRemoveSet: (String) -> Unit = {},
     onUpdateExercises: (String, List<PlannedExercise>) -> Unit = { _, _ -> }) {
     var planDay by rememberSaveable { mutableStateOf(today.toString()) }
@@ -46,6 +48,9 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
     var showGenerator by rememberSaveable { mutableStateOf(false) }
     var pendingDeleteDay by rememberSaveable { mutableStateOf<String?>(null) }
     var weekOffset by rememberSaveable { mutableIntStateOf(0) }
+    var copyCount by rememberSaveable { mutableIntStateOf(1) }
+    var showCopyConfirm by rememberSaveable { mutableStateOf(false) }
+    var showShiftConfirm by rememberSaveable { mutableStateOf(false) }
     var movingDay by rememberSaveable { mutableStateOf<String?>(null) }
     var destinationDay by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmSwap by rememberSaveable { mutableStateOf(false) }
@@ -155,6 +160,46 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                 TextButton(onClick = { weekOffset = (weekOffset + 1).coerceAtMost(52) }) { Text("Tydzień →") }
             }
             if (weekOffset != 0) TextButton(onClick = { weekOffset = 0 }) { Text("Wróć do bieżącego tygodnia") }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { showCopyConfirm = true }, enabled = !busy,
+                    modifier = Modifier.weight(1f)) { Text("⧉ Kopiuj tydzień") }
+                OutlinedButton(onClick = { showShiftConfirm = true }, enabled = !busy,
+                    modifier = Modifier.weight(1f)) { Text("↪ Przesuń cykl") }
+            }
+            if (showCopyConfirm) AlertDialog(
+                onDismissRequest = { showCopyConfirm = false },
+                title = { Text("Powtórz plan tygodnia") },
+                text = {
+                    Column {
+                        Text("Skopiuj treningi i dni odpoczynku do kolejnych tygodni. Zajęte dni nie zostaną nadpisane.")
+                        Row {
+                            (1..4).forEach { n ->
+                                FilterChip(selected = copyCount == n, onClick = { copyCount = n },
+                                    label = { Text(n.toString()) }, modifier = Modifier.padding(end = 4.dp))
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        onCopyWeeks(weekStart.toString(), copyCount)
+                        showCopyConfirm = false
+                    }, enabled = !busy) { Text("Kopiuj") }
+                },
+                dismissButton = { TextButton(onClick = { showCopyConfirm = false }) { Text("Anuluj") } }
+            )
+            if (showShiftConfirm) AlertDialog(
+                onDismissRequest = { showShiftConfirm = false },
+                title = { Text("Przesuń kolejne treningi") },
+                text = { Text("Przesunąć wszystkie zaplanowane dni od dzisiaj o 1 dzień? Historia treningów i wykonane serie nie zostaną zmienione.") },
+                confirmButton = {
+                    Button(onClick = {
+                        onShiftUpcoming(today.toString(), 1)
+                        showShiftConfirm = false
+                    }, enabled = !busy) { Text("Przesuń o dzień") }
+                },
+                dismissButton = { TextButton(onClick = { showShiftConfirm = false }) { Text("Anuluj") } }
+            )
             Text("Plan tygodnia • zapis lokalny", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             plans.forEach { (date, plan) ->
                 Surface(
