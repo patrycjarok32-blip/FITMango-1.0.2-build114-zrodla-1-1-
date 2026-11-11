@@ -112,7 +112,6 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 listOf(
                     Triple("today", "🏠", "Dzisiaj"),
                     Triple("training", "🏋️", "Trening"),
-                    Triple("challenges", "🎬", "Wyzwania"),
                     Triple("progress", "📈", "Postępy"),
                     Triple("recovery", "🌿", "Regeneracja")
                 ).forEach { (key, emoji, label) ->
@@ -131,7 +130,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             SportTodayDashboard(today, data, workouts, videoChallenges,
                 onStart = { activitySection = "training"; trainingPage = "session" },
                 onPlan = { activitySection = "training"; trainingPage = "plan" },
-                onChallenges = { activitySection = "challenges" },
+                onChallenges = { activitySection = "training"; trainingPage = "plan" },
                 onRecovery = { activitySection = "recovery" })
         }
         if (activitySection == "training") item {
@@ -221,22 +220,6 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 Column(Modifier.padding(14.dp)) {
                     WorkoutOverviewCard(today, data, workouts, videoChallenges, busy,
                         onRestDay = { day -> sports.plan(day, "Regeneracja", true) { saved() } })
-                }
-            }
-        }
-        if (activitySection == "challenges") item {
-            MangoCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(14.dp)) {
-                    VideoChallengesCard(videoChallenges, busy,
-                        onCreate = { title, weeks -> sports.addVideoChallenge(title, weeks) { saved() } },
-                        onDuplicate = { id -> sports.duplicateVideoChallenge(id) { saved() } },
-                        onDelete = { id -> sports.deleteVideoChallenge(id) { saved() } },
-                        onDuplicateWeek = { id, from, to -> sports.duplicateVideoWeek(id, from, to) { saved() } },
-                        onAdd = { id, day, title, minutes, category, url ->
-                            sports.addVideoWorkout(id, day, title, minutes, category, url) { saved() }
-                        },
-                        onToggle = { id, workout -> sports.toggleVideoWorkout(id, workout) { saved() } },
-                        onRemove = { id, workout -> sports.deleteVideoWorkout(id, workout) { saved() } })
                 }
             }
         }
