@@ -51,3 +51,30 @@ object ImportedTrainingPrograms {
         ))
     )
 }
+
+/** Instructional links from the home workout document; only known video URLs are embedded. */
+object ImportedExerciseVideos {
+    private val urls = mapOf(
+        "Wyprost biodra (na stronę)" to "https://www.youtube.com/watch?v=6MGYgc9-v_I",
+        "Goblet squat" to "https://www.youtube.com/watch?v=CkFzgR55gho",
+        "Zakroki (na stronę)" to "https://www.youtube.com/watch?v=B5yU9VvjOr8",
+        "Martwy ciąg na prostych nogach" to "https://www.youtube.com/watch?v=o9puuLKBdjA",
+        "Odwodzenie z mini band" to "https://www.youtube.com/watch?v=VGyomvk6gg8",
+        "Spięcia brzucha" to "https://www.youtube.com/watch?v=MNcn1_YhEsQ",
+        "Glute bridge" to "https://www.youtube.com/watch?v=6pOjT1gEMqQ",
+        "Floor press" to "https://www.youtube.com/watch?v=Fs9gbE5VLKU",
+        "Wyciskanie młotkowe" to "https://www.youtube.com/watch?v=G9L8l4N01-k",
+        "Unoszenie hantli nad głowę" to "https://www.youtube.com/watch?v=pInYJYisaEo",
+        "Prostowanie przedramion w opadzie" to "https://www.youtube.com/watch?v=-tCnjHpmTG4",
+        "Prostowanie przedramion zza głowy" to "https://www.youtube.com/watch?v=bQdml0AuCgI",
+        "Dead bug" to "https://www.youtube.com/watch?v=yUiZpr9ngIA",
+        "Przysiad sumo" to "https://www.youtube.com/watch?v=mL789y2aqrE",
+        "Wiosłowanie w opadzie tułowia" to "https://www.youtube.com/watch?v=MOlDmANU_4U",
+        "Narciarz" to "https://www.youtube.com/watch?v=TgXJkJ3Hq2A",
+        "Unoszenie sztangi do klatki" to "https://www.youtube.com/watch?v=Jr2jZECyKi0",
+        "Uginanie hantli młotkowo" to "https://www.youtube.com/watch?v=s_ubLsRZ59I",
+        "Uginanie z supinacją" to "https://www.youtube.com/watch?v=RTYQSbHTwOg",
+        "Plank (60 sekund)" to "https://www.youtube.com/watch?v=Rhq4govSpAg"
+    )
+    fun forExercise(name: String): String? = urls[name]
+}
