@@ -35,7 +35,7 @@ class RecipePhotoService(
         }
     }
     fun pixabay(recipe: RecipeEntity, token: String, englishQuery: String? = null): AutomaticPhoto? {
-        val query = englishQuery ?: RecipePhotoMatching.query(recipe.title) ?: return null
+        val query = englishQuery ?: RecipePhotoMatching.queryForRecipe(recipe.title, recipe.ingredients) ?: return null
         val photo = searchPixabay(query, token).filter {
             if (englishQuery == null) RecipePhotoMatching.matches(recipe.title, it.title)
             else RecipePhotoMatching.matchesEnglish(query, it.title)
@@ -237,6 +237,19 @@ object RecipePhotoMatching {
         return (listOf(dish) + ingredients.filter { (names, _) -> names.any { it in text } }.map { it.second }).distinct()
     }
     fun query(title: String): String? = terms(title).takeIf { it.isNotEmpty() }?.joinToString(" ")
+    /** Prefer the dish type from its title, then a few meaningful ingredients.
+     * Known Polish and English names work offline; unknown languages use the AI translation fallback.
+     */
+    fun queryForRecipe(title: String, recipeIngredients: String): String? {
+        val titleTerms = terms(title)
+        val normalizedIngredients = normalize(recipeIngredients)
+        val recognized = ingredients.filter { (names, _) ->
+            names.any { normalized -> normalized in normalizedIngredients }
+        }.map { it.second }
+        val combined = (titleTerms + recognized.take(3)).distinct().take(6)
+        return combined.takeIf { it.isNotEmpty() }?.joinToString(" ")
+    }
+
     fun cleanEnglishQuery(text: String): String? = text.trim().lowercase().takeIf {
         it.length in 3..80 && Regex("[a-z]+(?: [a-z]+){0,7}").matches(it)
     }
