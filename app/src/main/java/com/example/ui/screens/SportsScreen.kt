@@ -160,14 +160,15 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             val program = ImportedTrainingPrograms.all.first { it.id == selectedImportedProgram }
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("📚 Moje plany z dokumentów", style = MaterialTheme.typography.titleLarge)
-                    Text("Wybierz osobny plan domowy lub siłowniany. Podgląd nie zmienia Twojego kalendarza.")
+                    Text("📚 Biblioteka planów treningowych", style = MaterialTheme.typography.titleLarge)
+                    Text("Dwa gotowe plany z przesłanych dokumentów. Wybór i podgląd nie zmieniają zapisanych treningów.")
                     ImportedTrainingPrograms.all.forEach { option ->
                         OutlinedButton(
                             onClick = { selectedImportedProgram = option.id },
                             modifier = Modifier.fillMaxWidth()
                         ) { Text((if (selectedImportedProgram == option.id) "✓ " else "") + option.name) }
                     }
+                    Text("Wybrany: " + program.name, style = MaterialTheme.typography.titleMedium)
                     Text(program.source + " • " + program.days.size + " treningi")
                     program.days.forEach { day ->
                         Text(day.title + " — " + day.exercises.size + " ćwiczeń", style = MaterialTheme.typography.titleMedium)
@@ -175,7 +176,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                             Text("• " + exercise.name + " · " + exercise.sets + " × " + exercise.reps)
                         }
                     }
-                    Text("Zakresy powtórzeń z PDF zapisano jako dolną wartość (np. 8–10 → 8). Plank: 60 oznacza sekundy. Sprawdź plan przed zastosowaniem.")
+                    Text("Przed zapisaniem sprawdź parametry. Zakresy 8–10 zapisano jako 8, a Plank 60 oznacza sekundy. Plan PDF ma charakter osobistego szablonu; jego ilustracje nie są kopiowane.")
                     Button(onClick = { confirmImportedProgram = true }, enabled = !busy,
                         modifier = Modifier.fillMaxWidth()) { Text("Zastosuj ten plan w kalendarzu") }
                 }
@@ -183,8 +184,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             if (confirmImportedProgram) AlertDialog(
                 onDismissRequest = { confirmImportedProgram = false },
                 title = { Text("Zastosować: " + program.name + "?") },
-                text = { Text("Plan zostanie przypisany do kolejnych " + program.days.size +
-                    " dni treningowych (co drugi dzień), począwszy od dzisiaj. Istniejące plany na tych datach zostaną zastąpione. Zapisane treningi i wyniki pozostaną bez zmian.") },
+                text = { Text("Zapisz " + program.days.size +
+                    " dni treningowych w kalendarzu (co drugi dzień) od dzisiaj? Plany na tych datach zostaną zastąpione, ale historia i wyniki pozostaną bez zmian. Drugi szablon nadal będzie dostępny w bibliotece.") },
                 confirmButton = {
                     Button(onClick = {
                         val days = program.days.mapIndexed { index, template ->
