@@ -111,7 +111,7 @@ class BackupService(private val context: Context, private val database: AppDatab
                 encryptedFile.delete()
             }
             if (missing == 0) "Kopia zapisana i sprawdzona (${context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize } ?: -1} bajtów). Przechowuj ją w bezpiecznym miejscu."
-            else "Kopia zapisana i sprawdzona (${encrypted.size} bajtów). Niedostępne pliki: $missing. Ich tekst i pozostałe dane zachowano."
+            else "Kopia zapisana i sprawdzona (${context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize } ?: -1} bajtów). Niedostępne pliki: $missing. Ich tekst i pozostałe dane zachowano."
         } finally { temp.delete() }
     }
 
