@@ -38,16 +38,12 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
             if (plan != null && !plan.rest && plan.exercises.isNotEmpty()) {
                 Text("${plan.exercises.size} ćwiczeń • ${plan.exercises.sumOf { it.sets }} serii")
             }
-            if (pendingVideos > 0) Text("🎬 Wideo na dziś: $pendingVideos")
             Button(onClick = onStart, modifier = Modifier.fillMaxWidth().testTag("sport5_start")) {
                 Text(if (active != null) "Wróć do treningu" else "▶ Rozpocznij trening")
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = onPlan, modifier = Modifier.weight(1f)) { Text("Edytuj plan") }
                 OutlinedButton(onClick = onRecovery, modifier = Modifier.weight(1f)) { Text("Regeneracja") }
-            }
-            OutlinedButton(onClick = onChallenges, modifier = Modifier.fillMaxWidth()) {
-                Text("🎬 Moje wyzwania wideo")
             }
             Text("Wykonane sesje siłowe: $completed • Zapisane serie: ${data.sets.size}",
                 style = MaterialTheme.typography.bodySmall)
