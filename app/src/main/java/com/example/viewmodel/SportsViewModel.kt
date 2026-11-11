@@ -196,6 +196,22 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         val dates = plans.map { it.date }.toSet()
         current.copy(plans = current.plans.filterNot { it.date in dates } + plans)
     }, onSaved)
+    /** Move or swap complete planned sessions across weeks, keeping their exercises and all logged history. */
+    fun movePlannedWorkout(from: String, to: String, swap: Boolean, onSaved: () -> Unit) = edit({ current ->
+        val source = java.time.LocalDate.parse(from)
+        val target = java.time.LocalDate.parse(to)
+        require(source != target) { "Wybierz inny dzień." }
+        val moving = current.plans.firstOrNull { it.date == from }
+            ?: error("Nie ma planu w wybranym dniu.")
+        val existing = current.plans.firstOrNull { it.date == to }
+        require(swap || existing == null) {
+            "Dzień docelowy jest zajęty. Wybierz zamianę treningów lub wolny dzień."
+        }
+        val unchanged = current.plans.filterNot { it.date == from || it.date == to }
+        val moved = moving.copy(date = target.toString())
+        val other = if (swap) existing?.copy(date = source.toString()) else null
+        current.copy(plans = unchanged + moved + listOfNotNull(other))
+    }, onSaved)
     fun updatePlannedExercises(date: String, exercises: List<PlannedExercise>, onSaved: () -> Unit) = edit({ current ->
         require(exercises.size <= 30)
         require(current.plans.any { it.date == date && !it.rest })
