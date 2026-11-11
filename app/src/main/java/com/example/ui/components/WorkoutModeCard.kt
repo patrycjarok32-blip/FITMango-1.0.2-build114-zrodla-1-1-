@@ -1,6 +1,8 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
@@ -72,8 +74,14 @@ fun WorkoutModeCard(
             }
             val done = active.entries.count { it.done }
             Text(if (allCompleted) "🎉 Wszystkie ćwiczenia ukończone" else "🟢 ${active.title} • Pozostało ${pendingExercises.size} z ${exercises.size} ćwiczeń", style = MaterialTheme.typography.titleMedium)
-            Text("Wykonano ${done}/${active.entries.size} serii")
-            LinearProgressIndicator(progress = { if (active.entries.isEmpty()) 0f else done.toFloat() / active.entries.size },
+            val completion = if (active.entries.isEmpty()) 0f else done.toFloat() / active.entries.size
+            val animatedCompletion by animateFloatAsState(targetValue = completion, label = "workoutProgress")
+            Text("Wykonano ${done}/${active.entries.size} serii • ${(completion * 100).toInt()}%")
+            AnimatedVisibility(visible = allCompleted) {
+                Text("🎉 Brawo! Wszystkie serie ukończone — zapisz trening, aby utrwalić wynik.",
+                    style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            }
+            LinearProgressIndicator(progress = { animatedCompletion },
                 modifier = Modifier.fillMaxWidth())
             if (!allCompleted) Card(shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -190,7 +198,9 @@ fun WorkoutModeCard(
             }
             if (!allCompleted) Text("⏱️ Przerwa: ${rest / 60}:${(rest % 60).toString().padStart(2, '0')}", style = MaterialTheme.typography.titleLarge)
             if (!allCompleted) Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                TextButton(onClick = { rest = 45; restRunning = true }) { Text("45s") }
                 TextButton(onClick = { rest = 60; restRunning = true }) { Text("60s") }
+                TextButton(onClick = { rest = 90; restRunning = true }) { Text("90s") }
                 TextButton(onClick = { restRunning = !restRunning }, enabled = rest > 0) {
                     Text(if (restRunning) "Pauza" else "Wznów")
                 }
