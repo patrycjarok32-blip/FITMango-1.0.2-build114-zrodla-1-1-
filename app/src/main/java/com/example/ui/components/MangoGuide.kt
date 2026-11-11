@@ -32,7 +32,13 @@ fun MangoGuide(message: String? = null, event: Int = 0, size: Dp = 36.dp, modifi
     if (!enabled) return
     val reduced = LocalReducedMangoMotion.current
     val tilt = remember { Animatable(0f) }
-    LaunchedEffect(event, reduced) {
+    val mood = when {
+        message?.contains("gratul", ignoreCase = true) == true || message?.contains("brawo", ignoreCase = true) == true -> "🎉"
+        message?.contains("trening", ignoreCase = true) == true -> "💪"
+        message?.contains("odpoc", ignoreCase = true) == true -> "🌿"
+        else -> "🥭"
+    }
+    LaunchedEffect(event, mood, reduced) {
         if (reduced) tilt.snapTo(0f)
         else { tilt.snapTo(-6f); tilt.animateTo(5f, tween(120)); tilt.animateTo(0f, tween(160)) }
     }
@@ -42,7 +48,7 @@ fun MangoGuide(message: String? = null, event: Int = 0, size: Dp = 36.dp, modifi
                 .background(Brush.linearGradient(listOf(MangoSunset.copy(alpha = .55f), JuicyOrange.copy(alpha = .18f))), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Text("🥭", modifier = Modifier.graphicsLayer { rotationZ = tilt.value },
+            Text(mood, modifier = Modifier.graphicsLayer { rotationZ = tilt.value },
                 style = MaterialTheme.typography.headlineMedium)
         }
         if (message != null) Text(message, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
