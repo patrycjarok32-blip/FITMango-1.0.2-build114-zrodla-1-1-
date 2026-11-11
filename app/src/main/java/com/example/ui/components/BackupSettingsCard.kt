@@ -24,6 +24,7 @@ fun BackupSettingsCard(viewModel: DietaViewModel) {
     val preview by backup.preview.collectAsStateWithLifecycle()
     val hasRecovery by backup.hasRecovery.collectAsStateWithLifecycle()
     var backupPassword by remember { mutableStateOf("") }
+    var showBackupDetails by remember { mutableStateOf(false) }
     val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
         uri?.let { backup.export(it, backupPassword) }
     }
@@ -45,7 +46,7 @@ fun BackupSettingsCard(viewModel: DietaViewModel) {
             Text("Ostatnia kopia do pliku: ${backup.status.date(backupStatus.lastExport)}")
             Text("Kopia automatyczna na telefonie: ${backup.status.date(backupStatus.lastAutomatic)}")
             Row { Switch(backupStatus.automatic, { backup.status.automatic(it) }); Text("Automatyczna kopia lokalna") }
-            Text("Po zmianach w przepisach i jadłospisie zapisujemy kopię lokalną po 20 sekundach bez kolejnych zmian. Pozostaje na tym telefonie; plik zewnętrzny zapisz osobno.", style = MaterialTheme.typography.bodySmall)
+            Text("Kopia lokalna pozostaje na telefonie. Eksport zewnętrzny zapisz osobno.", style = MaterialTheme.typography.bodySmall)
             OutlinedButton(onClick = { backup.saveAutomaticNow() }, enabled = !busy) { Text("Zapisz kopię lokalną teraz") }
             if (backupStatus.lastAutomatic > 0) {
                 OutlinedButton(onClick = { saveAutomatic.launch("FITMango-automatyczna-${java.time.LocalDate.now()}.zip") },
@@ -55,7 +56,8 @@ fun BackupSettingsCard(viewModel: DietaViewModel) {
                 Text("Wybierz Pobrane (Downloads), Dysk Google lub inne dostępne miejsce. Ta kopia nie jest szyfrowana hasłem — przechowuj ją prywatnie.", style = MaterialTheme.typography.bodySmall)
                 OutlinedButton(onClick = { backup.prepareAutomatic() }, enabled = !busy) { Text("Przywróć kopię automatyczną") }
             }
-            Text("Zapisz przepisy, ulubione, jadłospis, zakupy, pomiary, napoje, kreatynę, profil, lokalne zdjęcia oraz klucze API w szyfrowanej kopii. Zdjęcia internetowe zachowują swoje linki.")
+            HorizontalDivider()
+            Text("Kopia szyfrowana • dane, zdjęcia i klucze API", style = MaterialTheme.typography.titleSmall)
             OutlinedTextField(value = backupPassword, onValueChange = { backupPassword = it }, label = { Text("Hasło kopii (minimum 8 znaków)") }, visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
             Text("Zachowaj hasło: bez niego nie odzyskasz danych z zaszyfrowanej kopii. Kopię zapisz poza aplikacją.", style = MaterialTheme.typography.bodySmall)
             Button(onClick = { save.launch("FITMango-kopia-${java.time.LocalDate.now()}.zip") }, enabled = !busy && backupPassword.length >= 8,
@@ -67,7 +69,13 @@ fun BackupSettingsCard(viewModel: DietaViewModel) {
             }
             if (busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text("Przetwarzanie kopii…") }
             message?.let { Text(it, modifier = Modifier.testTag("backup_result")) }
-            Text("Eksport do pliku jest szyfrowany hasłem i zawiera klucze Gemini, Pixabay oraz zdjęcia zapisane lokalnie. Automatyczna kopia lokalna nie zawiera kluczy. Health Connect wymaga ponownego połączenia.", style = MaterialTheme.typography.bodySmall)
+            TextButton(onClick = { showBackupDetails = !showBackupDetails }) {
+                Text(if (showBackupDetails) "▲ Ukryj szczegóły" else "▼ Szczegóły bezpieczeństwa")
+            }
+            if (showBackupDetails) {
+                Text("Kopia szyfrowana zawiera klucze Gemini, Pixabay i zdjęcia lokalne. Automatyczna kopia lokalna nie zawiera kluczy. Health Connect wymaga ponownego połączenia.", style = MaterialTheme.typography.bodySmall)
+                Text("Nie przywracaj plików 0 KB. W razie błędu zachowaj działającą kopię lokalną.", style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
     preview?.let { prepared ->
