@@ -27,6 +27,7 @@ fun WorkoutModeCard(
     var effort by rememberSaveable { mutableIntStateOf(6) }
     var rest by rememberSaveable { mutableIntStateOf(0) }
     var restRunning by rememberSaveable { mutableStateOf(false) }
+    var showFinishConfirmation by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(restRunning, rest) {
         if (restRunning && rest > 0) { delay(1000); rest-- }
         else if (rest == 0) restRunning = false
@@ -51,22 +52,29 @@ fun WorkoutModeCard(
             val exercises = active.entries.map { it.exercise }.distinct()
             val index = exerciseIndex.coerceIn(0, (exercises.size - 1).coerceAtLeast(0))
             val selected = exercises.getOrNull(index)
+            val nextPending = active.entries.indexOfFirst { !it.done }
+            LaunchedEffect(active.id, nextPending) {
+                if (nextPending >= 0 && !showExerciseList) {
+                    val pendingExercise = active.entries[nextPending].exercise
+                    val pendingIndex = exercises.indexOf(pendingExercise)
+                    if (pendingIndex >= 0 && exercises.getOrNull(exerciseIndex) != pendingExercise &&
+                        active.entries.filter { it.exercise == exercises.getOrNull(exerciseIndex) }.all { it.done }) {
+                        exerciseIndex = pendingIndex
+                    }
+                }
+            }
             val done = active.entries.count { it.done }
             Text("🟢 ${active.title} • Ćwiczenie ${index + 1} z ${exercises.size}", style = MaterialTheme.typography.titleMedium)
             Text("Wykonano ${done}/${active.entries.size} serii")
             LinearProgressIndicator(progress = { if (active.entries.isEmpty()) 0f else done.toFloat() / active.entries.size },
                 modifier = Modifier.fillMaxWidth())
             Card(shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
-                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    ExercisePhotoCard(selected.orEmpty(), modifier = Modifier.width(128.dp))
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                        Text(selected.orEmpty(), style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold)
-                        Text("Ćwiczenie " + (index + 1) + " z " + exercises.size,
-                            style = MaterialTheme.typography.labelMedium)
-                        TextButton(onClick = { showTechnique = true }) { Text("ⓘ Technika i wskazówki") }
-                    }
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(selected.orEmpty(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    // Full-width photograph instead of the former narrow gallery column.
+                    ExercisePhotoCard(selected.orEmpty(), modifier = Modifier.fillMaxWidth())
+                    Text("Ćwiczenie ${index + 1} z ${exercises.size}", style = MaterialTheme.typography.labelLarge)
+                    TextButton(onClick = { showTechnique = true }) { Text("ⓘ Technika i wskazówki") }
                 }
             }
             if (showTechnique) {
@@ -92,7 +100,7 @@ fun WorkoutModeCard(
             val previous = selected?.let { WorkoutInsights.previousKg(sports.sets, it) }
             val advice = selected?.let { WorkoutInsights.coachAdvice(sports, it,
                 active.entries.firstOrNull { e -> e.exercise == it }?.reps ?: 10) }
-            if (previous != null) Text("📈 Ostatni ciężar: " + previous + " kg")
+            if (previous != null) Text("📈 Poprzedni wynik: " + previous + " kg • sprawdź powtórzenia w dzienniku")
             if (advice != null) {
                 Text("🧠 Trener: " + advice.recommendation)
                 if (advice.weightKg != null) Text("Orientacyjny ciężar: " + advice.weightKg + " kg")
@@ -156,8 +164,18 @@ fun WorkoutModeCard(
             Text("Odczuwalny wysiłek: ${effort}/10")
             Slider(value = effort.toFloat(), onValueChange = { effort = it.toInt().coerceIn(1, 10) },
                 valueRange = 1f..10f, steps = 8)
-            Button(onClick = { onFinish(active.id, effort) }, enabled = !busy && done > 0,
+            Button(onClick = { showFinishConfirmation = true }, enabled = !busy && done > 0,
                 modifier = Modifier.fillMaxWidth()) { Text("🏁 Zakończ i zapisz podsumowanie") }
+            if (showFinishConfirmation) AlertDialog(
+                onDismissRequest = { showFinishConfirmation = false },
+                title = { Text("Zakończyć trening?") },
+                text = { Text("Zapisano $done z ${active.entries.size} serii. Niewykonane serie pozostaną pominięte w podsumowaniu.") },
+                confirmButton = { Button(onClick = {
+                    showFinishConfirmation = false
+                    onFinish(active.id, effort)
+                }) { Text("Zakończ i zapisz") } },
+                dismissButton = { TextButton(onClick = { showFinishConfirmation = false }) { Text("Wróć do treningu") } }
+            )
             Text("Postęp zapisuje się po każdej zatwierdzonej serii. Po powrocie do aplikacji można wznowić sesję.",
                 style = MaterialTheme.typography.bodySmall)
         }
