@@ -1,5 +1,11 @@
 package com.example.ui.components
 
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -54,6 +60,10 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
     var movingDay by rememberSaveable { mutableStateOf<String?>(null) }
     var destinationDay by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmSwap by rememberSaveable { mutableStateOf(false) }
+    var draggingFrom by remember { mutableStateOf<String?>(null) }
+    var hoveredDay by remember { mutableStateOf<String?>(null) }
+    val dayBounds = remember { mutableStateMapOf<String, Rect>() }
+    var dragPoint by remember { mutableStateOf<Offset?>(null) }
     var strengthGoal by rememberSaveable { mutableStateOf("muscle") }
     var trainingDays by rememberSaveable { mutableStateOf("3") }
     var experience by rememberSaveable { mutableStateOf("beginner") }
@@ -201,11 +211,52 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                 dismissButton = { TextButton(onClick = { showShiftConfirm = false }) { Text("Anuluj") } }
             )
             Text("Plan tygodnia • zapis lokalny", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Przytrzymaj kafelek treningu i przeciągnij na inny dzień. Zmiana wymaga potwierdzenia.",
+                style = MaterialTheme.typography.bodySmall)
             plans.forEach { (date, plan) ->
                 Surface(
-                    modifier = Modifier.fillMaxWidth().testTag("sport_plan_day_${date}"),
+                    modifier = Modifier.fillMaxWidth().testTag("sport_plan_day_${date}")
+                        .onGloballyPositioned { dayBounds[date.toString()] = it.boundsInRoot() }
+                        .pointerInput(date, plan?.date, busy) {
+                            if (plan != null && !busy) {
+                                var anchor = Offset.Zero
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { start ->
+                                        draggingFrom = date.toString()
+                                        anchor = (dayBounds[date.toString()]?.topLeft ?: Offset.Zero) + start
+                                        dragPoint = anchor
+                                        hoveredDay = date.toString()
+                                    },
+                                    onDrag = { change, delta ->
+                                        change.consume()
+                                        anchor += delta
+                                        dragPoint = anchor
+                                        hoveredDay = dayBounds.entries.firstOrNull { (_, rect) ->
+                                            rect.contains(anchor)
+                                        }?.key
+                                    },
+                                    onDragEnd = {
+                                        val destination = hoveredDay
+                                        if (destination != null && destination != date.toString()) {
+                                            movingDay = date.toString()
+                                            destinationDay = destination
+                                            confirmSwap = false
+                                        }
+                                        draggingFrom = null
+                                        hoveredDay = null
+                                        dragPoint = null
+                                    },
+                                    onDragCancel = {
+                                        draggingFrom = null
+                                        hoveredDay = null
+                                        dragPoint = null
+                                    }
+                                )
+                            }
+                        },
                     shape = RoundedCornerShape(18.dp),
-                    color = if (date == today) MaterialTheme.colorScheme.secondaryContainer
+                    color = if (draggingFrom != null && hoveredDay == date.toString()) LeafGreen.copy(alpha = 0.24f)
+                        else if (date == today) MaterialTheme.colorScheme.secondaryContainer
                         else MaterialTheme.colorScheme.surfaceVariant,
                     border = BorderStroke(1.dp, if (date == today) LeafGreen.copy(alpha = 0.5f)
                         else MaterialTheme.colorScheme.outlineVariant)
@@ -245,6 +296,8 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                     }
                 }
             }
+            if (draggingFrom != null) Text("Przeciągasz: " + (data.plans.firstOrNull { it.date == draggingFrom }?.title ?: "") +
+                " → " + (hoveredDay ?: "upuść na wybranym dniu"), color = LeafGreen)
             if (movingDay != null && destinationDay != null) AlertDialog(
                 onDismissRequest = { movingDay = null; confirmSwap = false },
                 title = { Text("Przenieś trening") },
