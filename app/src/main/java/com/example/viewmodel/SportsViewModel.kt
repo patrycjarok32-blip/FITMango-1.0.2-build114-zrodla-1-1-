@@ -212,6 +212,38 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         val other = if (swap) existing?.copy(date = source.toString()) else null
         current.copy(plans = unchanged + moved + listOfNotNull(other))
     }, onSaved)
+    /** Copy one planned week to 1–4 future weeks, refusing to overwrite existing plans. */
+    fun copyWorkoutWeeks(start: String, count: Int, onSaved: () -> Unit) = edit({ current ->
+        require(count in 1..4)
+        val monday = SportsSupport.week(java.time.LocalDate.parse(start))
+        val source = current.plans.filter { p ->
+            val date = java.time.LocalDate.parse(p.date)
+            !date.isBefore(monday) && date.isBefore(monday.plusDays(7))
+        }
+        require(source.isNotEmpty()) { "Brak planów w wybranym tygodniu." }
+        val copies = (1..count).flatMap { offset ->
+            source.map { it.copy(date = java.time.LocalDate.parse(it.date).plusWeeks(offset.toLong()).toString()) }
+        }
+        val existing = current.plans.map { it.date }.toSet()
+        require(copies.none { it.date in existing }) {
+            "W kolejnych tygodniach są już plany. Zmień zakres lub przenieś je przed kopiowaniem."
+        }
+        current.copy(plans = current.plans + copies)
+    }, onSaved)
+
+    /** Shift upcoming planned sessions forward, never touching completed history. */
+    fun shiftUpcomingWorkouts(from: String, days: Int, onSaved: () -> Unit) = edit({ current ->
+        require(days in 1..7)
+        val start = java.time.LocalDate.parse(from)
+        val moving = current.plans.filter { !java.time.LocalDate.parse(it.date).isBefore(start) }
+        require(moving.isNotEmpty()) { "Brak kolejnych treningów do przesunięcia." }
+        val stationary = current.plans.filterNot { it in moving }
+        val shifted = moving.map { it.copy(date = java.time.LocalDate.parse(it.date).plusDays(days.toLong()).toString()) }
+        val fixedDates = stationary.map { it.date }.toSet()
+        require(shifted.none { it.date in fixedDates }) { "Przesunięcie koliduje z wcześniejszym planem." }
+        current.copy(plans = stationary + shifted)
+    }, onSaved)
+
     fun updatePlannedExercises(date: String, exercises: List<PlannedExercise>, onSaved: () -> Unit) = edit({ current ->
         require(exercises.size <= 30)
         require(current.plans.any { it.date == date && !it.rest })
