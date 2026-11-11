@@ -100,6 +100,24 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         require(sessions.none { it.ended == 0L }) { "Najpierw dokończ rozpoczęty trening." }
         (sessions + WorkoutSessionStore.create(plan, plan.date)).takeLast(200)
     }, onSaved)
+    fun replaceWorkoutExercise(id: String, oldName: String, newName: String, onSaved: () -> Unit = {}) =
+        editWorkout({ sessions ->
+            require(newName.isNotBlank() && newName.length <= 120)
+            sessions.map { w ->
+                if (w.id != id || w.ended != 0L) w else {
+                    require(w.entries.any { it.exercise == oldName })
+                    require(w.entries.none { it.exercise == oldName && it.done }) {
+                        "Nie można zamienić ćwiczenia z ukończonymi seriami."
+                    }
+                    require(w.entries.none { it.exercise == newName }) {
+                        "To ćwiczenie jest już w sesji."
+                    }
+                    w.copy(entries = w.entries.map { e ->
+                        if (e.exercise == oldName) e.copy(exercise = newName) else e
+                    })
+                }
+            }
+        }, onSaved)
     fun updateWorkoutEntry(id: String, index: Int, reps: Int, kg: Double, done: Boolean, onSaved: () -> Unit = {}) =
         editWorkout({ sessions ->
             require(reps in 1..1000 && kg.isFinite() && kg in 0.0..2000.0)
