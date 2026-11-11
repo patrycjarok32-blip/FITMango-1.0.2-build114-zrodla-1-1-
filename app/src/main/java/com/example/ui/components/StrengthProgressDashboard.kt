@@ -3,6 +3,10 @@ package com.example.ui.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import kotlin.math.roundToInt
@@ -29,6 +33,7 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
     var selected by remember { mutableStateOf("") }
     var rangeDays by remember { mutableIntStateOf(90) }
     var selectedPoint by remember { mutableIntStateOf(-1) }
+    var showExerciseHistory by remember { mutableStateOf(false) }
     val chosen = selected.takeIf { it in exercises } ?: exercises.firstOrNull()
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -45,6 +50,7 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
                         exercises.forEach { name ->
                             DropdownMenuItem(text = { Text(name) }, onClick = {
                                 selected = name
+                                selectedPoint = -1
                                 menu = false
                             })
                         }
@@ -52,7 +58,7 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(30 to "30 dni", 90 to "90 dni", 3650 to "Całość").forEach { (days, label) ->
-                        FilterChip(selected = rangeDays == days, onClick = { rangeDays = days },
+                        FilterChip(selected = rangeDays == days, onClick = { rangeDays = days; selectedPoint = -1 },
                             label = { Text(label) })
                     }
                 }
@@ -84,7 +90,8 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
                         Text("📍 " + point.first + " • " + "%.1f".format(point.second) +
                             " kg • objętość " + "%.1f".format(point.third) + " kg")
                     }
-                    Canvas(Modifier.fillMaxWidth().height(110.dp)
+                    Canvas(Modifier.fillMaxWidth().height(145.dp)
+                        .semantics { contentDescription = "Wykres ciężaru. Wybierz datę z przycisków poniżej." }
                         .pointerInput(visibleHistory) {
                             detectTapGestures { offset ->
                                 val fraction = (offset.x / size.width).coerceIn(0f, 1f)
@@ -105,10 +112,53 @@ fun StrengthProgressDashboard(data: SportsData, today: LocalDate) {
                             }
                             drawPath(path, tint, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round))
                         }
-                        coords.forEach { drawCircle(tint, 4.dp.toPx(), it) }
+                        coords.forEachIndexed { index, point ->
+                            drawCircle(tint, if (selectedPoint == index) 7.dp.toPx() else 4.dp.toPx(), point)
+                        }
                     }
-                    Text("Dotknij wykresu, aby zobaczyć szczegóły. Od " + visibleHistory.first().first + " do " + visibleHistory.last().first,
+                    Text("Wybierz datę, aby zobaczyć ciężar i objętość:", style = MaterialTheme.typography.bodySmall)
+                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        visibleHistory.forEachIndexed { index, entry ->
+                            FilterChip(selected = selectedPoint == index,
+                                onClick = { selectedPoint = index },
+                                label = { Text(entry.first.takeLast(5)) })
+                        }
+                    }
+                    Text("Od " + visibleHistory.first().first + " do " + visibleHistory.last().first,
                         style = MaterialTheme.typography.bodySmall)
+                }
+                HorizontalDivider()
+                TextButton(onClick = { showExerciseHistory = !showExerciseHistory },
+                    modifier = Modifier.fillMaxWidth()) {
+                    Text(if (showExerciseHistory) "▲ Ukryj historię ćwiczenia" else "▼ Pełna historia ćwiczenia")
+                }
+                AnimatedVisibility(visible = showExerciseHistory) {
+                    val allSets = data.sets.filter { it.exercise.trim() == chosen }
+                        .sortedWith(compareByDescending<SportSet> { it.date }.thenByDescending { it.time })
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Historia: " + chosen, style = MaterialTheme.typography.titleMedium)
+                        Text("Zapisane serie, również spoza zakresu wykresu.",
+                            style = MaterialTheme.typography.bodySmall)
+                        if (allSets.isEmpty()) Text("Nie ma jeszcze zapisanych serii.")
+                        allSets.groupBy { it.date }.entries.take(20).forEach { (date, sets) ->
+                            Card(colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                                Column(Modifier.fillMaxWidth().padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(date + " • " + sets.size + " serii",
+                                        style = MaterialTheme.typography.titleSmall)
+                                    sets.forEach { set ->
+                                        Text("• " + "%.1f".format(set.kg) + " kg × " + set.reps +
+                                            " powt. = " + "%.1f".format(set.kg * set.reps) + " kg objętości")
+                                    }
+                                }
+                            }
+                        }
+                        if (allSets.map { it.date }.distinct().size > 20)
+                            Text("Pokazano 20 ostatnich dni treningowych.",
+                                style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             }
         }
