@@ -211,7 +211,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         onEntry = { id, index, reps, kg, done ->
                             sports.updateWorkoutEntry(id, index, reps, kg, done) { saved() }
                         },
-                        onFinish = { id, effort -> sports.finishWorkout(id, effort) { saved() } })
+                        onFinish = { id, effort -> sports.finishWorkout(id, effort) { saved() } },
+                        onReplaceExercise = { id, old, new -> sports.replaceWorkoutExercise(id, old, new) { saved() } })
                 }
             }
         }
