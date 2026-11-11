@@ -1045,6 +1045,7 @@ private fun MealCategorySection(
     dragController: MealDragController
 ) {
     var addMenuOpen by remember(categorySpec.canonicalName) { mutableStateOf(false) }
+    var expanded by rememberSaveable(categorySpec.canonicalName) { mutableStateOf(meals.isNotEmpty() && meals.any { !MealPlannerSupport.completedInCurrentWeek(it) }) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1098,6 +1099,11 @@ private fun MealCategorySection(
                 }
             }
 
+            if (meals.isNotEmpty()) {
+                TextButton(onClick = { expanded = !expanded }, modifier = Modifier.testTag("meal_slot_expand_" + categorySpec.canonicalName)) {
+                    Text(if (expanded) "▲ Zwiń" else "▼ " + meals.size + " pos.")
+                }
+            }
             Box {
                 TextButton(onClick = { addMenuOpen = true }, modifier = Modifier.testTag("add_to_slot_${categorySpec.canonicalName}")) {
                     Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -1140,7 +1146,7 @@ private fun MealCategorySection(
                     )
                 }
             }
-        } else {
+        } else if (expanded) {
             meals.forEach { meal ->
                 val matchedRecipe = recipes.find { it.id == meal.recipeId }
                     ?: recipes.find { it.title.equals(meal.recipeTitle, ignoreCase = true) }
