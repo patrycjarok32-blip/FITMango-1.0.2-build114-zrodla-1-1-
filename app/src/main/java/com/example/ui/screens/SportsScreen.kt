@@ -396,6 +396,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 onRemovePlan = { day -> sports.removePlan(day) { saved() } },
                 onAddSet = { day, exercise, reps, kg -> sports.addSet(day, exercise, reps, kg) { saved() } },
                 onSaveWeek = { plans -> sports.saveTrainingWeek(plans) { saved() } },
+                onMovePlan = { from, to, swap -> sports.movePlannedWorkout(from, to, swap) { saved() } },
                 onRemoveSet = { id -> sports.removeSet(id) { saved() } },
                 onUpdateExercises = { date, exercises -> sports.updatePlannedExercises(date, exercises) { saved() } })
         }
