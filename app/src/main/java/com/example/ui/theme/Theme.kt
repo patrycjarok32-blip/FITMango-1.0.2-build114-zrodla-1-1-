@@ -30,10 +30,10 @@ fun MojaDietaAiTheme(darkTheme: Boolean = false, dynamicColor: Boolean = false, 
     val light = MangoAppearance.light
     val base = if (light) lightColorScheme() else darkColorScheme()
     val scheme = base.copy(
-        primary = if (light) Color(0xFFCC650A) else MangoYellow, onPrimary = if (light) Color.White else MangoButtonInk,
-        primaryContainer = if (light) Color(0xFFFFE8D2) else MutedSurface2, onPrimaryContainer = if (light) Color(0xFF5A3100) else Cream,
+        primary = if (light) MangoForest else MangoYellow, onPrimary = if (light) Color.White else MangoButtonInk,
+        primaryContainer = if (light) Color(0xFFE1EDDE) else MutedSurface2, onPrimaryContainer = if (light) Color(0xFF254D37) else Cream,
         secondary = LeafGreen, onSecondary = Color.White,
-        secondaryContainer = if (light) Color(0xFFDDF5E7) else MutedSurface2, onSecondaryContainer = if (light) Color(0xFF174C32) else Cream,
+        secondaryContainer = if (light) Color(0xFFE7F0E5) else MutedSurface2, onSecondaryContainer = if (light) Color(0xFF174C32) else Cream,
         tertiary = MangoLavender, onTertiary = Color.White,
         tertiaryContainer = if (light) Color(0xFFEDE7FF) else Color(0xFF342A54), onTertiaryContainer = if (light) Color(0xFF3B2869) else Color.White,
         background = DarkBackground, onBackground = Cream,
@@ -47,7 +47,7 @@ fun MojaDietaAiTheme(darkTheme: Boolean = false, dynamicColor: Boolean = false, 
         error = if (light) Color(0xFFB3261E) else Color(0xFFFF8C95))
     SideEffect {
         context.findActivity()?.let { activity ->
-            val barStyle = if (light) SystemBarStyle.light(0xFFFFFAF1.toInt(), 0xFFFFFAF1.toInt())
+            val barStyle = if (light) SystemBarStyle.light(0xFFF7F6EF.toInt(), 0xFFF7F6EF.toInt())
                 else SystemBarStyle.dark(0xFF0B1017.toInt())
             activity.enableEdgeToEdge(statusBarStyle = barStyle, navigationBarStyle = barStyle)
             WindowCompat.getInsetsController(activity.window, view).apply {
