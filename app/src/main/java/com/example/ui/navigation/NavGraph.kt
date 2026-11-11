@@ -49,15 +49,15 @@ import com.example.ui.theme.*
 import com.example.viewmodel.DietaViewModel
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Dashboard : Screen("dashboard", "Dieta", Icons.Outlined.RestaurantMenu)
+    object Dashboard : Screen("dashboard", "Pulpit", Icons.Outlined.RestaurantMenu)
     object MealPlan : Screen("meal_plan", "Jadłospis", Icons.Outlined.CalendarMonth)
     object Documents : Screen("documents", "Dokumenty", Icons.Outlined.PictureAsPdf)
     object AiCoach : Screen("ai_coach", "AI", Icons.Outlined.SmartToy)
     object Recipes : Screen("recipes", "Przepisy", Icons.Outlined.RestaurantMenu)
     object Shopping : Screen("shopping", "Zakupy", Icons.Outlined.ShoppingCart)
     object Progress : Screen("effects", "Postępy", Icons.Outlined.ShowChart)
-    object Sport : Screen("sport", "Aktywność", Icons.Outlined.FitnessCenter)
-    object Profile : Screen("profile", "Więcej", Icons.Outlined.MoreHoriz)
+    object Sport : Screen("sport", "Trening", Icons.Outlined.FitnessCenter)
+    object Profile : Screen("profile", "Profil", Icons.Outlined.MoreHoriz)
 }
 
 @Composable
@@ -71,6 +71,7 @@ fun MangoBottomNav(
         Screen.Dashboard.route -> JuicyOrange
         Screen.MealPlan.route -> JuicyOrange
         Screen.Sport.route -> LeafGreen
+        Screen.Recipes.route -> MangoCoral
         Screen.Progress.route -> LeafGreen
         else -> MangoYellow
     }
@@ -162,7 +163,7 @@ fun MangoBottomNav(
                     Text(
                         text = screen.title,
                         color = labelColor,
-                        fontSize = 10.sp,
+                        fontSize = 11.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -201,8 +202,8 @@ fun MainNavigation(viewModel: DietaViewModel) {
     val items = listOf(
         Screen.Dashboard,
         Screen.MealPlan,
+        Screen.Recipes,
         Screen.Sport,
-        Screen.Progress,
         Screen.Profile
     )
 
