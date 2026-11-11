@@ -31,6 +31,7 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
     onPlan: (String, String, Boolean) -> Unit, onRemovePlan: (String) -> Unit,
     onAddSet: (String, String, Int, Double) -> Unit,
     onSaveWeek: (List<SportPlan>) -> Unit = {},
+    onMovePlan: (String, String, Boolean) -> Unit = { _, _, _ -> },
     onRemoveSet: (String) -> Unit = {},
     onUpdateExercises: (String, List<PlannedExercise>) -> Unit = { _, _ -> }) {
     var planDay by rememberSaveable { mutableStateOf(today.toString()) }
@@ -44,12 +45,16 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
     var planMode by rememberSaveable { mutableStateOf("auto") }
     var showGenerator by rememberSaveable { mutableStateOf(false) }
     var pendingDeleteDay by rememberSaveable { mutableStateOf<String?>(null) }
+    var weekOffset by rememberSaveable { mutableIntStateOf(0) }
+    var movingDay by rememberSaveable { mutableStateOf<String?>(null) }
+    var destinationDay by rememberSaveable { mutableStateOf<String?>(null) }
+    var confirmSwap by rememberSaveable { mutableStateOf(false) }
     var strengthGoal by rememberSaveable { mutableStateOf("muscle") }
     var trainingDays by rememberSaveable { mutableStateOf("3") }
     var experience by rememberSaveable { mutableStateOf("beginner") }
     var trainingPlace by rememberSaveable { mutableStateOf("gym") }
     var generatedTitles by remember { mutableStateOf<List<String>>(emptyList()) }
-    val weekStart = SportsSupport.week(today)
+    val weekStart = SportsSupport.week(today).plusWeeks(weekOffset.toLong())
     val plans = remember(data.plans, weekStart) {
         (0L..6L).map { weekStart.plusDays(it) to data.plans.firstOrNull { p -> p.date == weekStart.plusDays(it).toString() } }
     }
@@ -142,6 +147,14 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                 LaunchedEffect(planMode) { showEditor = true }
             }
             }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = { weekOffset = (weekOffset - 1).coerceAtLeast(-52) }) { Text("← Tydzień") }
+                Text(weekStart.format(DateTimeFormatter.ofPattern("dd.MM")) + "–" +
+                    weekStart.plusDays(6).format(DateTimeFormatter.ofPattern("dd.MM")),
+                    style = MaterialTheme.typography.labelMedium, modifier = Modifier.weight(1f))
+                TextButton(onClick = { weekOffset = (weekOffset + 1).coerceAtMost(52) }) { Text("Tydzień →") }
+            }
+            if (weekOffset != 0) TextButton(onClick = { weekOffset = 0 }) { Text("Wróć do bieżącego tygodnia") }
             Text("Plan tygodnia • zapis lokalny", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             plans.forEach { (date, plan) ->
                 Surface(
@@ -162,6 +175,12 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                                 style = MaterialTheme.typography.bodyMedium)
                             if (plan?.rest == true) Text("Regeneracja", style = MaterialTheme.typography.labelSmall)
                         }
+                        if (plan != null) TextButton(onClick = {
+                            movingDay = date.toString()
+                            destinationDay = date.plusDays(1).toString()
+                        }, enabled = !busy) {
+                            Icon(Icons.Outlined.SwapHoriz, contentDescription = "Przenieś trening z ${date}")
+                        }
                         if (plan != null) TextButton(onClick = { pendingDeleteDay = date.toString() },
                             enabled = !busy) {
                             Icon(Icons.Outlined.Close, contentDescription = "Usuń plan z ${date}")
@@ -169,6 +188,54 @@ fun SportProfileCards(data: SportsData, today: LocalDate, busy: Boolean,
                     }
                 }
             }
+            if (movingDay != null && destinationDay != null) AlertDialog(
+                onDismissRequest = { movingDay = null; confirmSwap = false },
+                title = { Text("Przenieś trening") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Z " + movingDay + " na inny dzień — także w kolejnym tygodniu.")
+                        val destination = runCatching { LocalDate.parse(destinationDay) }.getOrNull()
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            TextButton(onClick = {
+                                destination?.let { destinationDay = it.minusDays(1).toString() }
+                            }) { Text("← Dzień") }
+                            Text(destinationDay.orEmpty(), modifier = Modifier.weight(1f))
+                            TextButton(onClick = {
+                                destination?.let { destinationDay = it.plusDays(1).toString() }
+                            }) { Text("Dzień →") }
+                        }
+                        OutlinedTextField(value = destinationDay.orEmpty(),
+                            onValueChange = { destinationDay = it.take(10) },
+                            label = { Text("Data docelowa RRRR-MM-DD") },
+                            modifier = Modifier.fillMaxWidth())
+                        val occupied = data.plans.firstOrNull { it.date == destinationDay }
+                        if (occupied != null) {
+                            Text("W tym dniu jest już: " + occupied.title)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(checked = confirmSwap, onCheckedChange = { confirmSwap = it })
+                                Text("Zamień miejscami oba dni")
+                            }
+                        } else Text("Dzień wolny — trening zostanie przeniesiony.")
+                        Text("Historia i wykonane serie pozostaną bez zmian.",
+                            style = MaterialTheme.typography.bodySmall)
+                    }
+                },
+                confirmButton = {
+                    val valid = runCatching { LocalDate.parse(destinationDay) }.getOrNull() != null &&
+                        movingDay != destinationDay &&
+                        (data.plans.none { it.date == destinationDay } || confirmSwap)
+                    Button(enabled = valid && !busy, onClick = {
+                        val from = movingDay
+                        val to = destinationDay
+                        if (from != null && to != null) onMovePlan(from, to, confirmSwap)
+                        movingDay = null
+                        confirmSwap = false
+                    }) { Text(if (confirmSwap) "Zamień" else "Przenieś") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { movingDay = null; confirmSwap = false }) { Text("Anuluj") }
+                }
+            )
             if (pendingDeleteDay != null) AlertDialog(
                 onDismissRequest = { pendingDeleteDay = null },
                 title = { Text("Usunąć plan z tego dnia?") },
