@@ -57,6 +57,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     var trainingPage by rememberSaveable { mutableStateOf("session") }
     var showTrainingProfile by rememberSaveable { mutableStateOf(false) }
     var showProgramLibrary by rememberSaveable { mutableStateOf(false) }
+    var showExtendedProgress by rememberSaveable { mutableStateOf(false) }
     var selectedImportedProgram by rememberSaveable { mutableStateOf("home") }
     var confirmImportedProgram by rememberSaveable { mutableStateOf(false) }
     val importContext = LocalContext.current
@@ -357,9 +358,22 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 ?: LinearProgressIndicator(Modifier.fillMaxWidth()) }
         } else {
         if (activitySection == "progress") item { StrengthProgressDashboard(data, today) }
-        if (activitySection == "progress") item { PersonalProgressCards(viewModel, data, today) }
-        if (activitySection == "progress") item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
-        if (activitySection == "progress") item { SportInsightsCards(data, today, reportNumbers) }
+        if (activitySection == "progress") item {
+            OutlinedButton(onClick = { showExtendedProgress = !showExtendedProgress },
+                modifier = Modifier.fillMaxWidth()) {
+                Text(if (showExtendedProgress) "▲ Zwiń dodatkowe statystyki" else
+                    "▼ Więcej: statystyki osobiste, aktywność i wskazówki")
+            }
+        }
+        if (activitySection == "progress" && showExtendedProgress) item {
+            PersonalProgressCards(viewModel, data, today)
+        }
+        if (activitySection == "progress" && showExtendedProgress) item {
+            if (graphics.isNotEmpty()) SportActivityChart(graphics)
+        }
+        if (activitySection == "progress" && showExtendedProgress) item {
+            SportInsightsCards(data, today, reportNumbers)
+        }
         if (activitySection == "training" && trainingPage == "plan" && showTrainingProfile) item {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("🏋️  Twój profil sportowy", style = MaterialTheme.typography.titleLarge,
