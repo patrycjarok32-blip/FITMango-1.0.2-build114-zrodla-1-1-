@@ -118,11 +118,14 @@ fun DashboardScreen(
         MangoDayPhase.EVENING -> Color(0xFFFF805D)
         MangoDayPhase.NIGHT -> Color(0xFF547B6A)
     }
-    val backgroundMotion = rememberInfiniteTransition(label = "premium_background")
-    val backgroundPulse by backgroundMotion.animateFloat(
-        initialValue = 0.12f, targetValue = 0.22f,
-        animationSpec = infiniteRepeatable(tween(9000), RepeatMode.Reverse),
-        label = "premium_background_pulse")
+    val backgroundPulse = if (reducedMangoMotion) 0.12f else {
+        val backgroundMotion = rememberInfiniteTransition(label = "premium_background")
+        val pulse by backgroundMotion.animateFloat(
+            initialValue = 0.12f, targetValue = 0.22f,
+            animationSpec = infiniteRepeatable(tween(9000), RepeatMode.Reverse),
+            label = "premium_background_pulse")
+        pulse
+    }
     val waterFillFraction by animateFloatAsState(
         targetValue = (waterTotal.toFloat() / 2000f).coerceIn(0f, 1f),
         animationSpec = tween(durationMillis = if (reducedMangoMotion) 0 else 850),
