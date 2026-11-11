@@ -164,9 +164,40 @@ class BackupService(private val context: Context, private val database: AppDatab
         try {
             var total = 0L
             val names = mutableSetOf<String>()
-            val raw = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: error("Nie można otworzyć kopii.")
-            require(raw.size <= MAX_TOTAL + 1024) { "Plik kopii jest zbyt duży." }
-            val input = ByteArrayInputStream(if (raw.take(4).toByteArray().contentEquals(MAGIC)) decryptArchive(raw, password) else raw)
+            // Stage the archive on disk instead of allocating a 200+ MB ByteArray.
+            // For encrypted backups, fully consume the cipher stream so AES-GCM
+            // authentication is checked before any restored data is accepted.
+            val stagedZip = File(directory, "staged-backup.zip")
+            context.contentResolver.openInputStream(uri)?.buffered()?.use { source ->
+                val header = ByteArray(4)
+                var offset = 0
+                while (offset < header.size) {
+                    val count = source.read(header, offset, header.size - offset)
+                    if (count < 0) break
+                    offset += count
+                }
+                require(offset == 4) { "Plik kopii jest pusty lub uszkodzony." }
+                val stream: InputStream = if (header.contentEquals(MAGIC)) {
+                    require(password.isNotEmpty()) { "Podaj hasło zaszyfrowanej kopii." }
+                    val salt = ByteArray(16)
+                    val nonce = ByteArray(12)
+                    java.io.DataInputStream(source).apply {
+                        readFully(salt)
+                        readFully(nonce)
+                    }
+                    val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+                    cipher.init(Cipher.DECRYPT_MODE, derivedKey(password, salt), GCMParameterSpec(128, nonce))
+                    javax.crypto.CipherInputStream(source, cipher)
+                } else {
+                    java.io.SequenceInputStream(ByteArrayInputStream(header), source)
+                }
+                stream.use { input ->
+                    stagedZip.outputStream().buffered().use { output ->
+                        copyLimited(input, output, MAX_TOTAL + 1024L)
+                    }
+                }
+            } ?: error("Nie można otworzyć kopii.")
+            val input = stagedZip.inputStream().buffered()
             ZipInputStream(input).use { zip ->
                 while (true) {
                     val entry = zip.nextEntry ?: break
@@ -180,6 +211,7 @@ class BackupService(private val context: Context, private val database: AppDatab
                     zip.closeEntry()
                 }
             }
+            stagedZip.delete()
             val manifest = File(directory, "backup.json")
             require(manifest.isFile) { "Brak danych FITMango w pliku." }
             val archive = adapter.fromJson(manifest.readText()) ?: error("Nieprawidłowe dane kopii.")
