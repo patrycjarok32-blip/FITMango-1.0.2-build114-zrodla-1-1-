@@ -17,11 +17,13 @@ fun WorkoutModeCard(
     date: String, plan: SportPlan?, workouts: List<WorkoutSession>, sports: SportsData, busy: Boolean,
     onStart: (SportPlan) -> Unit,
     onEntry: (String, Int, Int, Double, Boolean) -> Unit,
-    onFinish: (String, Int) -> Unit
+    onFinish: (String, Int) -> Unit,
+    onReplaceExercise: (String, String, String) -> Unit
 ) {
     val active = workouts.firstOrNull { it.ended == 0L }
     val last = workouts.lastOrNull { it.ended > 0L }
     var exerciseIndex by rememberSaveable(active?.id) { mutableIntStateOf(0) }
+    var showReplacement by rememberSaveable { mutableStateOf(false) }
     var showTechnique by rememberSaveable { mutableStateOf(false) }
     var showExerciseList by rememberSaveable { mutableStateOf(false) }
     var effort by rememberSaveable { mutableIntStateOf(6) }
@@ -97,11 +99,35 @@ fun WorkoutModeCard(
                     },
                     confirmButton = { TextButton(onClick = { showTechnique = false }) { Text("Zamknij") } })
             }
-            val previous = selected?.let { WorkoutInsights.previousKg(sports.sets, it) }
+            val priorSets = selected?.let { SportsSupport.previous(sports, it, active.date) }.orEmpty()
+            val previous = priorSets.lastOrNull()?.kg
+            val completedForExercise = active.entries.count { it.exercise == selected && it.done }
+            OutlinedButton(onClick = { showReplacement = true },
+                enabled = !busy && completedForExercise == 0,
+                modifier = Modifier.fillMaxWidth()) { Text("⇄ Zamień ćwiczenie") }
+            if (showReplacement) {
+                val choices = StrengthExerciseLibrary.exercises.map { it.name }
+                    .filter { it != selected && active.entries.none { e -> e.exercise == it } }
+                AlertDialog(onDismissRequest = { showReplacement = false },
+                    title = { Text("Zamień ćwiczenie") },
+                    text = {
+                        androidx.compose.foundation.lazy.LazyColumn(modifier = Modifier.heightIn(max = 340.dp)) {
+                            items(choices.size) { n ->
+                                TextButton(onClick = {
+                                    onReplaceExercise(active.id, selected.orEmpty(), choices[n])
+                                    showReplacement = false
+                                }, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+                                    Text(choices[n])
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = { TextButton(onClick = { showReplacement = false }) { Text("Anuluj") } })
+            }
             val advice = selected?.let { WorkoutInsights.coachAdvice(sports, it,
                 active.entries.firstOrNull { e -> e.exercise == it }?.reps ?: 10) }
             if (previous != null) Text("📈 Poprzedni wynik: " + previous + " kg • sprawdź powtórzenia w dzienniku")
-            if (advice != null) {
+            if (false && advice != null) {
                 Text("🧠 Trener: " + advice.recommendation)
                 if (advice.weightKg != null) Text("Orientacyjny ciężar: " + advice.weightKg + " kg")
                 if (advice.reasons.isNotEmpty()) Text(advice.reasons.joinToString(" • "),
@@ -113,8 +139,10 @@ fun WorkoutModeCard(
             val visibleEntry = if (nextEntry >= 0) nextEntry else active.entries.indexOfLast { it.exercise == selected }
             active.entries.forEachIndexed { i, entry ->
                 if (entry.exercise == selected && i == visibleEntry) {
-                    var kg by rememberSaveable(active.id, i) { mutableStateOf(entry.kg.toString()) }
-                    var reps by rememberSaveable(active.id, i) { mutableStateOf(entry.reps.toString()) }
+                    val prior = priorSets.getOrNull((entry.number - 1).coerceAtLeast(0)) ?: priorSets.lastOrNull()
+                    var kg by rememberSaveable(active.id, i) { mutableStateOf(if (entry.kg > 0.0) entry.kg.toString() else prior?.kg?.toString() ?: "0") }
+                    var reps by rememberSaveable(active.id, i) { mutableStateOf(prior?.reps?.toString() ?: entry.reps.toString()) }
+                    if (prior != null) Text("Poprzednio: ${prior.kg} kg × ${prior.reps} powtórzeń", style = MaterialTheme.typography.bodyMedium)
                     Text("Seria ${entry.number} • ${active.entries.count { it.exercise == selected && it.done }} z ${active.entries.count { it.exercise == selected }} ukończonych", style = MaterialTheme.typography.titleMedium)
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("${entry.number}.", modifier = Modifier.width(24.dp))
