@@ -9,11 +9,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalContext
-import android.net.Uri
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import androidx.compose.ui.viewinterop.AndroidView
 import com.example.viewmodel.*
 import kotlinx.coroutines.delay
 
@@ -83,28 +78,25 @@ fun WorkoutModeCard(
             if (!allCompleted) Card(shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(selected.orEmpty(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    // Full-width photograph instead of the former narrow gallery column.
-                    OutlinedButton(onClick = { showVideo = true }, modifier = Modifier.fillMaxWidth()) {
-                        Text("▶ Obejrzyj film w FITMango")
+                    val videoUrl = ImportedExerciseVideos.forExercise(selected.orEmpty())
+                    if (videoUrl != null) {
+                        OutlinedButton(onClick = { showVideo = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text("▶ Film instruktażowy w FITMango")
+                        }
+                        if (showVideo) AlertDialog(
+                            onDismissRequest = { showVideo = false },
+                            title = { Text("Technika: " + selected.orEmpty()) },
+                            text = {
+                                EmbeddedYoutubeWorkout(videoUrl, Modifier.fillMaxWidth())
+                            },
+                            confirmButton = {
+                                TextButton(onClick = { showVideo = false }) { Text("Wróć do serii") }
+                            }
+                        )
+                    } else {
+                        Text("Film instruktażowy nie został jeszcze przypisany do tego ćwiczenia.",
+                            style = MaterialTheme.typography.bodySmall)
                     }
-                    if (showVideo) AlertDialog(
-                        onDismissRequest = { showVideo = false },
-                        title = { Text("Technika: " + selected.orEmpty()) },
-                        text = {
-                            val query = Uri.encode(selected.orEmpty() + " ćwiczenie technika")
-                            AndroidView(
-                                factory = { context ->
-                                    WebView(context).apply {
-                                        settings.javaScriptEnabled = true
-                                        webViewClient = WebViewClient()
-                                        loadUrl("https://www.youtube.com/results?search_query=$query")
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth().height(360.dp)
-                            )
-                        },
-                        confirmButton = { TextButton(onClick = { showVideo = false }) { Text("Wróć do serii") } }
-                    )
                     Text("Ćwiczenie ${index + 1} z ${exercises.size}", style = MaterialTheme.typography.labelLarge)
                     TextButton(onClick = { showTechnique = true }) { Text("ⓘ Technika i wskazówki") }
                 }
