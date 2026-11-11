@@ -347,6 +347,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             item { reportNumbers?.let { numbers -> SportsWeeklyReport(numbers, profile, aiReport, aiBusy) { viewModel.runWeeklyAiAnalysis() } }
                 ?: LinearProgressIndicator(Modifier.fillMaxWidth()) }
         } else {
+        if (activitySection == "progress") item { StrengthProgressDashboard(data, today) }
         if (activitySection == "progress") item { PersonalProgressCards(viewModel, data, today) }
         if (activitySection == "progress") item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
         if (activitySection == "progress") item { SportInsightsCards(data, today, reportNumbers) }
@@ -402,6 +403,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 onRemoveSet = { id -> sports.removeSet(id) { saved() } },
                 onUpdateExercises = { date, exercises -> sports.updatePlannedExercises(date, exercises) { saved() } })
         }
+        if (activitySection == "today") item { StrengthWeeklyReview(data, today) }
+        if (activitySection == "today") item { StrengthRecoverySuggestion(data, today, onShift = { sports.shiftUpcomingWorkouts(today.toString(), 1) { saved() } }, busy = busy) }
         if (activitySection == "today") item { ActivityTodayCard(data, today, current) }
         if (activitySection == "today" || (activitySection == "training" && trainingPage == "diary")) item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SportsHistoryControls(busy,
