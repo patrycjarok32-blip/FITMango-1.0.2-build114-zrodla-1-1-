@@ -53,7 +53,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     val foodDays by viewModel.habits.days.collectAsStateWithLifecycle()
     val confirmations by viewModel.healthConnect.weeklyEnergy.confirmations.collectAsStateWithLifecycle()
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
-    var activitySection by rememberSaveable { mutableStateOf("training") }
+    var activitySection by rememberSaveable { mutableStateOf("today") }
     var trainingPage by rememberSaveable { mutableStateOf("session") }
     var showTrainingProfile by rememberSaveable { mutableStateOf(true) }
     var selectedImportedProgram by rememberSaveable { mutableStateOf("home") }
@@ -164,6 +164,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 onRecovery = { activitySection = "recovery" })
         }
         if (activitySection == "training") item {
+            Text("Wybierz dział treningowy", style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
             androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(Triple("session", "▶", "Trenuj"), Triple("plan", "🗓", "Edytuj plan"),
                     Triple("diary", "📒", "Dziennik")).forEach { (key, icon, label) ->
@@ -174,7 +176,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         }
         if (activitySection == "training" && trainingPage != "session") item {
             FreshMangoSportSection("🏋️", "Twój trening",
-                "Plan tygodnia, zapis serii, historia aktywności i postępy siłowe")
+                "Wybierz plan, rozpocznij trening lub przejrzyj dziennik")
         }
         if (activitySection == "progress") item {
             FreshMangoSportSection("📈", "Twoje postępy",
