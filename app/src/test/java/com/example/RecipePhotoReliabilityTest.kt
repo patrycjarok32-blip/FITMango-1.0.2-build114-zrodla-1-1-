@@ -47,7 +47,7 @@ class RecipePhotoReliabilityTest {
         } finally { server.shutdown() }
     }
 
-    @Test fun failedImagesAndOldAutomaticPhotosCanBeRepairedButPhonePhotosStayProtected() {
+    @Test fun failedImagesCanBeRepairedButHealthyAutomaticAndPhonePhotosStayProtected() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val remote = recipe().copy(imageUrl = "https://example.org/meal.png")
         assertFalse(RecipePhotoQueue.repairable(context, remote))
@@ -56,7 +56,7 @@ class RecipePhotoReliabilityTest {
         RecipePhotoHealth.failed(context, remote.imageUrl, false)
         assertFalse(RecipePhotoQueue.repairable(context, remote))
         assertTrue(RecipePhotoQueue.repairable(context, recipe().copy(imageUrl = "/missing/meal.img")))
-        assertTrue(RecipePhotoQueue.repairable(context, remote.copy(description = "Zdjęcie: poglądowe Pixabay; cook")))
+        assertFalse(RecipePhotoQueue.repairable(context, remote.copy(description = "Zdjęcie: poglądowe Pixabay; cook")))
         assertFalse(RecipePhotoQueue.repairable(context, remote.copy(description = "Zdjęcie: dodane z telefonu.")))
     }
 
