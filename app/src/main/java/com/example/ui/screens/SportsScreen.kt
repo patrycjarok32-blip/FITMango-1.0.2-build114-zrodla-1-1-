@@ -305,7 +305,10 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     shape = RoundedCornerShape(24.dp)) {
                     Column(Modifier.fillMaxWidth().padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        val points = finishedCount * 10 + planMedals.size * 50
+                        val points = MangoDailyTools.rewardPoints(finishedCount, planMedals.size)
+                        var rewardState by remember { mutableStateOf(MangoRewardShop.load(context)) }
+                        var rewardFeedback by remember { mutableStateOf("") }
+                        val rewardBalance = MangoRewardShop.balance(points, rewardState)
                         val level = points / 100 + 1
                         Text("🥭 Mango Rewards", style = MaterialTheme.typography.titleLarge,
                             color = medalColor, fontWeight = FontWeight.Bold)
@@ -316,19 +319,42 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                             color = Color(0xFF9B54C8))
                         Text("10 punktów za ukończoną sesję siłową • 50 za ukończony plan.",
                             color = Color(0xFF625573), style = MaterialTheme.typography.bodySmall)
-                        val mangoLook = when {
-                            points >= 1000 -> "👑🥭 Królewskie Mango"
-                            points >= 500 -> "🥇🥭 Złote Mango"
-                            points >= 200 -> "🎽🥭 Sportowe Mango"
-                            points >= 100 -> "🧢🥭 Mango w czapce"
-                            else -> "🥭 Mango — początkujący"
+                        Text("Dostępne: $rewardBalance pkt • Wydane: ${MangoRewardShop.spent(rewardState)} pkt",
+                            color = medalColor)
+                        Text("Sklep z wyglądami Mango", style = MaterialTheme.typography.titleMedium,
+                            color = medalColor)
+                        MangoRewardShop.catalog.forEach { reward ->
+                            val owned = reward.id == "classic" || reward.id in rewardState.purchased
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(reward.icon + " " + reward.title +
+                                    if (reward.price > 0) " • ${reward.price} pkt" else "",
+                                    modifier = Modifier.weight(1f), color = medalColor,
+                                    style = MaterialTheme.typography.bodySmall)
+                                TextButton(
+                                    enabled = rewardState.equipped != reward.id &&
+                                        (owned || rewardBalance >= reward.price),
+                                    onClick = {
+                                        val updated = MangoRewardShop.purchase(rewardState, reward.id, points)
+                                        if (updated != null) {
+                                            rewardState = updated
+                                            MangoRewardShop.save(context, updated)
+                                            rewardFeedback = "Wybrano: ${reward.title}"
+                                            viewModel.usability.changed()
+                                        }
+                                    }) {
+                                    Text(when {
+                                        rewardState.equipped == reward.id -> "Wybrane"
+                                        owned -> "Załóż"
+                                        else -> "Kup"
+                                    })
+                                }
+                            }
                         }
-                        Text("Odblokowany wygląd: $mangoLook",
-                            style = MaterialTheme.typography.titleSmall, color = medalColor)
-                        Text("Następny strój odblokowuje się automatycznie wraz z punktami.",
+                        if (rewardFeedback.isNotBlank()) Text(rewardFeedback,
                             style = MaterialTheme.typography.bodySmall, color = medalColor)
-                        Text("Nagrody są wyliczane z historii treningów, bez nowego zapisu danych.",
-                            color = Color(0xFF625573), style = MaterialTheme.typography.bodySmall)
+                        Text("Zakupy kosmetyczne zapisują się w kopii zapasowej. Punkty wynikają z historii treningów.",
+                            style = MaterialTheme.typography.bodySmall, color = medalColor)
                     }
                 }
                 Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE7C7)),
