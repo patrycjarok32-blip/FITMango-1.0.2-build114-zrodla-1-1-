@@ -198,6 +198,11 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         val day = weekStart.plusDays(offset.toLong())
                         val plans = data.plans.filter { it.date == day.toString() }
                         val done = workouts.count { it.date == day.toString() && it.ended > 0L }
+                        val completedVideo = videoChallenges.flatMap { it.workouts }.count { video ->
+                            video.completedAt > 0L &&
+                                java.time.Instant.ofEpochMilli(video.completedAt)
+                                    .atZone(java.time.ZoneId.systemDefault()).toLocalDate() == day
+                        }
                         val active = workouts.any { it.date == day.toString() && it.ended == 0L }
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Text(day.toString().substring(5), modifier = Modifier.width(58.dp),
@@ -206,16 +211,17 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                 Text(if (plans.isEmpty()) "Bez zaplanowanego treningu"
                                     else plans.joinToString(" • ") { if (it.rest) "Regeneracja" else it.title },
                                     color = Color(0xFF43235E))
-                                if (done > 0 || active) Text(
+                                if (done > 0 || active || completedVideo > 0) Text(
                                     (if (done > 0) "✓ Ukończone: $done " else "") +
-                                        (if (active) "▶ W trakcie" else ""),
+                                        (if (active) "▶ W trakcie " else "") +
+                                        (if (completedVideo > 0) "🎬 Wideo: $completedVideo" else ""),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFF625573))
                             }
                         }
                         HorizontalDivider(color = Color(0xFFE8DDEA))
                     }
-                    Text("Widok odczytuje istniejący plan siłowy. Treningi wideo pozostają w sekcji wyzwań.",
+                    Text("Widok łączy sesje siłowe i ukończone treningi wideo. Planowanie posiłków pozostaje w Jadłospisie.",
                         style = MaterialTheme.typography.bodySmall, color = Color(0xFF625573))
                 }
             }
