@@ -134,6 +134,29 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             permissionError?.let { Text(it, color = ErrorInk) }
 
         }
+        if (activitySection == "training") item {
+            val suggestions = remember(workouts) { MangoTrainingCoach.suggestions(workouts) }
+            if (suggestions.isNotEmpty()) {
+                Card(shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF2EAFB))) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("🥭 Mango Trener — sugestie na kolejny trening",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold, color = Color(0xFF43235E))
+                        Text("Propozycje na podstawie ukończonych sesji. Zatwierdź ciężar samodzielnie.",
+                            color = Color(0xFF625573))
+                        suggestions.take(5).forEach { suggestion ->
+                            Text(suggestion.exercise + ": " + suggestion.previousKg +
+                                " → " + suggestion.suggestedKg + " kg",
+                                fontWeight = FontWeight.SemiBold, color = Color(0xFF43235E))
+                            Text(suggestion.explanation, color = Color(0xFF625573),
+                                style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
+        }
         if (activitySection == "achievements") item {
             val finished = workouts.filter { it.ended > 0L }
             val finishedCount = finished.size
