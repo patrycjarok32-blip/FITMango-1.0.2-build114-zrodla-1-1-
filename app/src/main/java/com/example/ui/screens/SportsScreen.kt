@@ -684,6 +684,33 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         if (activitySection == "progress" && showExtendedProgress) item {
             SportInsightsCards(data, today, reportNumbers)
         }
+        if (activitySection == "training" && trainingPage == "plan") item {
+            val todayPlan = data.plans.firstOrNull { it.date == today.toString() && !it.rest &&
+                it.exercises.isNotEmpty() }
+            if (todayPlan != null) {
+                val shortPlan = remember(todayPlan) {
+                    com.example.viewmodel.MangoDailyTools.quickWorkout(todayPlan.exercises)
+                }
+                var showShortPlan by rememberSaveable { mutableStateOf(false) }
+                Card(shape = RoundedCornerShape(18.dp)) {
+                    Column(Modifier.fillMaxWidth().padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("⏱️ Mam tylko 20 minut",
+                            style = MaterialTheme.typography.titleMedium)
+                        TextButton(onClick = { showShortPlan = !showShortPlan }) {
+                            Text(if (showShortPlan) "Ukryj propozycję" else "Pokaż skrócony trening")
+                        }
+                        if (showShortPlan) {
+                            shortPlan.forEach { exercise ->
+                                Text("${exercise.name}: ${exercise.sets} × ${exercise.reps}, przerwa ${exercise.restSeconds} s")
+                            }
+                            Text("To orientacyjny plan: 45 sekund na serię plus przerwy. Oryginalny trening nie jest zmieniany.",
+                                style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
+        }
         if (activitySection == "training" && trainingPage == "plan" && showTrainingProfile) item {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("🏋️  Twój profil sportowy", style = MaterialTheme.typography.titleLarge,
