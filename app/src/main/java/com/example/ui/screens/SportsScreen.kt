@@ -135,7 +135,22 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
 
         }
         if (activitySection == "achievements") item {
-            val finishedCount = workouts.count { it.ended > 0L }
+            val finished = workouts.filter { it.ended > 0L }
+            val finishedCount = finished.size
+            val weekStart = today.minusDays((today.dayOfWeek.value - 1).toLong())
+            val weeklyCount = finished.count { session ->
+                runCatching { LocalDate.parse(session.date) }.getOrNull()
+                    ?.let { !it.isBefore(weekStart) && !it.isAfter(today) } == true
+            }
+            val planMedals = videoChallenges.filter { challenge ->
+                challenge.workouts.isNotEmpty() &&
+                    challenge.workouts.all { it.completedAt > 0L }
+            }.sortedByDescending { it.workouts.maxOf { w -> w.completedAt } }
+            val strengthProgress = finished.flatMap { it.entries }
+                .filter { it.done && it.kg > 0.0 }
+                .groupBy { it.exercise.trim().lowercase() }
+                .any { (_, sets) -> sets.size > 1 &&
+                    sets.maxOf { it.kg } > sets.minOf { it.kg } }
             val badges = listOf(
                 Triple("🌱", "Pierwszy trening", 1),
                 Triple("💪", "10 treningów", 10),
@@ -143,54 +158,100 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 Triple("⭐", "50 treningów", 50),
                 Triple("👑", "100 treningów", 100)
             )
-            val earned = badges.count { finishedCount >= it.third }
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE7C7)),
-                    shape = RoundedCornerShape(24.dp)
-                ) {
+            val earned = badges.count { finishedCount >= it.third } +
+                planMedals.size + (if (weeklyCount >= 3) 1 else 0) +
+                (if (strengthProgress) 1 else 0)
+            val context = LocalContext.current
+            val medalColor = Color(0xFF43235E)
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE7C7)),
+                    shape = RoundedCornerShape(24.dp)) {
                     Column(Modifier.fillMaxWidth().padding(20.dp)) {
                         Text("🥭 Moje osiągnięcia", style = MaterialTheme.typography.headlineSmall,
-                            color = Color(0xFF43235E), fontWeight = FontWeight.Bold)
-                        Text("Świętuj swoje postępy i zbieraj odznaki za treningi!",
-                            color = Color(0xFF43235E))
-                        Spacer(Modifier.height(12.dp))
-                        Text("🏆 $earned zdobytych   •   🔒 ${badges.size - earned} do zdobycia",
-                            fontWeight = FontWeight.SemiBold, color = Color(0xFF43235E))
-                        Text("Ukończone treningi: $finishedCount",
-                            color = Color(0xFF43235E))
+                            color = medalColor, fontWeight = FontWeight.Bold)
+                        Text(when {
+                            earned >= 6 -> "👑 Mistrz Mango"
+                            earned >= 3 -> "🥭 Sportowe Mango"
+                            else -> "🌱 Młode Mango"
+                        }, style = MaterialTheme.typography.titleMedium, color = medalColor)
+                        Text("🏆 $earned zdobytych • $finishedCount ukończonych treningów",
+                            color = medalColor)
                     }
                 }
-                Card(shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFAF4))) {
+                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFAF4)),
+                    shape = RoundedCornerShape(24.dp)) {
                     Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                        Text("🏅 Odznaki treningowe", style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold, color = Color(0xFF43235E))
-                        badges.forEach { (emoji, name, threshold) ->
-                            val unlocked = finishedCount >= threshold
-                            Row(Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                        Text("🎯 Cel tygodniowy", style = MaterialTheme.typography.titleLarge,
+                            color = medalColor, fontWeight = FontWeight.Bold)
+                        Text("$weeklyCount / 3 ukończone treningi", color = medalColor)
+                        LinearProgressIndicator(
+                            progress = { (weeklyCount / 3f).coerceIn(0f, 1f) },
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                            color = Color(0xFF9B54C8))
+                        Text(if (weeklyCount >= 3) "🏅 Cel osiągnięty!" else
+                            "Jeszcze ${3 - weeklyCount} treningów do odznaki",
+                            color = Color(0xFF625573))
+                    }
+                }
+                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFAF4)),
+                    shape = RoundedCornerShape(24.dp)) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                        Text("🥇 Album ukończonych planów",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold, color = medalColor)
+                        if (planMedals.isEmpty()) Text(
+                            "Medal pojawi się po ukończeniu wszystkich treningów w zapisanym planie wideo.",
+                            color = Color(0xFF625573))
+                        planMedals.forEach { plan ->
+                            val completedAt = plan.workouts.maxOf { it.completedAt }
+                            val dateText = java.time.Instant.ofEpochMilli(completedAt)
+                                .atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString()
+                            Row(Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically) {
-                                Text(if (unlocked) emoji else "🔒",
-                                    style = MaterialTheme.typography.headlineMedium)
-                                Spacer(Modifier.width(14.dp))
+                                Text("🏅", style = MaterialTheme.typography.headlineMedium)
+                                Spacer(Modifier.width(12.dp))
                                 Column(Modifier.weight(1f)) {
-                                    Text(name, fontWeight = FontWeight.SemiBold,
-                                        color = Color(0xFF43235E))
-                                    Text(if (unlocked) "Zdobyta ✓" else "Postęp: $finishedCount / $threshold",
-                                        color = Color(0xFF766886))
+                                    Text(plan.title, fontWeight = FontWeight.Bold, color = medalColor)
+                                    Text("100% • ${plan.workouts.size} treningów • $dateText",
+                                        color = Color(0xFF625573))
                                 }
+                                TextButton(onClick = {
+                                    val certificate = "🏅 Dyplom FITMango\\nUkończony plan: ${plan.title}\\n" +
+                                        "Wykonane treningi: ${plan.workouts.size}/${plan.workouts.size}\\nData: $dateText"
+                                    val intent = android.content.Intent(android.content.Intent.ACTION_SEND)
+                                        .setType("text/plain")
+                                        .putExtra(android.content.Intent.EXTRA_TEXT, certificate)
+                                    context.startActivity(android.content.Intent.createChooser(intent, "Udostępnij dyplom"))
+                                }) { Text("Dyplom") }
                             }
                         }
                     }
                 }
-                Card(shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF2EAFB))) {
+                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFAF4)),
+                    shape = RoundedCornerShape(24.dp)) {
                     Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                        Text("🥇 Ukończone plany treningowe",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold, color = Color(0xFF43235E))
-                        Text("Medale za ukończenie planu w 100% pojawią się tutaj po powiązaniu historii sesji z konkretnymi planami. Nie przyznajemy ich na podstawie samej liczby treningów.",
-                            color = Color(0xFF625573))
+                        Text("🏆 Kolekcja odznak", style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold, color = medalColor)
+                        badges.forEach { (emoji, name, threshold) ->
+                            val unlocked = finishedCount >= threshold
+                            Row(Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically) {
+                                Text(if (unlocked) emoji else "🔒",
+                                    style = MaterialTheme.typography.headlineMedium)
+                                Spacer(Modifier.width(12.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(name, fontWeight = FontWeight.SemiBold, color = medalColor)
+                                    LinearProgressIndicator(
+                                        progress = { (finishedCount.toFloat() / threshold).coerceIn(0f, 1f) },
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
+                                    Text(if (unlocked) "Zdobyta ✓" else "$finishedCount / $threshold",
+                                        color = Color(0xFF625573))
+                                }
+                            }
+                        }
+                        Text(if (strengthProgress) "🏋️ Progres siłowy — zdobyta ✓" else
+                            "🔒 Progres siłowy — zwiększ ciężar w zapisanych seriach",
+                            color = medalColor)
                     }
                 }
             }
