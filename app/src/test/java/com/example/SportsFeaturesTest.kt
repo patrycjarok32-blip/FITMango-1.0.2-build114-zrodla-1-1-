@@ -170,4 +170,12 @@ class SportsFeaturesTest {
             CookingIngredient("1", "Jajko", "Jajko", quantity = null, unit = "szt"))))
     }
 
+    @Test fun videoPlayerOnlyEmbedsRecognizedSecureYouTubeUrls() {
+        assertEquals("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?playsinline=1&rel=0",
+            com.example.ui.components.MangoVideoUrl.embed("https://youtu.be/dQw4w9WgXcQ"))
+        assertNull(com.example.ui.components.MangoVideoUrl.embed("http://youtu.be/dQw4w9WgXcQ"))
+        assertNull(com.example.ui.components.MangoVideoUrl.embed("https://youtube.com.evil.test/watch?v=dQw4w9WgXcQ"))
+        assertNull(com.example.ui.components.MangoVideoUrl.embed("https://example.com/video"))
+    }
+
 }
