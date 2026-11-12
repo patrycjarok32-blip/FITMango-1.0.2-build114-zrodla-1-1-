@@ -7,13 +7,15 @@ import java.util.UUID
 
 data class WorkoutEntry(val exercise: String, val number: Int, val reps: Int, val kg: Double, val done: Boolean)
 data class WorkoutSession(val id: String, val date: String, val title: String, val started: Long,
-    val entries: List<WorkoutEntry>, val ended: Long = 0L, val effort: Int = 0,\n    val pausedAt: Long = 0L, val pausedMillis: Long = 0L)
+    val entries: List<WorkoutEntry>, val ended: Long = 0L, val effort: Int = 0,
+    val pausedAt: Long = 0L, val pausedMillis: Long = 0L)
 
 object WorkoutSessionStore {
     private const val KEY = "strength_workouts_v1"
     private fun encode(s: WorkoutSession): JSONObject = JSONObject()
         .put("id", s.id).put("date", s.date).put("title", s.title).put("started", s.started)
-        .put("ended", s.ended).put("effort", s.effort)\n        .put("pausedAt", s.pausedAt).put("pausedMillis", s.pausedMillis)
+        .put("ended", s.ended).put("effort", s.effort)
+        .put("pausedAt", s.pausedAt).put("pausedMillis", s.pausedMillis)
         .put("entries", JSONArray().also { a -> s.entries.forEach { e ->
             a.put(JSONObject().put("exercise", e.exercise).put("number", e.number)
                 .put("reps", e.reps).put("kg", e.kg).put("done", e.done))
@@ -26,9 +28,11 @@ object WorkoutSessionStore {
                 e.getDouble("kg"), e.getBoolean("done"))
         } }
         val s = WorkoutSession(o.getString("id"), o.getString("date"), o.getString("title"),
-            o.getLong("started"), entries, o.optLong("ended", 0), o.optInt("effort", 0),\n            o.optLong("pausedAt", 0), o.optLong("pausedMillis", 0))
+            o.getLong("started"), entries, o.optLong("ended", 0), o.optInt("effort", 0),
+            o.optLong("pausedAt", 0), o.optLong("pausedMillis", 0))
         require(s.id.length in 1..200 && s.title.length in 1..120 && s.started > 0 &&
-            (s.ended == 0L || s.ended >= s.started) && s.effort in 0..10 &&\n            s.pausedMillis >= 0 && (s.pausedAt == 0L || s.pausedAt >= s.started)
+            (s.ended == 0L || s.ended >= s.started) && s.effort in 0..10 &&
+            s.pausedMillis >= 0 && (s.pausedAt == 0L || s.pausedAt >= s.started)
         java.time.LocalDate.parse(s.date)
         entries.forEach { require(it.exercise.length in 1..120 && it.number in 1..12 &&
             it.reps in 1..1000 && it.kg.isFinite() && it.kg in 0.0..2000.0) }
