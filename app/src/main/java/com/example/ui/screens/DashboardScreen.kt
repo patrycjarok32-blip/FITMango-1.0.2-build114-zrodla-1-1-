@@ -223,6 +223,25 @@ fun DashboardScreen(
                     )
                 )
             }
+            var mangoGreeting by rememberSaveable { mutableStateOf(false) }
+            Surface(
+                onClick = { mangoGreeting = !mangoGreeting },
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                modifier = Modifier.fillMaxWidth().testTag("interactive_mango_mascot")
+            ) {
+                Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(if (mangoGreeting) "🥭✨" else "🥭",
+                        style = MaterialTheme.typography.headlineMedium)
+                    Column {
+                        Text(if (mangoGreeting) "Brawo, że dbasz o swoje nawyki!"
+                            else "Cześć! Dotknij Mango 👋",
+                            style = MaterialTheme.typography.titleSmall)
+                        Text("Twój pomocnik na dziś", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
             val mangoNextStep = remember(today, sportsData.plans, waterTotal, consumedCalories, targetCalories) {
                 com.example.viewmodel.MangoDailyTools.nextAction(
                     today, sportsData.plans, waterTotal,
