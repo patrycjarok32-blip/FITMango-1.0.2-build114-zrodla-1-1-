@@ -19,7 +19,8 @@ fun WorkoutModeCard(
     date: String, plan: SportPlan?, workouts: List<WorkoutSession>, sports: SportsData, busy: Boolean,
     onStart: (SportPlan) -> Unit,
     onEntry: (String, Int, Int, Double, Boolean) -> Unit,
-    onFinish: (String, Int) -> Unit,\n    onPause: (String, Boolean) -> Unit,
+    onFinish: (String, Int) -> Unit,
+    onPause: (String, Boolean) -> Unit,
     onDiscard: (String) -> Unit,
     onReplaceExercise: (String, String, String) -> Unit
 ) {
