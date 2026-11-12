@@ -103,8 +103,16 @@ fun WorkoutModeCard(
         Text("Uruchom muzykę w Spotify i wróć do FITMango. Licznik i serie działają bez odtwarzania dźwięku. " +
             "Film YouTube może przejąć dźwięk — zamknij film, by kontynuować Spotify.",
             style = MaterialTheme.typography.bodySmall)
-        MangoGuide(message = if (active == null) "Gotowa na trening?" else "Trening trwa — skup się na następnej serii.",
-            event = if (active?.entries?.all { it.done } == true) 1 else 0, size = 32.dp)
+        val finishedSets = active?.entries?.count { it.done } ?: 0
+        MangoGuide(
+            message = when {
+                active == null -> "Gotowa na trening?"
+                active.entries.isNotEmpty() && finishedSets == active.entries.size ->
+                    "Brawo! Wszystkie serie ukończone. 🏆"
+                finishedSets > 0 -> "Świetnie! ${finishedSets} serii za Tobą. 🥭"
+                else -> "Trening trwa — skup się na następnej serii."
+            },
+            event = finishedSets, size = 32.dp)
         Text(if (active == null) "🏋️ Wybierz trening" else "🏋️ Trening w toku", style = MaterialTheme.typography.titleLarge)
         if (active == null) {
             if (plan != null && !plan.rest && plan.exercises.isNotEmpty()) {
