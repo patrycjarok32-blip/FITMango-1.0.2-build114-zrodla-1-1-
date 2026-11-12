@@ -138,4 +138,16 @@ class SportsFeaturesTest {
         assertEquals(400L, awards.single().completedAt)
     }
 
+    @Test fun mangoCoachRaisesLoadOnlyAfterEasyCompletedWorkout() {
+        val easy = WorkoutSession("easy", "2026-11-10", "Siła", 100L,
+            listOf(WorkoutEntry("Przysiad", 1, 10, 30.0, true)), 200L, 5)
+        val suggestion = MangoTrainingCoach.suggestions(listOf(easy)).single()
+        assertEquals(30.0, suggestion.previousKg, 0.001)
+        assertEquals(32.5, suggestion.suggestedKg, 0.001)
+        val hard = easy.copy(id = "hard", started = 300L, ended = 400L, effort = 9)
+        assertEquals(30.0, MangoTrainingCoach.suggestions(listOf(easy, hard))
+            .single().suggestedKg, 0.001)
+        assertTrue(MangoTrainingCoach.suggestions(listOf(easy.copy(ended = 0L))).isEmpty())
+    }
+
 }
