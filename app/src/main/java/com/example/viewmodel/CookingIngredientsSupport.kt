@@ -36,6 +36,25 @@ object CookingIngredientsSupport {
         return items.map { item -> item.quantity?.let { q -> item.copy(quantity = q * factor,
             display = "${item.name} — ${MealPlannerSupport.formatQuantityNumber(q * factor)} ${item.unit}".trim()) } ?: item }
     }
+    /** Full calorie total only when every ingredient has a known quantity and energy profile.
+     * Unknown ingredients must never silently count as zero calories. */
+    fun verifiedCalories(items: List<CookingIngredient>): Int? {
+        if (items.isEmpty()) return null
+        var sum = 0.0
+        for (item in items) {
+            val quantity = item.quantity?.takeIf { it.isFinite() && it > 0f } ?: return null
+            val factor = when (item.unit.trim().lowercase(java.util.Locale.ROOT)) {
+                "g", "ml" -> 1.0
+                "kg", "l" -> 1000.0
+                else -> return null
+            }
+            val profile = IngredientSubstitutionSupport.lookupKnownIngredientNutrition(item.originalName)
+                ?: return null
+            sum += quantity * factor * profile.caloriesPer100g / 100.0
+        }
+        return sum.takeIf { it.isFinite() && it <= Int.MAX_VALUE }?.let { kotlin.math.round(it).toInt() }
+    }
+
     fun displayForStep(step: String, item: CookingIngredient): String {
         val quantity = item.quantity ?: return item.display
         val normalized = ProduceSupport.normalize(step)
