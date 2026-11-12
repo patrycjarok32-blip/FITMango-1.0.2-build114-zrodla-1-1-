@@ -247,6 +247,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                     .atZone(java.time.ZoneId.systemDefault()).toLocalDate() == day
                         }
                         val active = workouts.any { it.date == day.toString() && it.ended == 0L }
+                        val status = MangoWorkoutInsights.calendarStatus(day, today, plans, workouts)
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Text(day.toString().substring(5), modifier = Modifier.width(58.dp),
                                 color = Color(0xFF43235E))
@@ -254,10 +255,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                 Text(if (plans.isEmpty()) "Bez zaplanowanego treningu"
                                     else plans.joinToString(" • ") { if (it.rest) "Regeneracja" else it.title },
                                     color = Color(0xFF43235E))
-                                if (done > 0 || active || completedVideo > 0) Text(
-                                    (if (done > 0) "✓ Ukończone: $done " else "") +
-                                        (if (active) "▶ W trakcie " else "") +
-                                        (if (completedVideo > 0) "🎬 Wideo: $completedVideo" else ""),
+                                Text(status + if (completedVideo > 0) " • 🎬 Wideo: $completedVideo" else "",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFF625573))
                             }
@@ -786,7 +784,24 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                 label = { Text(d.substring(8)) })
                         }
                     }
-                    WorkoutModeCard(workoutDate, data.plans.firstOrNull { it.date == workoutDate },
+                    val selectedPlan = data.plans.firstOrNull { it.date == workoutDate }
+                    var quickMinutes by rememberSaveable(workoutDate) { mutableIntStateOf(0) }
+                    if (workouts.none { it.ended == 0L } && selectedPlan != null &&
+                        !selectedPlan.rest && selectedPlan.exercises.isNotEmpty()) {
+                        Text("⏱️ Trening ekspresowy", style = MaterialTheme.typography.titleMedium)
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            listOf(0, 15, 20, 30).forEach { duration ->
+                                FilterChip(selected = quickMinutes == duration,
+                                    onClick = { quickMinutes = duration },
+                                    label = { Text(if (duration == 0) "Pełny" else "$duration min") })
+                            }
+                        }
+                        if (quickMinutes > 0) Text("Wersja skrócona nie zmienia zapisanego planu.",
+                            style = MaterialTheme.typography.bodySmall)
+                    }
+                    val displayedPlan = if (quickMinutes > 0 && selectedPlan != null)
+                        MangoWorkoutInsights.quickPlan(selectedPlan, quickMinutes) else selectedPlan
+                    WorkoutModeCard(workoutDate, displayedPlan,
                         workouts, data, busy,
                         onStart = { plan -> sports.startWorkout(plan) { saved() } },
                         onEntry = { id, index, reps, kg, done ->
