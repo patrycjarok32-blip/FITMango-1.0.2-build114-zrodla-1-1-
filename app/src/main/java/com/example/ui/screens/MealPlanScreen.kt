@@ -88,6 +88,10 @@ import kotlin.math.roundToInt
 @Composable
 fun MealPlanScreen(viewModel: DietaViewModel) {
     val mealPlans by viewModel.mealPlans.collectAsStateWithLifecycle()
+    val sportPlanner: com.example.viewmodel.SportsViewModel =
+        androidx.lifecycle.viewmodel.compose.viewModel()
+    val sportData by sportPlanner.data.collectAsStateWithLifecycle()
+    val sportWorkouts by sportPlanner.workouts.collectAsStateWithLifecycle()
     val recipes by viewModel.recipes.collectAsStateWithLifecycle()
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
     val recipeIngredients by viewModel.recipeIngredients.collectAsStateWithLifecycle()
@@ -482,6 +486,33 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 verticalArrangement = Arrangement.spacedBy(6.dp),
                 contentPadding = PaddingValues(bottom = 104.dp)
             ) {
+                item {
+                    val monday = today.minusDays((today.dayOfWeek.value - 1).toLong())
+                    Surface(color = MutedSurface1, shape = RoundedCornerShape(16.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("🥗🏋️ Tydzień: dieta i trening",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold)
+                            (0..6).forEach { offset ->
+                                val day = monday.plusDays(offset.toLong())
+                                val dayText = day.toString()
+                                val meals = mealPlans.filter {
+                                    MealPlannerSupport.dateForDay(it.dayOfWeek, today) == day
+                                }
+                                val plans = sportData.plans.filter { it.date == dayText }
+                                val finished = sportWorkouts.count { it.date == dayText && it.ended > 0L }
+                                Text(dayText.substring(5) + " • " + meals.size + " posiłków • " +
+                                    (if (plans.isEmpty()) "bez planu sportowego"
+                                     else plans.joinToString(", ") { if (it.rest) "Odpoczynek" else it.title }) +
+                                    (if (finished > 0) " • ✓ $finished" else ""),
+                                    style = MaterialTheme.typography.bodySmall)
+                            }
+                            Text("Wspólny podgląd istniejących danych. Zmiany posiłków i treningów wykonuj w ich edytorach.",
+                                style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
                 item {
                     var toolsExpanded by rememberSaveable { mutableStateOf(false) }
                     Surface(color = MutedSurface1, shape = RoundedCornerShape(14.dp), tonalElevation = 0.dp) {
