@@ -110,6 +110,39 @@ fun MeasurementsScreen(
             item { com.example.ui.components.ChangeHistoryCard(viewModel) }
             item {
                 MangoCard {
+                    Column(Modifier.fillMaxWidth().padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("📈 Historia pomiarów", fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary)
+                        val recent = bodyMeasurements.take(8).reversed()
+                        if (recent.size < 2) {
+                            Text("Dodaj co najmniej dwa pomiary, aby zobaczyć trend.")
+                        } else {
+                            val values = recent.map { it.weightKg.toFloat() }
+                            val minValue = values.minOrNull() ?: 0f
+                            val maxValue = values.maxOrNull() ?: 0f
+                            val range = (maxValue - minValue).coerceAtLeast(0.1f)
+                            androidx.compose.foundation.Canvas(
+                                modifier = Modifier.fillMaxWidth().height(100.dp)) {
+                                val widthStep = size.width / (values.size - 1).coerceAtLeast(1)
+                                val path = androidx.compose.ui.graphics.Path()
+                                values.forEachIndexed { index, value ->
+                                    val x = index * widthStep
+                                    val y = size.height - ((value - minValue) / range) * size.height
+                                    if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                                }
+                                drawPath(path, color = androidx.compose.ui.graphics.Color(0xFF9B54C8),
+                                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 5.dp.toPx()))
+                            }
+                            Text("Ostatnie ${recent.size} pomiarów • ${minValue}–${maxValue} kg",
+                                style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
+
+            item {
+                MangoCard {
                     Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(
                             text = "Twoje postępy",
