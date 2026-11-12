@@ -157,3 +157,38 @@ object MangoTrainingCoach {
             }.sortedBy { it.exercise }
     }
 }
+
+/** Conservative load recommendations requiring repeat evidence, with no automatic history changes. */
+object MangoProgressiveOverload {
+    fun suggestions(sessions: List<WorkoutSession>): List<MangoLoadSuggestion> {
+        val completed = sessions.filter { it.ended > 0L && it.effort in 1..10 }
+            .sortedBy { it.ended }
+        val groups = completed.flatMap { session ->
+            session.entries.groupBy { it.exercise.trim().lowercase(java.util.Locale.ROOT) }
+                .map { (key, entries) -> Triple(key, session, entries) }
+        }.groupBy { it.first }
+        return groups.values.mapNotNull { records ->
+            val recent = records.takeLast(3)
+            val last = recent.lastOrNull() ?: return@mapNotNull null
+            val entries = last.third
+            val lastKg = entries.filter { it.done && it.kg > 0 }.map { it.kg }
+                .takeIf { it.isNotEmpty() }?.minOrNull() ?: return@mapNotNull null
+            val easyAndComplete = recent.size >= 2 && recent.takeLast(2).all { (_, session, sets) ->
+                session.effort in 1..6 && sets.isNotEmpty() &&
+                    sets.all { it.done && it.kg > 0 && it.reps > 0 } &&
+                    sets.minOf { it.kg } >= lastKg * 0.95
+            }
+            val hardOrIncomplete = last.second.effort >= 8 || entries.any { !it.done }
+            val step = if (lastKg >= 20.0) 2.5 else 1.0
+            val proposed = if (easyAndComplete && !hardOrIncomplete)
+                lastKg + step else lastKg
+            val reason = when {
+                hardOrIncomplete -> "Bez zwiększania: wysoki wysiłek lub nieukończone serie"
+                recent.size < 2 -> "Zbierz dane z co najmniej dwóch ukończonych sesji"
+                easyAndComplete -> "Dwie lekkie, ukończone sesje — rozważ mały wzrost ciężaru"
+                else -> "Utrzymaj ciężar i obserwuj regenerację oraz technikę"
+            }
+            MangoLoadSuggestion(entries.first().exercise, lastKg, proposed, reason)
+        }.sortedBy { it.exercise }
+    }
+}
