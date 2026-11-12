@@ -75,6 +75,10 @@ fun AiCoachScreen(viewModel: DietaViewModel, onEffects: () -> Unit = {}) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             SuccessFeedback(savedFeedback, "Zapisano przepis")
+            Text("📴 Tryb bez internetu: zapisane przepisy, jadłospis i lokalne dane możesz przeglądać bez AI. " +
+                "Rozmowa Mango AI oraz analiza zdjęć wymagają połączenia i dostępu do Gemini.",
+                color = GoldAccent, style = MaterialTheme.typography.bodySmall)
+
             Text("Szybkie funkcje Mango AI", color = GoldAccent,
                 style = MaterialTheme.typography.labelMedium)
             androidx.compose.foundation.lazy.LazyRow(
