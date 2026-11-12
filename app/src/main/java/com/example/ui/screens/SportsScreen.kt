@@ -185,9 +185,23 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                             progress = { (weeklyCount / 3f).coerceIn(0f, 1f) },
                             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                             color = Color(0xFF9B54C8))
-                        androidx.compose.animation.AnimatedVisibility(visible = weeklyCount >= 3 && !reducedMangoMotion) {
-                            Text("✨ 🏅 Brawo! Nowa odznaka tygodniowa!",
-                                color = Color(0xFF9B54C8), fontWeight = FontWeight.Bold)
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = weeklyCount >= 3,
+                            enter = if (reducedMangoMotion) androidx.compose.animation.EnterTransition.None
+                                else androidx.compose.animation.fadeIn(
+                                    animationSpec = androidx.compose.animation.core.tween(500)) +
+                                    androidx.compose.animation.scaleIn(
+                                        initialScale = 0.65f,
+                                        animationSpec = androidx.compose.animation.core.spring(
+                                            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy)),
+                            exit = androidx.compose.animation.ExitTransition.None
+                        ) {
+                            Column(Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("🏅", style = MaterialTheme.typography.displayMedium)
+                                Text("✨ Brawo! Cel tygodniowy osiągnięty!",
+                                    color = Color(0xFF9B54C8), fontWeight = FontWeight.Bold)
+                            }
                         }
                         Text(if (weeklyCount >= 3) "🏅 Cel osiągnięty!" else
                             "Jeszcze ${3 - weeklyCount} treningów do odznaki",
@@ -201,7 +215,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold, color = medalColor)
                         if (planMedals.isEmpty()) Text(
-                            "Medal pojawi się po ukończeniu wszystkich treningów w zapisanym planie wideo.",
+                            "Medal pojawi się po ukończeniu wszystkich treningów w programie wideo lub cyklu siłowym.",
                             color = Color(0xFF625573))
                         planMedals.forEach { plan ->
                             val completedAt = plan.completedAt
@@ -209,7 +223,15 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                 .atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString()
                             Row(Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically) {
-                                Text("🏅", style = MaterialTheme.typography.headlineMedium)
+                                androidx.compose.animation.AnimatedVisibility(
+                                    visible = true,
+                                    enter = if (reducedMangoMotion) androidx.compose.animation.EnterTransition.None
+                                        else androidx.compose.animation.fadeIn(
+                                            animationSpec = androidx.compose.animation.core.tween(550)) +
+                                            androidx.compose.animation.scaleIn(initialScale = 0.6f)
+                                ) {
+                                    Text("🏅", style = MaterialTheme.typography.headlineMedium)
+                                }
                                 Spacer(Modifier.width(12.dp))
                                 Column(Modifier.weight(1f)) {
                                     Text(plan.title, fontWeight = FontWeight.Bold, color = medalColor)
