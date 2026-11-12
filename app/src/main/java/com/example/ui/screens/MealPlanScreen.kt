@@ -88,6 +88,7 @@ import kotlin.math.roundToInt
 @Composable
 fun MealPlanScreen(viewModel: DietaViewModel) {
     val mealPlans by viewModel.mealPlans.collectAsStateWithLifecycle()
+    val shoppingItems by viewModel.shoppingItems.collectAsStateWithLifecycle()
     val sportPlanner: com.example.viewmodel.SportsViewModel =
         androidx.lifecycle.viewmodel.compose.viewModel()
     val sportData by sportPlanner.data.collectAsStateWithLifecycle()
@@ -508,6 +509,13 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                                     (if (finished > 0) " • ✓ $finished" else ""),
                                     style = MaterialTheme.typography.bodySmall)
                             }
+                            val shoppingForWeek = shoppingItems.filter {
+                                it.weekStart == monday.toString()
+                            }
+                            val missingShopping = shoppingForWeek.count { !it.isChecked }
+                            Text("🛒 Zakupy: $missingShopping do kupienia / ${shoppingForWeek.size} pozycji",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold)
                             Text("Wspólny podgląd istniejących danych. Zmiany posiłków i treningów wykonuj w ich edytorach.",
                                 style = MaterialTheme.typography.bodySmall)
                         }
