@@ -248,6 +248,25 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             val context = LocalContext.current
             val medalColor = Color(0xFF43235E)
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFF2EAFB)),
+                    shape = RoundedCornerShape(24.dp)) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val points = finishedCount * 10 + planMedals.size * 50
+                        val level = points / 100 + 1
+                        Text("🥭 Mango Rewards", style = MaterialTheme.typography.titleLarge,
+                            color = medalColor, fontWeight = FontWeight.Bold)
+                        Text("$points punktów • Poziom $level", color = medalColor)
+                        LinearProgressIndicator(
+                            progress = { (points % 100) / 100f },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = Color(0xFF9B54C8))
+                        Text("10 punktów za ukończoną sesję siłową • 50 za ukończony plan.",
+                            color = Color(0xFF625573), style = MaterialTheme.typography.bodySmall)
+                        Text("Nagrody są wyliczane z historii treningów, bez nowego zapisu danych.",
+                            color = Color(0xFF625573), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
                 Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE7C7)),
                     shape = RoundedCornerShape(24.dp)) {
                     Column(Modifier.fillMaxWidth().padding(20.dp)) {
