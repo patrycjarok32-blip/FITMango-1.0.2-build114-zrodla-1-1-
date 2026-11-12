@@ -121,6 +121,15 @@ fun ShoppingScreen(viewModel: DietaViewModel) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            val uniqueItems = remember(items) {
+                com.example.viewmodel.MangoDailyTools.uniqueShoppingItems(items)
+            }
+            if (uniqueItems.size < items.size) {
+                Text("🛒 Wykryto ${items.size - uniqueItems.size} powtórzonych pozycji o identycznej nazwie i ilości. " +
+                    "Zachowano wszystkie wpisy — sprawdź je przed usunięciem.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary)
+            }
             val dateFormat = DateTimeFormatter.ofPattern("dd.MM.yyyy")
             Text("Zakupy z jadłospisu • wybierz daty", fontWeight = FontWeight.Bold, color = Cream)
             Text("Od ${LocalDate.parse(rangeFrom).format(dateFormat)} do ${LocalDate.parse(rangeTo).format(dateFormat)}", color = GoldAccent)
