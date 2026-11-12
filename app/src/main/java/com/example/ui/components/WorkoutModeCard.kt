@@ -91,8 +91,13 @@ fun WorkoutModeCard(
         }
         OutlinedButton(
             onClick = {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://open.spotify.com/"))
-                runCatching { context.startActivity(intent) }
+                val spotify = Intent(Intent.ACTION_VIEW, Uri.parse("https://open.spotify.com/"))
+                    .setPackage("com.spotify.music")
+                val opened = runCatching { context.startActivity(spotify) }.isSuccess
+                if (!opened) runCatching {
+                    context.startActivity(Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://open.spotify.com/")))
+                }
             }, modifier = Modifier.fillMaxWidth()
         ) { Text("🎵 Otwórz Spotify — muzyka podczas treningu") }
         Text("Uruchom muzykę w Spotify i wróć do FITMango. Licznik i serie działają bez odtwarzania dźwięku. " +
