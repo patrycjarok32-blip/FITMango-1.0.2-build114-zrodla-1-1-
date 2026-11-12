@@ -208,6 +208,7 @@ fun DashboardScreen(
                 .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            MangoAnimatedLogo()
             if (!mangoOnline) {
                 Surface(color = MaterialTheme.colorScheme.secondaryContainer,
                     shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
@@ -304,7 +305,6 @@ fun DashboardScreen(
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    MangoAnimatedLogo()
                     Text("Mój dzień • Cześć! 👋", fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = MaterialTheme.colorScheme.onBackground)
                     Text("Bilans, następny posiłek i postępy w jednym miejscu", color = GoldAccent, fontSize = 13.sp)
                     val datedWeights = remember(bodyMeasurements) {
