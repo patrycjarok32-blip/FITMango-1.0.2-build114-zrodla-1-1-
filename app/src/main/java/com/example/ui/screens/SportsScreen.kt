@@ -204,6 +204,24 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         LinearProgressIndicator(
                             progress = { done.toFloat() / activeWorkout.entries.size.coerceAtLeast(1) },
                             modifier = Modifier.fillMaxWidth(), color = Color(0xFF9B54C8))
+                        if (done == activeWorkout.entries.size && done > 0) {
+                            var finishEffort by rememberSaveable(activeWorkout.id) { mutableIntStateOf(5) }
+                            Text("✓ Wszystkie serie wykonane. Zakończ sesję, aby zatrzymać licznik i usunąć status „W trakcie”.",
+                                color = Color(0xFF43235E), fontWeight = FontWeight.SemiBold)
+                            Text("Odczuwany wysiłek: $finishEffort/10", color = Color(0xFF43235E))
+                            Slider(value = finishEffort.toFloat(),
+                                onValueChange = { finishEffort = it.toInt().coerceIn(1, 10) },
+                                valueRange = 1f..10f, steps = 8)
+                            Button(onClick = { sports.finishWorkout(activeWorkout.id, finishEffort) { saved() } },
+                                enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+                                Text("✓ Zakończ i zapisz trening")
+                            }
+                        }
+                        val elapsed = (System.currentTimeMillis() - activeWorkout.started).coerceAtLeast(0L)
+                        if (elapsed > 4L * 60L * 60L * 1000L) {
+                            Text("Uwaga: sesja jest otwarta ponad 4 godziny. Czas od rozpoczęcia nie oznacza czasu aktywnych ćwiczeń. Zakończ trening po sprawdzeniu serii.",
+                                color = Color(0xFF8A4A22), style = MaterialTheme.typography.bodySmall)
+                        }
                         Text("Zaznaczaj serie i zapisuj ciężary w odtwarzaczu sesji poniżej.",
                             color = Color(0xFF625573))
                     }
