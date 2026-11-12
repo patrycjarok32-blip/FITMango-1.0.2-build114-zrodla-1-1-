@@ -64,7 +64,28 @@ object WorkoutSessionStore {
     fun write(context: Context, sessions: List<WorkoutSession>) {
         require(sessions.size <= 200 && sessions.count { it.ended == 0L } <= 1)
         val raw = JSONArray().also { a -> sessions.forEach { a.put(encode(it)) } }.toString()
-        check(context.getSharedPreferences("FITMangoUsability", 0).edit().putString(KEY, raw).commit())
+        val prefs = context.getSharedPreferences("FITMangoUsability", 0)
+        // Keep a last-known-good snapshot before overwriting workout history.
+        // A failed snapshot write must not silently discard the previous data.
+        val previous = prefs.getString(KEY, "[]") ?: "[]"
+        if (previous != raw) {
+            validateRaw(previous)
+            check(prefs.edit().putString("${KEY}_restore_point", previous).commit())
+        }
+        check(prefs.edit().putString(KEY, raw).commit())
+    }
+    /** Recovery is explicit; never silently replace the primary workout history. */
+    fun restorePoint(context: Context): List<WorkoutSession>? {
+        val raw = context.getSharedPreferences("FITMangoUsability", 0)
+            .getString("${KEY}_restore_point", null) ?: return null
+        return parse(raw)
+    }
+    /** Validated JSON export of the existing workout history; no API keys or profile data. */
+    fun exportJson(context: Context): String {
+        val raw = context.getSharedPreferences("FITMangoUsability", 0)
+            .getString(KEY, "[]") ?: "[]"
+        validateRaw(raw)
+        return raw
     }
     fun create(plan: SportPlan, date: String, now: Long = System.currentTimeMillis()): WorkoutSession {
         require(!plan.rest && plan.exercises.isNotEmpty())
