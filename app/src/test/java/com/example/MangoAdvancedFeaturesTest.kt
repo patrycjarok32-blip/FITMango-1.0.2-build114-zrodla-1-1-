@@ -4,7 +4,12 @@ import com.example.viewmodel.*
 import com.example.data.ShoppingItemEntity
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [33])
 class MangoAdvancedFeaturesTest {
     @Test fun rewardPurchaseCannotOverspendOrDoubleCharge() {
         val empty = MangoRewardState()
