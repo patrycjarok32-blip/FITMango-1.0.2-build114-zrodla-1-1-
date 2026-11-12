@@ -60,4 +60,36 @@ class SportsFeaturesTest {
         assertNull(restored.history.single().activeKcal)
         assertTrue(runCatching { SportsSupport.decode(SportsSupport.encode(restored.copy(history = listOf(session, session)))) }.isFailure)
     }
+    @Test fun completedPlanMedalRequiresEveryWorkoutAndSurvivesBackupRestore() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val first = VideoWorkout("w1", 1, "Trening A", 20, "Siła", "", 1000L)
+        val second = VideoWorkout("w2", 2, "Trening B", 20, "Siła", "", 0L)
+        val plan = VideoChallenge("achievement-plan", "Plan Mango", 14, listOf(first, second))
+        VideoChallengeStore.write(context, listOf(plan))
+        assertFalse(VideoChallengeStore.read(context).single().workouts.all { it.completedAt > 0L })
+        val completed = plan.copy(workouts = listOf(first, second.copy(completedAt = 2000L)))
+        VideoChallengeStore.write(context, listOf(completed))
+        val backup = UsabilityPreferences.export(context)
+        context.getSharedPreferences("FITMangoUsability", 0).edit().clear().commit()
+        UsabilityPreferences.restore(context, backup)
+        val restored = VideoChallengeStore.read(context).single()
+        assertEquals("Plan Mango", restored.title)
+        assertTrue(restored.workouts.isNotEmpty() && restored.workouts.all { it.completedAt > 0L })
+        assertEquals(2000L, restored.workouts.maxOf { it.completedAt })
+    }
+
+    @Test fun workoutMilestonesCountOnlyFinishedSessions() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val date = LocalDate.now().toString()
+        val complete = WorkoutSession("finished", date, "Siła", 100L,
+            listOf(WorkoutEntry("Przysiad", 1, 10, 25.0, true)), 200L)
+        val active = WorkoutSession("active", date, "Siła", 300L,
+            listOf(WorkoutEntry("Przysiad", 1, 10, 30.0, false)))
+        WorkoutSessionStore.write(context, listOf(complete, active))
+        val restored = WorkoutSessionStore.read(context)
+        assertEquals(1, restored.count { it.ended > 0L })
+        assertEquals(1, restored.count { it.ended > 0L &&
+            LocalDate.parse(it.date) == LocalDate.now() })
+    }
+
 }
