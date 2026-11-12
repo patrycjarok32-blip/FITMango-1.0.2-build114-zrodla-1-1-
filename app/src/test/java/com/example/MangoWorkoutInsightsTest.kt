@@ -46,4 +46,20 @@ class MangoWorkoutInsightsTest {
         assertEquals(1, MangoWorkoutInsights.exerciseHistory(
             "floor press", listOf(completed, active)).size)
     }
+    @Test fun pausedMinutesAreNotCountedInWeeklySummary() {
+        val paused = WorkoutSessionStore.finish(
+            WorkoutSessionStore.pause(session("p", "2026-11-12", 0L, 12.0), 31000L),
+            631000L, 6)
+        assertEquals(0L, WorkoutSessionStore.activeDurationMillis(paused) / 60000L)
+    }
+    @Test fun alternativesRespectHomeEquipmentAndMuscleGroup() {
+        val library = listOf("Glute bridge", "Hip thrust", "Cable kickback", "Bench press")
+        val home = MangoExerciseAlternatives.candidates("Glute bridge", library, true)
+        assertTrue(home.contains("Hip thrust"))
+        assertFalse(home.contains("Cable kickback"))
+        assertFalse(home.contains("Bench press"))
+        val gym = MangoExerciseAlternatives.candidates("Glute bridge", library, false)
+        assertEquals("Cable kickback", gym.first())
+    }
+
 }
