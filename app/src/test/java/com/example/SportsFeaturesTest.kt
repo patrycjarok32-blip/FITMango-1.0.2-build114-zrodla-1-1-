@@ -178,4 +178,23 @@ class SportsFeaturesTest {
         assertNull(com.example.ui.components.MangoVideoUrl.embed("https://example.com/video"))
     }
 
+    @Test fun workoutClockExcludesPausedTimeAndFreezesOnFinish() {
+        val base = com.example.viewmodel.WorkoutSession(
+            "clock", "2026-11-12", "PUSH", 1000L,
+            listOf(com.example.viewmodel.WorkoutEntry("Squat", 1, 8, 20.0, true)))
+        val paused = com.example.viewmodel.WorkoutSessionStore.pause(base, 61000L)
+        assertEquals(60000L, com.example.viewmodel.WorkoutSessionStore.activeDurationMillis(paused, 121000L))
+        val resumed = com.example.viewmodel.WorkoutSessionStore.resume(paused, 121000L)
+        assertEquals(60000L, com.example.viewmodel.WorkoutSessionStore.activeDurationMillis(resumed, 121000L))
+        val finished = com.example.viewmodel.WorkoutSessionStore.finish(resumed, 181000L, 6)
+        assertEquals(120000L, com.example.viewmodel.WorkoutSessionStore.activeDurationMillis(finished, 900000L))
+    }
+    @Test fun pausedWorkoutCanFinishWithoutCountingRemainingPause() {
+        val base = com.example.viewmodel.WorkoutSession("clock", "2026-11-12", "PUSH", 1000L,
+            listOf(com.example.viewmodel.WorkoutEntry("Squat", 1, 8, 20.0, true)))
+        val paused = com.example.viewmodel.WorkoutSessionStore.pause(base, 31000L)
+        val finished = com.example.viewmodel.WorkoutSessionStore.finish(paused, 901000L, 5)
+        assertEquals(30000L, com.example.viewmodel.WorkoutSessionStore.activeDurationMillis(finished))
+    }
+
 }
