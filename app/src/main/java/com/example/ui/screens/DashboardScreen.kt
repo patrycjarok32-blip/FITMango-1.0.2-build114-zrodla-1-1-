@@ -232,6 +232,11 @@ fun DashboardScreen(
                     )
                 )
             }
+            val selectedMango = remember(usabilityRevision) {
+                com.example.viewmodel.MangoRewardShop.load(appearanceContext).equipped
+            }
+            val mangoIcon = com.example.viewmodel.MangoRewardShop.catalog
+                .firstOrNull { it.id == selectedMango }?.icon ?: "🥭"
             var mangoGreeting by rememberSaveable { mutableStateOf(false) }
             Surface(
                 onClick = { mangoGreeting = !mangoGreeting },
@@ -241,7 +246,7 @@ fun DashboardScreen(
             ) {
                 Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(if (mangoGreeting) "🥭✨" else "🥭",
+                    Text(if (mangoGreeting) "$mangoIcon✨" else mangoIcon,
                         style = MaterialTheme.typography.headlineMedium)
                     Column {
                         Text(if (mangoGreeting) "Brawo, że dbasz o swoje nawyki!"
