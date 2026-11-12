@@ -26,7 +26,7 @@ object MangoVideoUrl {
             else -> null
         } ?: return null
         if (!id.matches(Regex("[A-Za-z0-9_-]{11}"))) return null
-        return "https://www.youtube.com/embed/$id?playsinline=1&rel=0&origin=https%3A%2F%2Fwww.youtube.com"
+        return "https://www.youtube.com/embed/$id?playsinline=1&rel=0&mute=1&origin=https%3A%2F%2Fwww.youtube.com"
     }
 }
 
