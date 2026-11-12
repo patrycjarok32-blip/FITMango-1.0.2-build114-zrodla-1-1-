@@ -129,6 +129,15 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
                 }
             }
         }, onSaved)
+    fun setWorkoutPaused(id: String, paused: Boolean, onSaved: () -> Unit = {}) =
+        editWorkout({ sessions ->
+            val now = System.currentTimeMillis()
+            sessions.map { session ->
+                if (session.id != id || session.ended != 0L) session
+                else if (paused) WorkoutSessionStore.pause(session, now)
+                else WorkoutSessionStore.resume(session, now)
+            }
+        }, onSaved)
     fun discardWorkout(id: String, onSaved: () -> Unit = {}) =
         editWorkout({ sessions ->
             require(sessions.any { it.id == id && it.ended == 0L }) { "Brak aktywnego treningu." }
@@ -150,7 +159,7 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
                         SportSet(java.util.UUID.randomUUID().toString(), w.date, e.exercise, e.reps, e.kg, now)
                     }
                     SportsSupport.write(context, sports.copy(sets = sports.sets + added))
-                    val finished = sessions.map { if (it.id == id) it.copy(ended = now, effort = effort) else it }
+                    val finished = sessions.map { if (it.id == id) WorkoutSessionStore.finish(it, now, effort) else it }
                     WorkoutSessionStore.write(context, finished)
                     _workouts.value = finished
                     _data.value = SportsSupport.read(context)
