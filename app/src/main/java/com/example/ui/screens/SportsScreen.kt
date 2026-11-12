@@ -163,6 +163,31 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 }
             }
         }
+        if (activitySection == "training" && trainingPage == "plan") item {
+            val availableVideos = videoChallenges.flatMap { challenge ->
+                challenge.workouts.map { challenge.title to it }
+            }.filter { it.second.url.isNotBlank() }
+            var selectedVideoId by rememberSaveable { mutableStateOf("") }
+            if (availableVideos.isNotEmpty()) {
+                Card(shape = RoundedCornerShape(20.dp)) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("🎬 Trening wideo w FITMango",
+                            style = MaterialTheme.typography.titleMedium)
+                        availableVideos.take(30).forEach { (program, video) ->
+                            TextButton(onClick = {
+                                selectedVideoId = if (selectedVideoId == video.id) "" else video.id
+                            }) { Text(program + " • " + video.title) }
+                            if (selectedVideoId == video.id) {
+                                MangoInAppVideoPlayer(video.url)
+                                Text("Odtworzenie filmu nie oznacza ukończenia treningu. Zapisz wykonanie w planie.",
+                                    style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                }
+            }
+        }
         if (activitySection == "training" && trainingPage == "session") item {
             val activeWorkout = workouts.firstOrNull { it.ended == 0L }
             if (activeWorkout != null) {
