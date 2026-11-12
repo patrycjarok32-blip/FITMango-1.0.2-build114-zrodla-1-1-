@@ -188,6 +188,10 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                             progress = { (weeklyCount / 3f).coerceIn(0f, 1f) },
                             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                             color = Color(0xFF9B54C8))
+                        androidx.compose.animation.AnimatedVisibility(visible = weeklyCount >= 3 && !reducedMangoMotion) {
+                            Text("✨ 🏅 Brawo! Nowa odznaka tygodniowa!",
+                                color = Color(0xFF9B54C8), fontWeight = FontWeight.Bold)
+                        }
                         Text(if (weeklyCount >= 3) "🏅 Cel osiągnięty!" else
                             "Jeszcze ${3 - weeklyCount} treningów do odznaki",
                             color = Color(0xFF625573))
