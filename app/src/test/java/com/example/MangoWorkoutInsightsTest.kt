@@ -38,6 +38,7 @@ class MangoWorkoutInsightsTest {
         assertTrue(quick.exercises.sumOf { it.sets } <= 10)
         assertEquals(5, plan.exercises.first().sets)
         assertTrue(quick.title.contains("15 min"))
+        assertEquals(2, quick.exercises.size)
     }
     @Test fun historyExcludesIncompleteSessions() {
         val completed = session("a", "2026-11-10", 61000L, 10.0)
