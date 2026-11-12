@@ -64,6 +64,7 @@ fun DashboardScreen(
     val recipeIngredients by viewModel.recipeIngredients.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoadingAi.collectAsStateWithLifecycle()
     val healthSync by viewModel.healthConnect.healthConnectSync.collectAsStateWithLifecycle()
+    val mangoOnline = com.example.ui.components.rememberMangoOnline()
     val sportsModel: com.example.viewmodel.SportsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
     val sportsData by sportsModel.data.collectAsStateWithLifecycle()
     val refreshing by viewModel.healthConnect.isSyncing.collectAsStateWithLifecycle()
@@ -207,6 +208,14 @@ fun DashboardScreen(
                 .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            if (!mangoOnline) {
+                Surface(color = MaterialTheme.colorScheme.secondaryContainer,
+                    shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text("📴 Offline • Twoje zapisane posiłki, treningi i pomiary pozostają dostępne. " +
+                        "AI, wyszukiwanie online i synchronizacja wymagają internetu.",
+                        modifier = Modifier.padding(12.dp), style = MaterialTheme.typography.bodySmall)
+                }
+            }
             val smartSuggestions = remember(
                 targetCalories, consumedCalories, incompleteNutrition,
                 consumedProtein, targetProtein, waterTotal
