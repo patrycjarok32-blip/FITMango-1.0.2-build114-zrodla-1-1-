@@ -106,16 +106,24 @@ object PlanAchievementSupport {
         val video = challenges.filter { it.workouts.isNotEmpty() && it.workouts.all { w -> w.completedAt > 0L } }
             .map { c -> CompletedPlanAward("video:" + c.id, c.title,
                 c.workouts.maxOf { it.completedAt }, c.workouts.size, c.workouts.size) }
-        // Each dated strength plan is a separate scheduled session, not a multi-week
-        // program. Require an ended session matching both its date and title.
+        // Group scheduled strength days by plan title. A multi-day cycle earns
+        // one medal only after every scheduled day has a matching finished session.
         val strength = data.plans.filter { !it.rest && it.exercises.isNotEmpty() }
-            .mapNotNull { plan ->
-                sessions.filter { it.ended > 0L && it.date == plan.date && it.title == plan.title }
-                    .maxByOrNull { it.ended }?.let { session ->
-                        CompletedPlanAward("strength:" + plan.date + ":" + plan.title,
-                            plan.title, session.ended, 1, 1)
-                    }
-            }.distinctBy { it.id }
+            .groupBy { it.title.trim().lowercase(java.util.Locale.ROOT) }
+            .values.mapNotNull { days ->
+                val uniqueDays = days.distinctBy { it.date }
+                val matches = uniqueDays.map { day ->
+                    sessions.filter { it.ended > 0L && it.date == day.date &&
+                        it.title.equals(day.title, ignoreCase = true) }
+                        .maxByOrNull { it.ended }
+                }
+                if (matches.any { it == null }) null else {
+                    val completed = matches.filterNotNull()
+                    CompletedPlanAward("strength:" + days.first().title + ":" +
+                        uniqueDays.minOf { it.date }, days.first().title,
+                        completed.maxOf { it.ended }, uniqueDays.size, uniqueDays.size)
+                }
+            }
         return (video + strength).sortedByDescending { it.completedAt }
     }
 }
