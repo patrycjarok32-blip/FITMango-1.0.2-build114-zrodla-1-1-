@@ -287,16 +287,10 @@ fun WorkoutModeCard(
                 enabled = !busy && completedForExercise == 0,
                 modifier = Modifier.fillMaxWidth()) { Text("⇄ Zamień ćwiczenie") }
             if (!allCompleted && showReplacement) {
-                val choices = StrengthExerciseLibrary.exercises.map { it.name }
-                    .filter { it != selected && active.entries.none { e -> e.exercise == it } }
-                    .filter { candidate ->
-                        when (equipmentFilter) {
-                            "Dom" -> !Regex("maszyna|wyciąg|suwnica|smith|cable|machine|leg press",
-                                RegexOption.IGNORE_CASE).containsMatchIn(candidate)
-                            "Siłownia" -> true
-                            else -> true
-                        }
-                    }
+                val choices = MangoExerciseAlternatives.candidates(
+                    selected.orEmpty(), StrengthExerciseLibrary.exercises.map { it.name },
+                    home = equipmentFilter == "Dom"
+                ).filter { candidate -> active.entries.none { it.exercise == candidate } }
                 AlertDialog(onDismissRequest = { showReplacement = false },
                     title = { Text("Zamień ćwiczenie") },
                     text = {
@@ -308,8 +302,10 @@ fun WorkoutModeCard(
                                         label = { Text(option) })
                                 }
                             }
-                            Text("Zamienniki z biblioteki. Sprawdź, czy angażują te same mięśnie.",
+                            Text("Ta sama orientacyjna grupa mięśniowa. Sprawdź technikę i dostępny sprzęt.",
                                 style = MaterialTheme.typography.bodySmall)
+                        if (choices.isEmpty()) Text("Brak potwierdzonych zamienników w bibliotece. " +
+                            "Nie proponujemy losowych ćwiczeń.")
                         androidx.compose.foundation.lazy.LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
                             items(choices.size) { n ->
                                 TextButton(onClick = {
