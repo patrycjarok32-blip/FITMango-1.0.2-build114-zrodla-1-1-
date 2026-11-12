@@ -24,7 +24,7 @@ class MangoAdvancedFeaturesTest {
     }
 
     private fun session(id: String, effort: Int, kg: Double, done: Boolean = true) =
-        WorkoutSession(id, "2026-11-01", "A", 100L, listOf(
+        WorkoutSession(id, "2026-11-" + (id.length + 1).toString().padStart(2, '0'), "A", 100L, listOf(
             WorkoutEntry("Squat", 1, 8, kg, done),
             WorkoutEntry("Squat", 2, 8, kg, done)), 200L + id.length, effort)
 
