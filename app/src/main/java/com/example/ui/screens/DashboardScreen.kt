@@ -207,6 +207,42 @@ fun DashboardScreen(
                 .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            val smartSuggestions = remember(
+                targetCalories, consumedCalories, incompleteNutrition,
+                consumedProtein, targetProtein, waterTotal
+            ) {
+                com.example.viewmodel.SmartDailyRecommendations.evaluate(
+                    com.example.viewmodel.SmartDailyInput(
+                        calorieTarget = targetCalories,
+                        consumedCalories = if (incompleteNutrition) null else consumedCalories,
+                        proteinTargetGrams = targetProtein,
+                        consumedProteinGrams = if (incompleteNutrition) null else consumedProtein,
+                        waterConsumedMl = waterTotal,
+                        waterTargetMl = 2000,
+                        nutritionIsPartial = incompleteNutrition
+                    )
+                )
+            }
+            if (smartSuggestions.isNotEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().testTag("smart_daily_recommendations"),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                ) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Inteligentne wskazówki • Mój dzień",
+                            style = MaterialTheme.typography.titleMedium)
+                        smartSuggestions.take(3).forEach { suggestion ->
+                            Column {
+                                Text(suggestion.title, fontWeight = FontWeight.SemiBold)
+                                Text(suggestion.explanation, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                        TextButton(onClick = onNavigateToMealPlan) {
+                            Text("Otwórz jadłospis")
+                        }
+                    }
+                }
+            }
             if (incompleteNutrition) {
                 Text("Niepełne dane odżywcze: wartości bilansu mogą być zaniżone. " +
                     "Uzupełnij składniki, aby uzyskać dokładniejsze propozycje.",
