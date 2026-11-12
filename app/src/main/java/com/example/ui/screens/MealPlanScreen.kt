@@ -709,6 +709,13 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
     // 1. Change Recipe or Add Recipe to Category Dialog
     if (mealToChangeRecipe != null || slotToAddRecipe != null) {
         val editingMeal = mealToChangeRecipe
+        val originalForSwap = editingMeal?.let { meal ->
+            recipes.firstOrNull { it.id == meal.recipeId }
+        }
+        val smartAlternatives = remember(recipes, originalForSwap) {
+            originalForSwap?.let { com.example.viewmodel.MangoDailyTools.mealAlternatives(it, recipes) }
+                .orEmpty()
+        }
         val targetSlot = slotToAddRecipe
         var pickerCategory by remember(editingMeal?.id, targetSlot?.canonicalName) { mutableStateOf("Wszystkie") }
         var pickerPreparation by remember(editingMeal?.id, targetSlot?.canonicalName) { mutableStateOf("Wszystkie czasy") }
@@ -758,6 +765,16 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         )
                     )
 
+                    if (smartAlternatives.isNotEmpty()) {
+                        Text("🥗 Podobne kalorie i białko", style = MaterialTheme.typography.titleSmall)
+                        androidx.compose.foundation.lazy.LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            items(smartAlternatives, key = { it.id }) { alternative ->
+                                AssistChip(onClick = { recipePickerSearch = alternative.title },
+                                    label = { Text(alternative.title + " • " + alternative.calories + " kcal") })
+                            }
+                        }
+                    }
                     RecipeFilterChips(pickerCategory, { pickerCategory = it }, pickerPreparation, { pickerPreparation = it })
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Text("Wyniki: ${filteredRecipes.size} • Brak czasu: $unknownTimes", modifier = Modifier.weight(1f),
