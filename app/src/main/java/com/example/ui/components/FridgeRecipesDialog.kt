@@ -78,6 +78,17 @@ fun FridgeRecipesDialog(recipes: List<RecipeEntity>, contents: String, onContent
                                     Text("Masz: ${match.available.joinToString(", ")}", color = LeafGreen, style = MaterialTheme.typography.bodySmall)
                                     Text(if (match.missing.isEmpty()) "Masz wszystkie składniki — sprawdź ilości." else "Brakuje: ${match.missing.joinToString(", ")}",
                                         color = if (match.missing.isEmpty()) LeafGreen else OrangeInk, style = MaterialTheme.typography.bodySmall)
+                                    if (match.missing.isNotEmpty()) {
+                                        val context = androidx.compose.ui.platform.LocalContext.current
+                                        TextButton(onClick = {
+                                            val manager = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
+                                                as android.content.ClipboardManager
+                                            manager.setPrimaryClip(android.content.ClipData.newPlainText(
+                                                "FITMango — lista zakupów", match.missing.joinToString("\\n")))
+                                            android.widget.Toast.makeText(context, "Skopiowano brakujące produkty",
+                                                android.widget.Toast.LENGTH_SHORT).show()
+                                        }) { Text("📋 Kopiuj brakujące produkty") }
+                                    }
                                     Text("${match.recipe.calories} kcal • Otwórz przepis", style = MaterialTheme.typography.labelSmall)
                                 }
                             }
