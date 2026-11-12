@@ -170,7 +170,7 @@ internal object PdfRecipeExtractor {
                 .takeWhile { line ->
                     line.length <= 90 && line.any { it.isLetter() } &&
                         line.filter { it.isLetter() }.count { it.isUpperCase() } >=
-                        line.filter { it.isLetter() }.size * 3 / 4
+                        line.count { it.isLetter() } * 3 / 4
                 }.take(5)
             val title = titleLines.joinToString(" ").replace(Regex("""\s+"""), " ").trim()
             if (title.length !in 6..145 || titleLines.isEmpty() ||
