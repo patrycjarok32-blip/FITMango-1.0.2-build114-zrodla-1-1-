@@ -130,6 +130,28 @@ fun ShoppingScreen(viewModel: DietaViewModel) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary)
             }
+            val totals = remember(items) {
+                com.example.viewmodel.MangoShoppingTotals.totals(items)
+            }
+            var showShoppingTotals by rememberSaveable { mutableStateOf(false) }
+            if (totals.isNotEmpty()) {
+                OutlinedButton(onClick = { showShoppingTotals = !showShoppingTotals }) {
+                    Text(if (showShoppingTotals) "Ukryj sumę zakupów" else "🛒 Zsumuj zakupy")
+                }
+                if (showShoppingTotals) {
+                    Card {
+                        Column(Modifier.fillMaxWidth().padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Suma niekupionych produktów", style = MaterialTheme.typography.titleMedium)
+                            totals.forEach { total -> Text(total.label() +
+                                if (total.sourceCount > 1) " (z ${total.sourceCount} wpisów)" else "") }
+                            Text("Sumowane są tylko zgodne jednostki g/kg, ml/l i sztuki. " +
+                                "Nieznane jednostki pozostają na oryginalnej liście.",
+                                style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
             val dateFormat = DateTimeFormatter.ofPattern("dd.MM.yyyy")
             Text("Zakupy z jadłospisu • wybierz daty", fontWeight = FontWeight.Bold, color = Cream)
             Text("Od ${LocalDate.parse(rangeFrom).format(dateFormat)} do ${LocalDate.parse(rangeTo).format(dateFormat)}", color = GoldAccent)
