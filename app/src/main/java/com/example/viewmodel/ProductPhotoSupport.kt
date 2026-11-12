@@ -81,7 +81,12 @@ object ProductPhotoSupport {
             if (json.isNull(key) || !json.has(key)) "brak wiarygodnej oceny"
             else json.optDouble(key, -1.0).takeIf { it >= 0.0 && it.isFinite() }
                 ?.let { "${it.toInt()} $unit (szacunek)" } ?: "brak wiarygodnej oceny"
-        return "Rozpoznane danie: $dish\\nKalorie: ${estimate("kcal_estimate", "kcal")}\\nBiałko: ${estimate("protein_g", "g")}\\nWęglowodany: ${estimate("carbs_g", "g")}\\nTłuszcz: ${estimate("fat_g", "g")}\\nWeryfikuj skład i wielkość porcji przed zapisaniem."
+        val ingredients = json.optJSONArray("ingredients")
+            ?.let { array -> (0 until array.length()).mapNotNull { index ->
+                array.optString(index).trim().takeIf { it.isNotBlank() && it != "null" }
+            }.take(20) }.orEmpty()
+        return "Rozpoznane danie: $dish\\nSkładniki do sprawdzenia: " +
+            ingredients.joinToString(", ").ifBlank { "nieustalone" } + "\\nKalorie: ${estimate("kcal_estimate", "kcal")}\\nBiałko: ${estimate("protein_g", "g")}\\nWęglowodany: ${estimate("carbs_g", "g")}\\nTłuszcz: ${estimate("fat_g", "g")}\\nWeryfikuj skład i wielkość porcji przed zapisaniem."
     }
 
     suspend fun recognize(context: Context, uri: Uri): String {
