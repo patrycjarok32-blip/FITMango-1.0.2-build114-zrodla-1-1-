@@ -13,6 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.viewmodel.*
 import kotlinx.coroutines.delay
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun WorkoutModeCard(
@@ -24,6 +27,7 @@ fun WorkoutModeCard(
     onDiscard: (String) -> Unit,
     onReplaceExercise: (String, String, String) -> Unit
 ) {
+    val context = LocalContext.current
     val active = workouts.firstOrNull { it.ended == 0L }
     var recoveryNote by rememberSaveable { mutableStateOf(false) }
     val last = workouts.lastOrNull { it.ended > 0L }
@@ -70,6 +74,15 @@ fun WorkoutModeCard(
                     style = MaterialTheme.typography.bodySmall)
             }
         }
+        OutlinedButton(
+            onClick = {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://open.spotify.com/"))
+                runCatching { context.startActivity(intent) }
+            }, modifier = Modifier.fillMaxWidth()
+        ) { Text("🎵 Otwórz Spotify — muzyka podczas treningu") }
+        Text("Uruchom muzykę w Spotify i wróć do FITMango. Licznik i serie działają bez odtwarzania dźwięku. " +
+            "Film YouTube może przejąć dźwięk — zamknij film, by kontynuować Spotify.",
+            style = MaterialTheme.typography.bodySmall)
         MangoGuide(message = if (active == null) "Gotowa na trening?" else "Trening trwa — skup się na następnej serii.",
             event = if (active?.entries?.all { it.done } == true) 1 else 0, size = 32.dp)
         Text(if (active == null) "🏋️ Wybierz trening" else "🏋️ Trening w toku", style = MaterialTheme.typography.titleLarge)
