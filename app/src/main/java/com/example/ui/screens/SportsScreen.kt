@@ -134,6 +134,35 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             permissionError?.let { Text(it, color = ErrorInk) }
 
         }
+        if (activitySection == "progress") item {
+            val monthStart = today.withDayOfMonth(1)
+            val monthSessions = workouts.filter { it.ended > 0L &&
+                runCatching { LocalDate.parse(it.date) }.getOrNull()?.let { d ->
+                    !d.isBefore(monthStart) && !d.isAfter(today)
+                } == true }
+            val completedVideo = videoChallenges.flatMap { it.workouts }.count { workout ->
+                workout.completedAt > 0L && java.time.Instant.ofEpochMilli(workout.completedAt)
+                    .atZone(java.time.ZoneId.systemDefault()).toLocalDate().let { d ->
+                        !d.isBefore(monthStart) && !d.isAfter(today)
+                    }
+            }
+            Card(shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF2EAFB))) {
+                Column(Modifier.fillMaxWidth().padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("📊 Mój miesiąc", style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold, color = Color(0xFF43235E))
+                    Text("Podsumowanie do " + today.toString(), color = Color(0xFF625573))
+                    Text("🏋️ Sesje siłowe: " + monthSessions.size, color = Color(0xFF43235E))
+                    Text("🎬 Ukończone treningi wideo: " + completedVideo,
+                        color = Color(0xFF43235E))
+                    Text("📅 Dni z treningiem siłowym: " +
+                        monthSessions.map { it.date }.distinct().size, color = Color(0xFF43235E))
+                    Text("Raport pokazuje zapisane ukończone sesje; nie szacuje brakujących danych.",
+                        style = MaterialTheme.typography.bodySmall, color = Color(0xFF625573))
+                }
+            }
+        }
         if (activitySection == "training") item {
             val suggestions = remember(workouts) { MangoTrainingCoach.suggestions(workouts) }
             if (suggestions.isNotEmpty()) {
