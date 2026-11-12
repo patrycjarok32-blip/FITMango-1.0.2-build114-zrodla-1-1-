@@ -3,6 +3,7 @@ package com.example
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import org.junit.Rule
 import org.junit.Test
@@ -30,6 +31,6 @@ class MainActivityStartupTest {
             Shadows.shadowOf(Looper.getMainLooper()).idle()
             viewModel.recipes.value.isNotEmpty() && viewModel.userProfile.value != null
         }
-        compose.onNodeWithText("FITMango", useUnmergedTree = true).assertIsDisplayed()
+        compose.onAllNodesWithText("FITMango", useUnmergedTree = true)[0].assertIsDisplayed()
     }
 }
