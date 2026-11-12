@@ -150,4 +150,16 @@ class SportsFeaturesTest {
         assertTrue(MangoTrainingCoach.suggestions(listOf(easy.copy(ended = 0L))).isEmpty())
     }
 
+    @Test fun backupStatusNeverClaimsSuccessWithoutSavedCopy() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        context.getSharedPreferences("FITMangoBackupStatus", 0).edit().clear().commit()
+        val status = com.example.backup.BackupStatusStore(context)
+        assertTrue(status.healthMessage().contains("Brak potwierdzonej"))
+        status.automatic(false)
+        assertTrue(status.healthMessage().contains("wyłączona"))
+        status.automatic(true)
+        status.savedAutomatic()
+        assertTrue(status.healthMessage().contains("zapisana"))
+    }
+
 }
