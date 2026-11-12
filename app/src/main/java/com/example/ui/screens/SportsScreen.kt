@@ -316,6 +316,17 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                             color = Color(0xFF9B54C8))
                         Text("10 punktów za ukończoną sesję siłową • 50 za ukończony plan.",
                             color = Color(0xFF625573), style = MaterialTheme.typography.bodySmall)
+                        val mangoLook = when {
+                            points >= 1000 -> "👑🥭 Królewskie Mango"
+                            points >= 500 -> "🥇🥭 Złote Mango"
+                            points >= 200 -> "🎽🥭 Sportowe Mango"
+                            points >= 100 -> "🧢🥭 Mango w czapce"
+                            else -> "🥭 Mango — początkujący"
+                        }
+                        Text("Odblokowany wygląd: $mangoLook",
+                            style = MaterialTheme.typography.titleSmall, color = medalColor)
+                        Text("Następny strój odblokowuje się automatycznie wraz z punktami.",
+                            style = MaterialTheme.typography.bodySmall, color = medalColor)
                         Text("Nagrody są wyliczane z historii treningów, bez nowego zapisu danych.",
                             color = Color(0xFF625573), style = MaterialTheme.typography.bodySmall)
                     }
