@@ -200,6 +200,21 @@ fun WorkoutModeCard(
                         Text(if (showHistory) "Ukryj historię" else "📈 Historia ćwiczenia")
                     }
                     if (showHistory) {
+                        val peak = exerciseHistory.maxOfOrNull { it.maxKg }?.coerceAtLeast(1.0) ?: 1.0
+                        Text("Ciężar maksymalny • ostatnie sesje",
+                            style = MaterialTheme.typography.labelMedium)
+                        exerciseHistory.forEach { point ->
+                            Row(verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(point.date.takeLast(5), modifier = Modifier.width(46.dp),
+                                    style = MaterialTheme.typography.labelSmall)
+                                LinearProgressIndicator(
+                                    progress = { (point.maxKg / peak).toFloat().coerceIn(0f, 1f) },
+                                    modifier = Modifier.weight(1f))
+                                Text("${point.maxKg} kg",
+                                    style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
                         exerciseHistory.forEach { point ->
                             Text("${point.date}: ${point.maxKg} kg × maks. ${point.maxReps} • ${"%.1f".format(point.volumeKg)} kg objętości",
                                 style = MaterialTheme.typography.bodySmall)
