@@ -216,6 +216,35 @@ fun WorkoutModeCard(
                                     style = MaterialTheme.typography.labelSmall)
                             }
                         }
+                        val peakReps = exerciseHistory.maxOfOrNull { it.maxReps }?.coerceAtLeast(1) ?: 1
+                        val peakVolume = exerciseHistory.maxOfOrNull { it.volumeKg }?.coerceAtLeast(1.0) ?: 1.0
+                        Text("Powtórzenia • ostatnie sesje",
+                            style = MaterialTheme.typography.labelMedium)
+                        exerciseHistory.forEach { point ->
+                            Row(verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(point.date.takeLast(5), modifier = Modifier.width(46.dp),
+                                    style = MaterialTheme.typography.labelSmall)
+                                LinearProgressIndicator(progress = {
+                                    (point.maxReps.toFloat() / peakReps).coerceIn(0f, 1f)
+                                }, modifier = Modifier.weight(1f))
+                                Text("${point.maxReps}", style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                        Text("Objętość • ostatnie sesje",
+                            style = MaterialTheme.typography.labelMedium)
+                        exerciseHistory.forEach { point ->
+                            Row(verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(point.date.takeLast(5), modifier = Modifier.width(46.dp),
+                                    style = MaterialTheme.typography.labelSmall)
+                                LinearProgressIndicator(progress = {
+                                    (point.volumeKg / peakVolume).toFloat().coerceIn(0f, 1f)
+                                }, modifier = Modifier.weight(1f))
+                                Text("${"%.0f".format(point.volumeKg)} kg",
+                                    style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
                         exerciseHistory.forEach { point ->
                             Text("${point.date}: ${point.maxKg} kg × maks. ${point.maxReps} • ${"%.1f".format(point.volumeKg)} kg objętości",
                                 style = MaterialTheme.typography.bodySmall)
