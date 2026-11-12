@@ -162,4 +162,12 @@ class SportsFeaturesTest {
         assertTrue(status.healthMessage().contains("zapisana"))
     }
 
+    @Test fun cookingCaloriesNeverInventUnknownIngredients() {
+        assertNull(CookingIngredientsSupport.verifiedCalories(emptyList()))
+        assertNull(CookingIngredientsSupport.verifiedCalories(listOf(
+            CookingIngredient("1", "Nieznany składnik xyz", "Nieznany składnik xyz", quantity = 100f, unit = "g"))))
+        assertNull(CookingIngredientsSupport.verifiedCalories(listOf(
+            CookingIngredient("1", "Jajko", "Jajko", quantity = null, unit = "szt"))))
+    }
+
 }
