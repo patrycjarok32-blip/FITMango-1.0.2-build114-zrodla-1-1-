@@ -34,6 +34,8 @@ fun ProductPhotoScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProduct:
     var useAi by rememberSaveable { mutableStateOf(false) }
     var analyzePlate by rememberSaveable { mutableStateOf(false) }
     var mealAnalysis by remember { mutableStateOf<String?>(null) }
+    var correctedMeal by rememberSaveable { mutableStateOf("") }
+    var portionGrams by rememberSaveable { mutableStateOf("") }
     val aiAllowed = !com.example.ai.SecureKeyStorage.localOnly()
     var remote by remember { mutableStateOf<List<SubstituteCandidate>>(emptyList()) }
     val recipes by viewModel.recipes.collectAsState()
@@ -50,6 +52,8 @@ fun ProductPhotoScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProduct:
         try {
             if (analyzePlate && aiAllowed) {
                 mealAnalysis = withTimeout(90_000) { ProductPhotoSupport.recognizeMeal(context, android.net.Uri.parse(request)) }
+                correctedMeal = mealAnalysis.orEmpty()
+                portionGrams = ""
                 message = "To sugestia AI, nie automatycznie zapisany posiłek."
             } else if (useAi && aiAllowed) {
                 query = withTimeout(90_000) { ProductPhotoSupport.recognize(context, android.net.Uri.parse(request)) }
@@ -120,6 +124,17 @@ fun ProductPhotoScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProduct:
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Wynik rozpoznawania AI", style = MaterialTheme.typography.titleMedium)
                         Text(analysis)
+                        OutlinedTextField(
+                            value = correctedMeal, onValueChange = { correctedMeal = it.take(3000) },
+                            label = { Text("Popraw nazwę i składniki") },
+                            modifier = Modifier.fillMaxWidth(), minLines = 3)
+                        OutlinedTextField(
+                            value = portionGrams, onValueChange = { portionGrams = it.take(8) },
+                            label = { Text("Zweryfikowana masa porcji (g)") },
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                            modifier = Modifier.fillMaxWidth())
+                        Text("Po poprawieniu porcji wyszukaj produkty w bazie i wybierz ich wartości odżywcze. Zdjęcie samo nie określa kalorii.")
                         Text("AI może pomylić składniki i porcje. Nic nie zostało automatycznie dodane do dziennika.")
                     }
                 }
