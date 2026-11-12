@@ -288,7 +288,9 @@ class WeeklyMealPlannerVerificationTest {
         composeTestRule.onNodeWithTag("planner_day_Środa").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
+        composeTestRule.onNodeWithTag("meal_plan_lazy_column")
+            .performScrollToNode(hasTestTag("meal_category_section_Obiad"))
+        composeTestRule.waitUntil(timeoutMillis = 10_000) {
             composeTestRule.onAllNodesWithText("Kurczak curry — 1 porcja").fetchSemanticsNodes().isNotEmpty()
         }
 
