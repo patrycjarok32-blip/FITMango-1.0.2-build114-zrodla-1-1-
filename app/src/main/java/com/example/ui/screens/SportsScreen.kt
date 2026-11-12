@@ -134,6 +134,67 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             permissionError?.let { Text(it, color = ErrorInk) }
 
         }
+        if (activitySection == "achievements") item {
+            val finishedCount = workouts.count { it.ended > 0L }
+            val badges = listOf(
+                Triple("🌱", "Pierwszy trening", 1),
+                Triple("💪", "10 treningów", 10),
+                Triple("🏆", "20 treningów", 20),
+                Triple("⭐", "50 treningów", 50),
+                Triple("👑", "100 treningów", 100)
+            )
+            val earned = badges.count { finishedCount >= it.third }
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE7C7)),
+                    shape = RoundedCornerShape(24.dp)
+                ) {
+                    Column(Modifier.fillMaxWidth().padding(20.dp)) {
+                        Text("🥭 Moje osiągnięcia", style = MaterialTheme.typography.headlineSmall,
+                            color = Color(0xFF43235E), fontWeight = FontWeight.Bold)
+                        Text("Świętuj swoje postępy i zbieraj odznaki za treningi!",
+                            color = Color(0xFF43235E))
+                        Spacer(Modifier.height(12.dp))
+                        Text("🏆 $earned zdobytych   •   🔒 ${badges.size - earned} do zdobycia",
+                            fontWeight = FontWeight.SemiBold, color = Color(0xFF43235E))
+                        Text("Ukończone treningi: $finishedCount",
+                            color = Color(0xFF43235E))
+                    }
+                }
+                Card(shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFAF4))) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                        Text("🏅 Odznaki treningowe", style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold, color = Color(0xFF43235E))
+                        badges.forEach { (emoji, name, threshold) ->
+                            val unlocked = finishedCount >= threshold
+                            Row(Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically) {
+                                Text(if (unlocked) emoji else "🔒",
+                                    style = MaterialTheme.typography.headlineMedium)
+                                Spacer(Modifier.width(14.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(name, fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFF43235E))
+                                    Text(if (unlocked) "Zdobyta ✓" else "Postęp: $finishedCount / $threshold",
+                                        color = Color(0xFF766886))
+                                }
+                            }
+                        }
+                    }
+                }
+                Card(shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF2EAFB))) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                        Text("🥇 Ukończone plany treningowe",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold, color = Color(0xFF43235E))
+                        Text("Medale za ukończenie planu w 100% pojawią się tutaj po powiązaniu historii sesji z konkretnymi planami. Nie przyznajemy ich na podstawie samej liczby treningów.",
+                            color = Color(0xFF625573))
+                    }
+                }
+            }
+        }
         if (activitySection == "today") item { FreshMangoSportHeader() }
         if (activitySection == "today") item {
             FreshMangoSportRings(progress.first, progress.second, week.activeDays, ActivityRecoverySupport.unit(data))
@@ -145,7 +206,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     Triple("today", "🏠", "Dzisiaj"),
                     Triple("training", "🏋️", "Trening"),
                     Triple("progress", "📈", "Postępy"),
-                    Triple("recovery", "🌿", "Regeneracja")
+                    Triple("recovery", "🌿", "Regeneracja"),
+                    Triple("achievements", "🏆", "Odznaki")
                 ).forEach { (key, emoji, label) ->
                     item {
                         FilterChip(
