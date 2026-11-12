@@ -163,6 +163,28 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 }
             }
         }
+        if (activitySection == "training" && trainingPage == "session") item {
+            val activeWorkout = workouts.firstOrNull { it.ended == 0L }
+            if (activeWorkout != null) {
+                Card(shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF2EAFB))) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("▶ Mango Workout Mode", style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold, color = Color(0xFF43235E))
+                        Text(activeWorkout.title, color = Color(0xFF43235E))
+                        val done = activeWorkout.entries.count { it.done }
+                        Text("Ukończone serie: $done / ${activeWorkout.entries.size}",
+                            color = Color(0xFF43235E))
+                        LinearProgressIndicator(
+                            progress = { done.toFloat() / activeWorkout.entries.size.coerceAtLeast(1) },
+                            modifier = Modifier.fillMaxWidth(), color = Color(0xFF9B54C8))
+                        Text("Zaznaczaj serie i zapisuj ciężary w odtwarzaczu sesji poniżej.",
+                            color = Color(0xFF625573))
+                    }
+                }
+            }
+        }
         if (activitySection == "training") item {
             val weekStart = today.minusDays((today.dayOfWeek.value - 1).toLong())
             Card(shape = RoundedCornerShape(20.dp),
