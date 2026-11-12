@@ -20,6 +20,7 @@ class UsabilityPreferences(context: Context) {
                 MeasurementRemovalSupport.validate((0 until a.length()).map { a.getString(it) }.toSet())
             }
             if (json.has(SportsSupport.KEY)) SportsSupport.decode(json.getString(SportsSupport.KEY))
+            if (json.has(MangoRewardShop.KEY)) MangoRewardShop.decode(json.getString(MangoRewardShop.KEY))
             if (json.has("strength_workouts_v1")) WorkoutSessionStore.validateRaw(json.getString("strength_workouts_v1"))
             if (json.has("video_challenges_v1")) VideoChallengeStore.validateRaw(json.getString("video_challenges_v1"))
             if (json.has(ExerciseVideoLinks.KEY)) ExerciseVideoLinks.validate(json.getString(ExerciseVideoLinks.KEY))
