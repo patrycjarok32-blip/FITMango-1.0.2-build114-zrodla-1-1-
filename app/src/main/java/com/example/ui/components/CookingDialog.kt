@@ -67,6 +67,16 @@ fun CookingDialog(recipe: RecipeEntity,
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
                     isError = servings == null, modifier = Modifier.fillMaxWidth().testTag("cooking_servings"))
                 Text(if (syncWithMealPlan) "Zmiany porcji i gramatury zapisują się w jadłospisie." else "Zmiany dotyczą tylko tego gotowania.", style = MaterialTheme.typography.bodySmall)
+                val verifiedIngredientCalories = remember(cookingItems) {
+                    CookingIngredientsSupport.verifiedCalories(cookingItems)
+                }
+                if (verifiedIngredientCalories != null) {
+                    Text("✓ Kalorie z gramatur i znanych składników: $verifiedIngredientCalories kcal",
+                        color = LeafGreen, style = MaterialTheme.typography.bodyMedium)
+                } else {
+                    Text("Nie można dokładnie przeliczyć wszystkich składników: brakuje gramatury lub wartości kcal/100 g.",
+                        style = MaterialTheme.typography.bodySmall)
+                }
                 if (servings != null && initialServings > 0f && recipe.calories > 0) {
                     val estimated = (recipe.calories.toDouble() * servings / initialServings)
                         .toInt().coerceAtLeast(0)
