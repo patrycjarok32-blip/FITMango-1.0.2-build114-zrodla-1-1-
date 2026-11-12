@@ -19,7 +19,7 @@ fun WorkoutModeCard(
     date: String, plan: SportPlan?, workouts: List<WorkoutSession>, sports: SportsData, busy: Boolean,
     onStart: (SportPlan) -> Unit,
     onEntry: (String, Int, Int, Double, Boolean) -> Unit,
-    onFinish: (String, Int) -> Unit,
+    onFinish: (String, Int) -> Unit,\n    onPause: (String, Boolean) -> Unit,
     onDiscard: (String) -> Unit,
     onReplaceExercise: (String, String, String) -> Unit
 ) {
@@ -35,6 +35,13 @@ fun WorkoutModeCard(
     var showFinishConfirmation by rememberSaveable { mutableStateOf(false) }
     var showExitChoice by rememberSaveable { mutableStateOf(false) }
     var showVideo by rememberSaveable { mutableStateOf(false) }
+    var clockNow by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(active?.id, active?.pausedAt) {
+        while (active != null && active.ended == 0L) {
+            clockNow = System.currentTimeMillis()
+            delay(1000)
+        }
+    }
     LaunchedEffect(restRunning, rest) {
         if (restRunning && rest > 0) { delay(1000); rest-- }
         else if (rest == 0) restRunning = false
@@ -42,7 +49,7 @@ fun WorkoutModeCard(
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         MangoGuide(message = if (active == null) "Gotowa na trening?" else "Trening trwa — skup się na następnej serii.",
             event = if (active?.entries?.all { it.done } == true) 1 else 0, size = 32.dp)
-        Text("🏋️ Trening w toku", style = MaterialTheme.typography.titleLarge)
+        Text(if (active == null) "🏋️ Wybierz trening" else "🏋️ Trening w toku", style = MaterialTheme.typography.titleLarge)
         if (active == null) {
             if (plan != null && !plan.rest && plan.exercises.isNotEmpty()) {
                 Text("${plan.title} • ${plan.exercises.size} ćwiczeń • ${plan.exercises.sumOf { it.sets }} serii")
@@ -55,7 +62,11 @@ fun WorkoutModeCard(
                 val volume = done.sumOf { it.kg * it.reps }
                 Text("🏆 Ostatni trening: ${last.title}", style = MaterialTheme.typography.titleMedium)
                 Text("Wykonano ${done.size}/${last.entries.size} serii • objętość ${"%.1f".format(volume)} kg")
-                Text("Czas: ${((last.ended - last.started) / 60000).coerceAtLeast(0)} min • wysiłek ${last.effort}/10")
+                val elapsed = WorkoutSessionStore.activeDurationMillis(last)
+                Text("Czas aktywny: ${elapsed / 60000} min • wysiłek ${last.effort}/10")
+                if (elapsed > 4L * 60L * 60L * 1000L && last.pausedMillis == 0L)
+                    Text("Starszy zapis: czas mógł obejmować przerwy i pozostawienie otwartej aplikacji.",
+                        style = MaterialTheme.typography.bodySmall)
             }
         } else {
             val exercises = active.entries.map { it.exercise }.distinct()
@@ -73,6 +84,14 @@ fun WorkoutModeCard(
                         exerciseIndex = pendingIndex
                     }
                 }
+            }
+            val elapsedMs = WorkoutSessionStore.activeDurationMillis(active, clockNow)
+            Text("⏱️ Czas aktywny: ${elapsedMs / 60000}:${((elapsedMs / 1000) % 60).toString().padStart(2, '0')}" +
+                if (active.pausedAt > 0L) " • PAUZA" else "",
+                style = MaterialTheme.typography.titleMedium)
+            OutlinedButton(onClick = { onPause(active.id, active.pausedAt == 0L) },
+                enabled = !busy) {
+                Text(if (active.pausedAt > 0L) "▶ Wznów licznik" else "⏸ Wstrzymaj licznik")
             }
             val done = active.entries.count { it.done }
             Text(if (allCompleted) "🎉 Wszystkie ćwiczenia ukończone" else "🟢 ${active.title} • Pozostało ${pendingExercises.size} z ${exercises.size} ćwiczeń", style = MaterialTheme.typography.titleMedium)
@@ -231,7 +250,7 @@ fun WorkoutModeCard(
             Text("Odczuwalny wysiłek: ${effort}/10")
             Slider(value = effort.toFloat(), onValueChange = { effort = it.toInt().coerceIn(1, 10) },
                 valueRange = 1f..10f, steps = 8)
-            Button(onClick = { showExitChoice = true }, enabled = !busy,
+            Button(onClick = { if (allCompleted) showFinishConfirmation = true else showExitChoice = true }, enabled = !busy,
                 modifier = Modifier.fillMaxWidth()) { Text("🏁 Zakończ trening") }
             if (showExitChoice) AlertDialog(
                 onDismissRequest = { showExitChoice = false },
