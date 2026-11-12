@@ -25,6 +25,7 @@ fun WorkoutModeCard(
     onReplaceExercise: (String, String, String) -> Unit
 ) {
     val active = workouts.firstOrNull { it.ended == 0L }
+    var recoveryNote by rememberSaveable { mutableStateOf(false) }
     val last = workouts.lastOrNull { it.ended > 0L }
     var exerciseIndex by rememberSaveable(active?.id) { mutableIntStateOf(0) }
     var showReplacement by rememberSaveable { mutableStateOf(false) }
@@ -48,6 +49,26 @@ fun WorkoutModeCard(
         else if (rest == 0) restRunning = false
     }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        if (active != null) {
+            Text("💾 Sesja zapisana automatycznie. Po ponownym uruchomieniu aplikacji możesz ją wznowić.",
+                style = MaterialTheme.typography.bodySmall)
+        }
+        val lastCompleted = workouts.filter { it.ended > 0L }.maxByOrNull { it.ended }
+        if (lastCompleted != null) {
+            TextButton(onClick = { recoveryNote = !recoveryNote }) {
+                Text("😴 Mango Trener regeneracji")
+            }
+            if (recoveryNote) {
+                val elapsedHours = ((System.currentTimeMillis() - lastCompleted.ended)
+                    .coerceAtLeast(0L) / 3600000L)
+                Text(if (lastCompleted.effort >= 8 && elapsedHours < 24)
+                    "Ostatni trening był intensywny. Rozważ lżejszą sesję lub odpoczynek."
+                    else if (elapsedHours < 12)
+                    "Od ostatniej sesji minęło mniej niż 12 godzin. Sprawdź sen i samopoczucie."
+                    else "Sprawdź regenerację, sen i zmęczenie przed doborem obciążenia.",
+                    style = MaterialTheme.typography.bodySmall)
+            }
+        }
         MangoGuide(message = if (active == null) "Gotowa na trening?" else "Trening trwa — skup się na następnej serii.",
             event = if (active?.entries?.all { it.done } == true) 1 else 0, size = 32.dp)
         Text(if (active == null) "🏋️ Wybierz trening" else "🏋️ Trening w toku", style = MaterialTheme.typography.titleLarge)
@@ -83,6 +104,8 @@ fun WorkoutModeCard(
                         style = MaterialTheme.typography.bodySmall)
             }
         } else {
+            if (active.pausedAt > 0L) Text("⏸ Trening wstrzymany — wznów licznik przed kolejną serią.",
+                style = MaterialTheme.typography.bodyMedium)
             val exercises = active.entries.map { it.exercise }.distinct()
             val pendingExercises = exercises.filter { name -> active.entries.any { it.exercise == name && !it.done } }
             val allCompleted = pendingExercises.isEmpty()
