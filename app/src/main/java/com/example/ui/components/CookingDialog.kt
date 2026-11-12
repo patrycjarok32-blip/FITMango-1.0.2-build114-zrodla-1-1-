@@ -67,6 +67,15 @@ fun CookingDialog(recipe: RecipeEntity,
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
                     isError = servings == null, modifier = Modifier.fillMaxWidth().testTag("cooking_servings"))
                 Text(if (syncWithMealPlan) "Zmiany porcji i gramatury zapisują się w jadłospisie." else "Zmiany dotyczą tylko tego gotowania.", style = MaterialTheme.typography.bodySmall)
+                if (servings != null && initialServings > 0f && recipe.calories > 0) {
+                    val estimated = (recipe.calories.toDouble() * servings / initialServings)
+                        .toInt().coerceAtLeast(0)
+                    Text("🔥 Szacunkowa energia całej przygotowywanej ilości: $estimated kcal",
+                        color = MangoYellow, style = MaterialTheme.typography.bodyMedium)
+                    Text("Wartość skaluje kalorie przepisu według liczby porcji. Zmiana pojedynczych składników wymaga ponownego przeliczenia pełnego składu.",
+                        style = MaterialTheme.typography.bodySmall)
+                }
+
                 if (steps.isEmpty()) Text("Ten przepis nie ma zapisanych kroków. Uzupełnij instrukcję w szczegółach przepisu.")
                 else {
                     Text("Krok ${step + 1} z ${steps.size}", color = MangoYellow)
