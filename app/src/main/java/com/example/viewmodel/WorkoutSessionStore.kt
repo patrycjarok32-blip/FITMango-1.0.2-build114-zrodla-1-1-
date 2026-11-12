@@ -32,7 +32,7 @@ object WorkoutSessionStore {
             o.optLong("pausedAt", 0), o.optLong("pausedMillis", 0))
         require(s.id.length in 1..200 && s.title.length in 1..120 && s.started > 0 &&
             (s.ended == 0L || s.ended >= s.started) && s.effort in 0..10 &&
-            s.pausedMillis >= 0 && (s.pausedAt == 0L || s.pausedAt >= s.started)
+            s.pausedMillis >= 0 && (s.pausedAt == 0L || s.pausedAt >= s.started))
         java.time.LocalDate.parse(s.date)
         entries.forEach { require(it.exercise.length in 1..120 && it.number in 1..12 &&
             it.reps in 1..1000 && it.kg.isFinite() && it.kg in 0.0..2000.0) }
