@@ -26,7 +26,7 @@ object MangoVideoUrl {
             else -> null
         } ?: return null
         if (!id.matches(Regex("[A-Za-z0-9_-]{11}"))) return null
-        return "https://www.youtube-nocookie.com/embed/$id?playsinline=1&rel=0"
+        return "https://www.youtube.com/embed/$id?playsinline=1&rel=0&origin=https%3A%2F%2Fwww.youtube.com"
     }
 }
 
@@ -55,7 +55,8 @@ fun MangoInAppVideoPlayer(url: String, modifier: Modifier = Modifier) {
                             "www.youtube-nocookie.com", "youtube-nocookie.com",
                             "www.youtube.com", "youtube.com")
                     }
-                    loadUrl(embed)
+                    // Error 153 often indicates a missing referrer for embedded playback.
+                    loadUrl(embed, mapOf("Referer" to "https://www.youtube.com/"))
                 }
             },
             update = { },
