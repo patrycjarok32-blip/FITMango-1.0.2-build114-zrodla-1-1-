@@ -91,6 +91,21 @@ fun AiCoachScreen(viewModel: DietaViewModel, onEffects: () -> Unit = {}) {
                     }, label = { Text("✨ Odchudź przepis") })
                 }
                 item {
+                    AssistChip(enabled = !isLoading, onClick = {
+                        viewModel.sendChatMessage("Pomóż mi ułożyć realistyczny plan tygodnia: posiłki, treningi, odpoczynek i lista zakupów. Nie zakładaj dostępu do danych, których nie widzisz. Najpierw zapytaj o brakujące cele, dostępne dni i produkty.")
+                    }, label = { Text("🗓️ Plan tygodnia") })
+                }
+                item {
+                    AssistChip(enabled = !isLoading, onClick = {
+                        viewModel.sendChatMessage("Jesteś pomocnikiem treningowym FITMango. Zapytaj o doświadczenie, cel, sprzęt, dostępny czas i regenerację. Zaproponuj bezpieczną progresję, bez automatycznej zmiany zapisanych treningów.")
+                    }, label = { Text("🏋️ Trener Mango") })
+                }
+                item {
+                    AssistChip(enabled = !isLoading, onClick = {
+                        viewModel.sendChatMessage("Zaproponuj posiłki z produktów, które mam w lodówce. Najpierw poproś o listę produktów i ilości; podaj też brakujące składniki do zakupów.")
+                    }, label = { Text("🥕 Moja lodówka") })
+                }
+                item {
                     AssistChip(enabled = !isLoading, onClick = onEffects,
                         label = { Text("📊 Analiza tygodnia") })
                 }
