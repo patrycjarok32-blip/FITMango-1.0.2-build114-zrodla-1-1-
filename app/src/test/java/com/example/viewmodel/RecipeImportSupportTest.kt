@@ -576,9 +576,13 @@ class RecipeImportSupportTest {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("planner_day_Poniedziałek").performClick()
         composeTestRule.waitForIdle()
-        // Meal slots are intentionally collapsed by default to shorten the planner.
-        // Expand the target slot before checking the imported recipe card.
-        composeTestRule.onNodeWithTag("meal_slot_expand_Śniadanie").performScrollTo().performClick()
+        // A populated slot may already be expanded (including when Room data arrives
+        // after composition). Do not collapse it by blindly toggling the slot.
+        composeTestRule.onNodeWithTag("meal_slot_expand_Śniadanie").performScrollTo()
+        if (composeTestRule.onAllNodesWithText("Placki z plasterkami jabłek — 2 porcje")
+                .fetchSemanticsNodes().isEmpty()) {
+            composeTestRule.onNodeWithTag("meal_slot_expand_Śniadanie").performClick()
+        }
         composeTestRule.waitForIdle()
 
         composeTestRule.waitUntil(timeoutMillis = 5000) {
