@@ -96,3 +96,26 @@ data class RestTimer(val deadline: Long = 0, val paused: Long = 0) {
     fun resume(now: Long) = if (paused > 0) RestTimer(now + paused) else this
     companion object { fun start(seconds: Int, now: Long): RestTimer { require(seconds in 10..3600); return RestTimer(now + seconds * 1000L) } }
 }
+
+/** Read-only achievement projection. Existing storage and backups remain unchanged. */
+data class CompletedPlanAward(val id: String, val title: String, val completedAt: Long, val completed: Int, val total: Int)
+
+object PlanAchievementSupport {
+    fun awards(data: SportsData, sessions: List<WorkoutSession>,
+        challenges: List<VideoChallenge>): List<CompletedPlanAward> {
+        val video = challenges.filter { it.workouts.isNotEmpty() && it.workouts.all { w -> w.completedAt > 0L } }
+            .map { c -> CompletedPlanAward("video:" + c.id, c.title,
+                c.workouts.maxOf { it.completedAt }, c.workouts.size, c.workouts.size) }
+        // Each dated strength plan is a separate scheduled session, not a multi-week
+        // program. Require an ended session matching both its date and title.
+        val strength = data.plans.filter { !it.rest && it.exercises.isNotEmpty() }
+            .mapNotNull { plan ->
+                sessions.filter { it.ended > 0L && it.date == plan.date && it.title == plan.title }
+                    .maxByOrNull { it.ended }?.let { session ->
+                        CompletedPlanAward("strength:" + plan.date + ":" + plan.title,
+                            plan.title, session.ended, 1, 1)
+                    }
+            }.distinctBy { it.id }
+        return (video + strength).sortedByDescending { it.completedAt }
+    }
+}
