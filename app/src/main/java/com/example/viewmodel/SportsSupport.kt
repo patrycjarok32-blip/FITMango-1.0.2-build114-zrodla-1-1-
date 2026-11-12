@@ -173,7 +173,9 @@ object MangoProgressiveOverload {
             val entries = last.third
             val lastKg = entries.filter { it.done && it.kg > 0 }.map { it.kg }
                 .takeIf { it.isNotEmpty() }?.minOrNull() ?: return@mapNotNull null
-            val easyAndComplete = recent.size >= 2 && recent.takeLast(2).all { (_, session, sets) ->
+            val distinctRecentDays = recent.takeLast(2).map { it.second.date }.distinct().size == 2
+            val easyAndComplete = recent.size >= 2 && distinctRecentDays &&
+                recent.takeLast(2).all { (_, session, sets) ->
                 session.effort in 1..6 && sets.isNotEmpty() &&
                     sets.all { it.done && it.kg > 0 && it.reps > 0 } &&
                     sets.minOf { it.kg } >= lastKg * 0.95
