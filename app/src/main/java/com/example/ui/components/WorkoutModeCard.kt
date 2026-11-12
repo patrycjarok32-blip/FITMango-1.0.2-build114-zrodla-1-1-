@@ -29,6 +29,7 @@ fun WorkoutModeCard(
     val last = workouts.lastOrNull { it.ended > 0L }
     var exerciseIndex by rememberSaveable(active?.id) { mutableIntStateOf(0) }
     var showReplacement by rememberSaveable { mutableStateOf(false) }
+    var equipmentFilter by rememberSaveable { mutableStateOf("Wszystko") }
     var showTechnique by rememberSaveable { mutableStateOf(false) }
     var showExerciseList by rememberSaveable { mutableStateOf(false) }
     var effort by rememberSaveable { mutableIntStateOf(6) }
@@ -231,10 +232,28 @@ fun WorkoutModeCard(
             if (!allCompleted && showReplacement) {
                 val choices = StrengthExerciseLibrary.exercises.map { it.name }
                     .filter { it != selected && active.entries.none { e -> e.exercise == it } }
+                    .filter { candidate ->
+                        when (equipmentFilter) {
+                            "Dom" -> !Regex("maszyna|wyciąg|suwnica|smith|cable|machine|leg press",
+                                RegexOption.IGNORE_CASE).containsMatchIn(candidate)
+                            "Siłownia" -> true
+                            else -> true
+                        }
+                    }
                 AlertDialog(onDismissRequest = { showReplacement = false },
                     title = { Text("Zamień ćwiczenie") },
                     text = {
-                        androidx.compose.foundation.lazy.LazyColumn(modifier = Modifier.heightIn(max = 340.dp)) {
+                        Column {
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                listOf("Wszystko", "Dom", "Siłownia").forEach { option ->
+                                    FilterChip(selected = equipmentFilter == option,
+                                        onClick = { equipmentFilter = option },
+                                        label = { Text(option) })
+                                }
+                            }
+                            Text("Zamienniki z biblioteki. Sprawdź, czy angażują te same mięśnie.",
+                                style = MaterialTheme.typography.bodySmall)
+                        androidx.compose.foundation.lazy.LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
                             items(choices.size) { n ->
                                 TextButton(onClick = {
                                     onReplaceExercise(active.id, selected.orEmpty(), choices[n])
@@ -243,6 +262,7 @@ fun WorkoutModeCard(
                                     Text(choices[n])
                                 }
                             }
+                        }
                         }
                     },
                     confirmButton = { TextButton(onClick = { showReplacement = false }) { Text("Anuluj") } })
