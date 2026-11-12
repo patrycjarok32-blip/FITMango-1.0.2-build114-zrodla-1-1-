@@ -62,4 +62,22 @@ class MangoWorkoutInsightsTest {
         assertEquals("Cable kickback", gym.first())
     }
 
+    @Test fun previousSessionIsExcludedFromPersonalRecordWhenNoEarlierHistory() {
+        val first = session("first", "2026-11-10", 61000L, 20.0)
+        val report = MangoWorkoutInsights.summary(first, listOf(first))
+        assertEquals(0, report.personalRecords)
+        assertNull(report.previousVolumeKg)
+    }
+    @Test fun expressPlansNeverIncreaseOriginalSetCounts() {
+        val original = SportPlan("2026-11-12", "PULL", false, listOf(
+            PlannedExercise("Row", 4, 8, 90),
+            PlannedExercise("Curl", 3, 12, 60)))
+        for (minutes in listOf(15, 20, 30)) {
+            val shortened = MangoWorkoutInsights.quickPlan(original, minutes)
+            assertTrue(shortened.exercises.all { changed ->
+                original.exercises.any { it.name == changed.name && it.sets >= changed.sets }
+            })
+        }
+    }
+
 }
