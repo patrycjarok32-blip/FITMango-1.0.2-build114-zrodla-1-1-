@@ -127,3 +127,33 @@ object PlanAchievementSupport {
         return (video + strength).sortedByDescending { it.completedAt }
     }
 }
+
+/** Conservative local coaching suggestions. Never modifies saved workout history. */
+data class MangoLoadSuggestion(val exercise: String, val previousKg: Double, val suggestedKg: Double,
+    val explanation: String)
+
+object MangoTrainingCoach {
+    fun suggestions(sessions: List<WorkoutSession>): List<MangoLoadSuggestion> {
+        val finished = sessions.filter { it.ended > 0L }.sortedBy { it.ended }
+        return finished.flatMap { session ->
+            session.entries.filter { it.done && it.kg > 0.0 }.map { session to it }
+        }.groupBy { (_, entry) -> entry.exercise.trim().lowercase(java.util.Locale.ROOT) }
+            .values.mapNotNull { group ->
+                val last = group.lastOrNull() ?: return@mapNotNull null
+                val latestSession = last.first
+                val latest = last.second
+                val sameSession = group.filter { it.first.id == latestSession.id }
+                val completedAll = latestSession.entries.filter { it.exercise.equals(latest.exercise, true) }
+                    .all { it.done }
+                val suggested = when {
+                    latestSession.effort >= 8 -> latest.kg
+                    completedAll && sameSession.isNotEmpty() && latestSession.effort in 1..6 ->
+                        (latest.kg + if (latest.kg >= 20.0) 2.5 else 1.0).coerceAtMost(2000.0)
+                    else -> latest.kg
+                }
+                MangoLoadSuggestion(latest.exercise, latest.kg, suggested,
+                    if (suggested > latest.kg) "Propozycja niewielkiej progresji po lekkiej sesji"
+                    else "Utrzymaj ciężar; priorytetem jest technika i regeneracja")
+            }.sortedBy { it.exercise }
+    }
+}
