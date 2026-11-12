@@ -1046,6 +1046,15 @@ private fun MealCategorySection(
 ) {
     var addMenuOpen by remember(categorySpec.canonicalName) { mutableStateOf(false) }
     var expanded by rememberSaveable(categorySpec.canonicalName) { mutableStateOf(meals.isNotEmpty() && meals.any { !MealPlannerSupport.completedInCurrentWeek(it) }) }
+    // Room can deliver meals after the first composition. Open newly populated slots once,
+    // without overriding subsequent manual collapse/expand choices.
+    var hadMeals by rememberSaveable(categorySpec.canonicalName) { mutableStateOf(meals.isNotEmpty()) }
+    LaunchedEffect(meals.isNotEmpty()) {
+        if (meals.isNotEmpty() && !hadMeals) {
+            expanded = true
+            hadMeals = true
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
