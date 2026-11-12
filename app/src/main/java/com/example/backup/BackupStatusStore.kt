@@ -21,6 +21,17 @@ class BackupStatusStore(context: Context) {
     }
     @Synchronized fun exported() { prefs.edit().putLong("export", System.currentTimeMillis()).putInt("changes", 0).apply(); _state.value = read() }
     @Synchronized fun savedAutomatic() { prefs.edit().putLong("autoDate", System.currentTimeMillis()).putBoolean("pending", false).apply(); _state.value = read() }
+    /** Read-only status summary; never treats a missing automatic backup as a success. */
+    fun healthMessage(now: Long = System.currentTimeMillis()): String {
+        val current = state.value
+        if (!current.automatic) return "Automatyczna kopia jest wyłączona."
+        if (current.lastAutomatic <= 0L) return "Brak potwierdzonej kopii automatycznej."
+        if (pending()) return "Zmiany oczekują na zapis w kopii automatycznej."
+        val age = (now - current.lastAutomatic).coerceAtLeast(0L)
+        return if (age > 7L * 24 * 60 * 60 * 1000)
+            "Ostatnia kopia ma ponad 7 dni. Sprawdź możliwość jej odtworzenia."
+        else "Kopia automatyczna została zapisana. Warto okresowo sprawdzać przywracanie."
+    }
     fun pending() = prefs.getBoolean("pending", false)
     fun date(value: Long): String = if (value == 0L) "jeszcze nie zapisano" else java.time.Instant.ofEpochMilli(value)
         .atZone(java.time.ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))
