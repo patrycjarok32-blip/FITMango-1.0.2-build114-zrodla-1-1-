@@ -66,12 +66,27 @@ fun WorkoutModeCard(
             if (recoveryNote) {
                 val elapsedHours = ((System.currentTimeMillis() - lastCompleted.ended)
                     .coerceAtLeast(0L) / 3600000L)
-                Text(if (lastCompleted.effort >= 8 && elapsedHours < 24)
-                    "Ostatni trening był intensywny. Rozważ lżejszą sesję lub odpoczynek."
-                    else if (elapsedHours < 12)
-                    "Od ostatniej sesji minęło mniej niż 12 godzin. Sprawdź sen i samopoczucie."
-                    else "Sprawdź regenerację, sen i zmęczenie przed doborem obciążenia.",
-                    style = MaterialTheme.typography.bodySmall)
+                val today = java.time.LocalDate.now().toString()
+                val sleep = sports.daily.filter { it.date <= today }.maxByOrNull { it.date }
+                    ?.takeIf { it.date >= java.time.LocalDate.now().minusDays(1).toString() }
+                    ?.sleepMinutes
+                val check = sports.recovery.filter { it.date <= today }.maxByOrNull { it.date }
+                    ?.takeIf { it.date >= java.time.LocalDate.now().minusDays(2).toString() }
+                if (sleep != null) Text("💤 Ostatni sen: ${sleep / 60} h ${sleep % 60} min")
+                if (check != null) Text("Energia: ${check.energy}/5 • zmęczenie: ${check.fatigue}/5")
+                val lowRecovery = (sleep != null && sleep < 360) ||
+                    (check != null && (check.fatigue >= 4 || check.energy <= 2))
+                Text(when {
+                    lowRecovery -> "Regeneracja może być niewystarczająca. Rozważ lżejszy trening."
+                    lastCompleted.effort >= 8 && elapsedHours < 24 ->
+                        "Ostatni trening był intensywny. Rozważ odpoczynek lub mniejsze obciążenie."
+                    elapsedHours < 12 ->
+                        "Od ostatniej sesji minęło mniej niż 12 godzin. Oceń zmęczenie."
+                    else -> "Dostosuj obciążenie do samopoczucia i techniki."
+                }, style = MaterialTheme.typography.bodySmall)
+                if (sleep == null && check == null)
+                    Text("Brak aktualnych danych snu lub samopoczucia. Sprawdź synchronizację Health Connect.",
+                        style = MaterialTheme.typography.bodySmall)
             }
         }
         OutlinedButton(
