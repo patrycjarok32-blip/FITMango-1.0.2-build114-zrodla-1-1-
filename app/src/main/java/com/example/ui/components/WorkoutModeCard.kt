@@ -65,6 +65,19 @@ fun WorkoutModeCard(
                 Text("Wykonano ${done.size}/${last.entries.size} serii • objętość ${"%.1f".format(volume)} kg")
                 val elapsed = WorkoutSessionStore.activeDurationMillis(last)
                 Text("Czas aktywny: ${elapsed / 60000} min • wysiłek ${last.effort}/10")
+                val report = remember(last, workouts) { MangoWorkoutInsights.summary(last, workouts) }
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)) {
+                    Column(Modifier.fillMaxWidth().padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("🏆 Podsumowanie Premium", style = MaterialTheme.typography.titleMedium)
+                        Text("Serie: ${report.completedSets}/${report.totalSets} • objętość: ${"%.1f".format(report.volumeKg)} kg")
+                        Text("Rekordy ciężaru: ${report.personalRecords} • czas aktywny: ${report.activeMinutes} min")
+                        report.previousVolumeKg?.let { old ->
+                            Text("Poprzednia sesja: ${"%.1f".format(old)} kg • zmiana: ${"%+.1f".format(report.volumeKg - old)} kg")
+                        }
+                    }
+                }
+
                 if (elapsed > 4L * 60L * 60L * 1000L && last.pausedMillis == 0L)
                     Text("Starszy zapis: czas mógł obejmować przerwy i pozostawienie otwartej aplikacji.",
                         style = MaterialTheme.typography.bodySmall)
@@ -153,6 +166,23 @@ fun WorkoutModeCard(
                         }
                     },
                     confirmButton = { TextButton(onClick = { showTechnique = false }) { Text("Zamknij") } })
+            }
+            if (selected != null) {
+                val exerciseHistory = remember(selected, workouts) {
+                    MangoWorkoutInsights.exerciseHistory(selected, workouts).takeLast(6)
+                }
+                if (exerciseHistory.isNotEmpty()) {
+                    var showHistory by rememberSaveable(selected) { mutableStateOf(false) }
+                    TextButton(onClick = { showHistory = !showHistory }) {
+                        Text(if (showHistory) "Ukryj historię" else "📈 Historia ćwiczenia")
+                    }
+                    if (showHistory) {
+                        exerciseHistory.forEach { point ->
+                            Text("${point.date}: ${point.maxKg} kg × maks. ${point.maxReps} • ${"%.1f".format(point.volumeKg)} kg objętości",
+                                style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
             }
             val priorSets = selected?.let { SportsSupport.previous(sports, it, active.date) }.orEmpty()
             val previous = priorSets.lastOrNull()?.kg
