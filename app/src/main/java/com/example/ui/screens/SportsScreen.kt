@@ -839,3 +839,61 @@ private fun sportActivityIcon(title: String): String {
         else -> "💪"
     }
 }
+
+private fun createMangoDiploma(context: android.content.Context, title: String,
+    completed: Int, total: Int, date: String): android.net.Uri {
+    val bitmap = android.graphics.Bitmap.createBitmap(1200, 850, android.graphics.Bitmap.Config.ARGB_8888)
+    try {
+        val canvas = android.graphics.Canvas(bitmap)
+        canvas.drawColor(android.graphics.Color.rgb(255, 249, 238))
+        val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+        paint.color = android.graphics.Color.rgb(88, 47, 111)
+        paint.style = android.graphics.Paint.Style.STROKE
+        paint.strokeWidth = 12f
+        canvas.drawRoundRect(36f, 36f, 1164f, 814f, 42f, 42f, paint)
+        paint.style = android.graphics.Paint.Style.FILL
+        paint.textAlign = android.graphics.Paint.Align.CENTER
+        paint.typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.BOLD)
+        paint.textSize = 74f
+        canvas.drawText("FITMango", 600f, 190f, paint)
+        paint.color = android.graphics.Color.rgb(184, 121, 31)
+        paint.textSize = 55f
+        canvas.drawText("DYPLOM UKOŃCZENIA", 600f, 300f, paint)
+        paint.color = android.graphics.Color.rgb(88, 47, 111)
+        paint.textSize = 45f
+        canvas.drawText(title.take(42), 600f, 430f, paint)
+        paint.textSize = 35f
+        canvas.drawText("Ukończono $completed z $total treningów", 600f, 530f, paint)
+        canvas.drawText("Data: $date", 600f, 610f, paint)
+        paint.textSize = 28f
+        canvas.drawText("Gratulacje! Każdy trening to Twój sukces.", 600f, 725f, paint)
+        val values = android.content.ContentValues().apply {
+            put(android.provider.MediaStore.Images.Media.DISPLAY_NAME,
+                "FITMango_dyplom_${System.currentTimeMillis()}.png")
+            put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/png")
+            if (android.os.Build.VERSION.SDK_INT >= 29) {
+                put(android.provider.MediaStore.Images.Media.RELATIVE_PATH, "Pictures/FITMango")
+                put(android.provider.MediaStore.Images.Media.IS_PENDING, 1)
+            }
+        }
+        val resolver = context.contentResolver
+        val uri = resolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+            ?: error("Nie można utworzyć pliku")
+        try {
+            resolver.openOutputStream(uri)?.use { output ->
+                check(bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, output))
+            } ?: error("Nie można zapisać obrazu")
+            if (android.os.Build.VERSION.SDK_INT >= 29) {
+                resolver.update(uri, android.content.ContentValues().apply {
+                    put(android.provider.MediaStore.Images.Media.IS_PENDING, 0)
+                }, null, null)
+            }
+            return uri
+        } catch (e: Exception) {
+            resolver.delete(uri, null, null)
+            throw e
+        }
+    } finally {
+        bitmap.recycle()
+    }
+}
