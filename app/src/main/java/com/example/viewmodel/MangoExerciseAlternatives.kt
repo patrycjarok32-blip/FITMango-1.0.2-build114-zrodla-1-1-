@@ -16,11 +16,14 @@ object MangoExerciseAlternatives {
         val normalized = name.lowercase(java.util.Locale.ROOT)
         return groups.entries.firstOrNull { (_, keys) -> keys.any { normalized.contains(it) } }?.key
     }
+    private val gymEquipment = Regex(
+        "maszyna|wyciąg|suwnica|smith|cable|machine|leg press|pulldown|leg curl",
+        RegexOption.IGNORE_CASE
+    )
     fun candidates(current: String, library: List<String>, home: Boolean): List<String> {
         val group = muscleGroup(current) ?: return emptyList()
         return library.filter { it != current && muscleGroup(it) == group }
-            .filter { !home || !Regex("maszyna|wyciąg|suwnica|smith|cable|machine|leg press",
-                RegexOption.IGNORE_CASE).containsMatchIn(it) }
-            .distinct().sorted()
+            .filter { !home || !gymEquipment.containsMatchIn(it) }
+            .distinct().sortedWith(compareBy<String> { if (home) 0 else if (gymEquipment.containsMatchIn(it)) 0 else 1 }.thenBy { it })
     }
 }
