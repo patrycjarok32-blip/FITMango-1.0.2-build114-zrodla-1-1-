@@ -172,6 +172,33 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
     fun n(value: Double?, unit: String) = value?.let { String.format(java.util.Locale.getDefault(), "%.2f %s", it, unit) } ?: "brak danych"
     LazyColumn(Modifier.fillMaxSize().background(DarkBackground).padding(horizontal = 16.dp), state = rememberLazyListState(), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
         item {
+            val sorted = measurements.filter { it.weightKg.isFinite() && it.weightKg > 0f }
+                .sortedBy { it.date }
+            val first = sorted.firstOrNull()
+            val last = sorted.lastOrNull()
+            Card(colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                Column(Modifier.fillMaxWidth().padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("📊 Moja przemiana", style = MaterialTheme.typography.titleMedium)
+                    if (first != null && last != null && first.id != last.id) {
+                        val difference = com.example.viewmodel.MangoDailyTools.weightChange(
+                            first.weightKg, last.weightKg)
+                        Text("Od ${first.date} do ${last.date}")
+                        if (difference != null) Text("Zmiana masy: " +
+                            String.format(java.util.Locale.getDefault(), "%+.1f kg", difference))
+                        if (first.waistCm > 0f && last.waistCm > 0f)
+                            Text("Zmiana talii: " + String.format(java.util.Locale.getDefault(),
+                                "%+.1f cm", last.waistCm - first.waistCm))
+                        Text("To porównanie zapisanych pomiarów, nie ocena wyglądu.",
+                            style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        Text("Dodaj co najmniej dwa pomiary, aby porównać postępy.")
+                    }
+                }
+            }
+        }
+        item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("Postępy", style = MaterialTheme.typography.headlineSmall,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.weight(1f))
