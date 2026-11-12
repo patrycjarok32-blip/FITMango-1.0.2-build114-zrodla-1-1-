@@ -53,14 +53,23 @@ object MangoWorkoutInsights {
     fun quickPlan(plan: SportPlan, minutes: Int): SportPlan {
         require(minutes in listOf(15, 20, 30))
         var budget = minutes * 60
-        val chosen = plan.exercises.mapNotNull { e ->
-            if (budget < 60) return@mapNotNull null
-            val perSet = 45 + e.restSeconds.coerceIn(0, 180)
-            val count = (budget / perSet).coerceIn(0, e.sets)
-            if (count == 0) null else {
-                budget -= count * perSet
-                e.copy(sets = count)
+        val counts = IntArray(plan.exercises.size)
+        // Round-robin preserves exercise variety rather than spending the entire
+        // time budget on the first exercise.
+        var progressed: Boolean
+        do {
+            progressed = false
+            plan.exercises.forEachIndexed { index, exercise ->
+                val seconds = 45 + exercise.restSeconds.coerceIn(0, 180)
+                if (counts[index] < exercise.sets && seconds <= budget) {
+                    counts[index]++
+                    budget -= seconds
+                    progressed = true
+                }
             }
+        } while (progressed)
+        val chosen = plan.exercises.mapIndexedNotNull { index, exercise ->
+            counts[index].takeIf { it > 0 }?.let { exercise.copy(sets = it) }
         }
         return plan.copy(title = plan.title + " • ekspres $minutes min", exercises = chosen)
     }
