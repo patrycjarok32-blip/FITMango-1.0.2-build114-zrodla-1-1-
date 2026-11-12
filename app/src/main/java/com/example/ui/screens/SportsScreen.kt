@@ -252,7 +252,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
         }
         if (activitySection == "training") item {
-            val suggestions = remember(workouts) { MangoTrainingCoach.suggestions(workouts) }
+            val suggestions = remember(workouts) { MangoProgressiveOverload.suggestions(workouts) }
             if (suggestions.isNotEmpty()) {
                 Card(shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = Color(0xFFF2EAFB))) {
@@ -261,7 +261,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         Text("🥭 Mango Trener — sugestie na kolejny trening",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold, color = Color(0xFF43235E))
-                        Text("Propozycje na podstawie ukończonych sesji. Zatwierdź ciężar samodzielnie.",
+                        Text("Propozycje wymagają powtarzalnych lekkich sesji. Ciężar zatwierdzasz samodzielnie.",
                             color = Color(0xFF625573))
                         suggestions.take(5).forEach { suggestion ->
                             Text(suggestion.exercise + ": " + suggestion.previousKg +
