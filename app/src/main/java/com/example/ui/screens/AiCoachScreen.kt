@@ -106,6 +106,11 @@ fun AiCoachScreen(viewModel: DietaViewModel, onEffects: () -> Unit = {}) {
                     }, label = { Text("🥕 Moja lodówka") })
                 }
                 item {
+                    AssistChip(enabled = !isLoading, onClick = {
+                        viewModel.sendChatMessage("Chcę rozpoznać posiłek ze zdjęcia i poprawić wielkości porcji. Jeżeli nie masz dostępu do obrazu, powiedz to wyraźnie i poproś o składniki oraz gramatury. Nie wymyślaj dokładnych kalorii bez danych.")
+                    }, label = { Text("📸 Skan posiłku 2.0") })
+                }
+                item {
                     AssistChip(enabled = !isLoading, onClick = onEffects,
                         label = { Text("📊 Analiza tygodnia") })
                 }
