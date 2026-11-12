@@ -421,6 +421,11 @@ class IngredientSubstitutionVerificationTest {
         composeTestRule.waitForIdle()
 
         val wedMeal = viewModel.mealPlans.value.first { it.recipeTitle == "Kurczak curry" && it.dayOfWeek == MealPlannerSupport.dateForDay("Środa")!!.toString() }
+        composeTestRule.onNodeWithTag("meal_plan_lazy_column")
+            .performScrollToNode(hasTestTag("meal_category_section_Obiad"))
+        composeTestRule.waitUntil(10_000) {
+            composeTestRule.onAllNodesWithTag("toggle_meal_details_${wedMeal.id}").fetchSemanticsNodes().isNotEmpty()
+        }
         composeTestRule.onNodeWithTag("toggle_meal_details_${wedMeal.id}").performClick()
 
         composeTestRule.waitUntil(timeoutMillis = 5000) {
