@@ -92,4 +92,33 @@ class SportsFeaturesTest {
             LocalDate.parse(it.date) == LocalDate.now() })
     }
 
+    @Test fun planAwardsRequireMatchingCompletedStrengthSession() {
+        val date = LocalDate.now().toString()
+        val plan = SportPlan(date, "Trening nóg", false, listOf(PlannedExercise("Przysiad", 3, 10)))
+        val data = SportsData(plans = listOf(plan))
+        val unfinished = WorkoutSession("s1", date, plan.title, 100L, emptyList())
+        assertTrue(PlanAchievementSupport.awards(data, listOf(unfinished), emptyList()).isEmpty())
+        assertTrue(PlanAchievementSupport.awards(data,
+            listOf(unfinished.copy(ended = 200L, title = "Inny trening")), emptyList()).isEmpty())
+        val earned = PlanAchievementSupport.awards(data,
+            listOf(unfinished.copy(ended = 200L)), emptyList())
+        assertEquals(1, earned.size)
+        assertEquals("Trening nóg", earned.single().title)
+        assertEquals(200L, earned.single().completedAt)
+    }
+
+    @Test fun videoProgramAwardRequiresAllTasksAndNoEmptyPlanAwards() {
+        val one = VideoWorkout("one", 1, "Pierwszy", 20, "Siła", "", 1000L)
+        val two = VideoWorkout("two", 2, "Drugi", 20, "Siła", "", 0L)
+        val incomplete = VideoChallenge("v1", "Program", 14, listOf(one, two))
+        val empty = VideoChallenge("v2", "Pusty", 14, emptyList())
+        assertTrue(PlanAchievementSupport.awards(SportsData(), emptyList(),
+            listOf(incomplete, empty)).isEmpty())
+        val complete = incomplete.copy(workouts = listOf(one, two.copy(completedAt = 2000L)))
+        val awards = PlanAchievementSupport.awards(SportsData(), emptyList(), listOf(complete, empty))
+        assertEquals(1, awards.size)
+        assertEquals(2, awards.single().total)
+        assertEquals(2000L, awards.single().completedAt)
+    }
+
 }
