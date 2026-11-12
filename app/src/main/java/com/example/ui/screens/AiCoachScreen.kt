@@ -35,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun AiCoachScreen(viewModel: DietaViewModel, onEffects: () -> Unit = {}) {
     val messages by viewModel.chatMessages.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoadingAi.collectAsStateWithLifecycle()
+    val mangoOnline = com.example.ui.components.rememberMangoOnline()
     var recipeText by remember { mutableStateOf<String?>(null) }
     var savedFeedback by remember { mutableIntStateOf(0) }
 
@@ -58,7 +59,7 @@ fun AiCoachScreen(viewModel: DietaViewModel, onEffects: () -> Unit = {}) {
             )
         },
         bottomBar = {
-            ChatComposer(isLoading) { viewModel.sendChatMessage(it) }
+            ChatComposer(isLoading || !mangoOnline) { if (mangoOnline) viewModel.sendChatMessage(it) }
         },
         containerColor = DarkBackground
     ) { padding ->
@@ -75,6 +76,10 @@ fun AiCoachScreen(viewModel: DietaViewModel, onEffects: () -> Unit = {}) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             SuccessFeedback(savedFeedback, "Zapisano przepis")
+            if (!mangoOnline) {
+                Text("📴 Offline: rozmowa z Gemini jest wstrzymana. Twoje zapisane dane pozostają dostępne.",
+                    color = GoldAccent, style = MaterialTheme.typography.bodyMedium)
+            }
             Text("📴 Tryb bez internetu: zapisane przepisy, jadłospis i lokalne dane możesz przeglądać bez AI. " +
                 "Rozmowa Mango AI oraz analiza zdjęć wymagają połączenia i dostępu do Gemini.",
                 color = GoldAccent, style = MaterialTheme.typography.bodySmall)
@@ -85,37 +90,37 @@ fun AiCoachScreen(viewModel: DietaViewModel, onEffects: () -> Unit = {}) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item {
-                    AssistChip(enabled = !isLoading, onClick = {
+                    AssistChip(enabled = !isLoading && mangoOnline, onClick = {
                         viewModel.sendChatMessage("Pomóż mi zaplanować zbilansowane posiłki na dziś. Najpierw zapytaj o moje cele, ograniczenia i preferencje, jeśli nie są znane.")
                     }, label = { Text("🥗 Pomysły na dziś") })
                 }
                 item {
-                    AssistChip(enabled = !isLoading, onClick = {
+                    AssistChip(enabled = !isLoading && mangoOnline, onClick = {
                         viewModel.sendChatMessage("Chcę odchudzić przepis. Poproś mnie o składniki, ilości i liczbę porcji, a następnie zaproponuj lżejsze zamienniki. Podaj jedynie orientacyjne różnice kalorii, gdy dane pozwalają je policzyć.")
                     }, label = { Text("✨ Odchudź przepis") })
                 }
                 item {
-                    AssistChip(enabled = !isLoading, onClick = {
+                    AssistChip(enabled = !isLoading && mangoOnline, onClick = {
                         viewModel.sendChatMessage("Pomóż mi ułożyć realistyczny plan tygodnia: posiłki, treningi, odpoczynek i lista zakupów. Nie zakładaj dostępu do danych, których nie widzisz. Najpierw zapytaj o brakujące cele, dostępne dni i produkty.")
                     }, label = { Text("🗓️ Plan tygodnia") })
                 }
                 item {
-                    AssistChip(enabled = !isLoading, onClick = {
+                    AssistChip(enabled = !isLoading && mangoOnline, onClick = {
                         viewModel.sendChatMessage("Jesteś pomocnikiem treningowym FITMango. Zapytaj o doświadczenie, cel, sprzęt, dostępny czas i regenerację. Zaproponuj bezpieczną progresję, bez automatycznej zmiany zapisanych treningów.")
                     }, label = { Text("🏋️ Trener Mango") })
                 }
                 item {
-                    AssistChip(enabled = !isLoading, onClick = {
+                    AssistChip(enabled = !isLoading && mangoOnline, onClick = {
                         viewModel.sendChatMessage("Zaproponuj posiłki z produktów, które mam w lodówce. Najpierw poproś o listę produktów i ilości; podaj też brakujące składniki do zakupów.")
                     }, label = { Text("🥕 Moja lodówka") })
                 }
                 item {
-                    AssistChip(enabled = !isLoading, onClick = {
+                    AssistChip(enabled = !isLoading && mangoOnline, onClick = {
                         viewModel.sendChatMessage("Chcę rozpoznać posiłek ze zdjęcia i poprawić wielkości porcji. Jeżeli nie masz dostępu do obrazu, powiedz to wyraźnie i poproś o składniki oraz gramatury. Nie wymyślaj dokładnych kalorii bez danych.")
                     }, label = { Text("📸 Skan posiłku 2.0") })
                 }
                 item {
-                    AssistChip(enabled = !isLoading, onClick = onEffects,
+                    AssistChip(enabled = !isLoading && mangoOnline, onClick = onEffects,
                         label = { Text("📊 Analiza tygodnia") })
                 }
             }
@@ -168,7 +173,7 @@ fun AiCoachScreen(viewModel: DietaViewModel, onEffects: () -> Unit = {}) {
                                 fontWeight = if (isUser) FontWeight.Bold else FontWeight.Normal
                             )
                             if (canImport) {
-                                TextButton(enabled = !isLoading, onClick = { recipeText = msg.content }) { Text("Dodaj przepis do jadłospisu →") }
+                                TextButton(enabled = !isLoading && mangoOnline, onClick = { recipeText = msg.content }) { Text("Dodaj przepis do jadłospisu →") }
                             }
                             }
                         }
