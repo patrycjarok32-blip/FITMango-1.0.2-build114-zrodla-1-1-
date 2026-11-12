@@ -142,10 +142,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 runCatching { LocalDate.parse(session.date) }.getOrNull()
                     ?.let { !it.isBefore(weekStart) && !it.isAfter(today) } == true
             }
-            val planMedals = videoChallenges.filter { challenge ->
-                challenge.workouts.isNotEmpty() &&
-                    challenge.workouts.all { it.completedAt > 0L }
-            }.sortedByDescending { it.workouts.maxOf { w -> w.completedAt } }
+            val planMedals = PlanAchievementSupport.awards(data, workouts, videoChallenges)
             val strengthProgress = finished.flatMap { it.entries }
                 .filter { it.done && it.kg > 0.0 }
                 .groupBy { it.exercise.trim().lowercase() }
@@ -207,7 +204,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                             "Medal pojawi się po ukończeniu wszystkich treningów w zapisanym planie wideo.",
                             color = Color(0xFF625573))
                         planMedals.forEach { plan ->
-                            val completedAt = plan.workouts.maxOf { it.completedAt }
+                            val completedAt = plan.completedAt
                             val dateText = java.time.Instant.ofEpochMilli(completedAt)
                                 .atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString()
                             Row(Modifier.fillMaxWidth().padding(vertical = 8.dp),
@@ -216,16 +213,21 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                 Spacer(Modifier.width(12.dp))
                                 Column(Modifier.weight(1f)) {
                                     Text(plan.title, fontWeight = FontWeight.Bold, color = medalColor)
-                                    Text("100% • ${plan.workouts.size} treningów • $dateText",
+                                    Text("100% • ${plan.total} treningów • $dateText",
                                         color = Color(0xFF625573))
                                 }
                                 TextButton(onClick = {
-                                    val certificate = "🏅 Dyplom FITMango\\nUkończony plan: ${plan.title}\\n" +
-                                        "Wykonane treningi: ${plan.workouts.size}/${plan.workouts.size}\\nData: $dateText"
-                                    val intent = android.content.Intent(android.content.Intent.ACTION_SEND)
-                                        .setType("text/plain")
-                                        .putExtra(android.content.Intent.EXTRA_TEXT, certificate)
-                                    context.startActivity(android.content.Intent.createChooser(intent, "Udostępnij dyplom"))
+                                    runCatching {
+                                        val image = createMangoDiploma(context, plan.title, plan.completed, plan.total, dateText)
+                                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND)
+                                            .setType("image/png")
+                                            .putExtra(android.content.Intent.EXTRA_STREAM, image)
+                                            .addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        context.startActivity(android.content.Intent.createChooser(intent, "Zapisz lub udostępnij dyplom"))
+                                    }.onFailure {
+                                        android.widget.Toast.makeText(context, "Nie udało się zapisać dyplomu",
+                                            android.widget.Toast.LENGTH_LONG).show()
+                                    }
                                 }) { Text("Dyplom") }
                             }
                         }
