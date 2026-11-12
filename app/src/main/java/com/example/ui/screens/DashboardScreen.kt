@@ -223,6 +223,25 @@ fun DashboardScreen(
                     )
                 )
             }
+            val mangoNextStep = remember(today, sportsData.plans, waterTotal, consumedCalories, targetCalories) {
+                com.example.viewmodel.MangoDailyTools.nextAction(
+                    today, sportsData.plans, waterTotal,
+                    (targetCalories - consumedCalories).coerceAtLeast(0))
+            }
+            Card(modifier = Modifier.fillMaxWidth().testTag("mango_daily_coach"),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer)) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("🥭 Mango Coach • następny krok",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold)
+                    Text(mangoNextStep, style = MaterialTheme.typography.bodyMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = onNavigateToMealPlan) { Text("Jadłospis") }
+                        TextButton(onClick = onNavigateToAiCoach) { Text("Zapytaj Mango") }
+                    }
+                }
+            }
             if (smartSuggestions.isNotEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth().testTag("smart_daily_recommendations"),
