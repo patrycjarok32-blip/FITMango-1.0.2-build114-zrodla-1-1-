@@ -76,6 +76,9 @@ class ProfileNavigationUiTest {
         restoration.emulateSavedInstanceStateRestore()
         compose.onNodeWithTag("theme_light").assertExists()
         compose.onNodeWithTag("profile_detail_back").performClick()
+        compose.waitUntil(10_000) {
+            compose.onAllNodesWithTag("profile_tab_settings").fetchSemanticsNodes().isNotEmpty()
+        }
         compose.onNodeWithTag("profile_tab_settings").assertIsSelected()
     }
     @Test fun aSavedTabIsUsedOnOpeningTheProfile() {
