@@ -163,12 +163,19 @@ internal object PdfRecipeExtractor {
         val found = mutableListOf<ParsedRecipe>()
         for (i in pages.indices) {
             val (number, heading) = pages[i]
-            val title = heading.lines().map { it.trim() }.filter { it.isNotBlank() }
-                .joinToString(" ").replace(Regex("""\s+"""), " ").trim()
-            if (title.length !in 6..145 || heading.lines().size > 7 ||
+            // Photo/title pages often contain an ornamental page number or a short
+            // footer. Keep the actual uppercase heading, not the entire page text.
+            val headingLines = heading.lines().map { it.trim() }.filter { it.isNotBlank() }
+            val titleLines = headingLines.dropWhile { it.matches(Regex("""\\d{1,3}""")) }
+                .takeWhile { line ->
+                    line.length <= 90 && line.any { it.isLetter() } &&
+                        line.filter { it.isLetter() }.count { it.isUpperCase() } >=
+                        line.filter { it.isLetter() }.size * 3 / 4
+                }.take(5)
+            val title = titleLines.joinToString(" ").replace(Regex("""\\s+"""), " ").trim()
+            if (title.length !in 6..145 || titleLines.isEmpty() ||
                 title.startsWith("PRZEPISY ", true) || title.startsWith("SŁOWO O ", true) ||
-                title.startsWith("WSTĘP", true) || title.contains("MONIKA CIESIELSKA", true) ||
-                title.count { it.isLetter() && it.isUpperCase() } < 4) continue
+                title.startsWith("WSTĘP", true) || title.contains("MONIKA CIESIELSKA", true)) continue
             val ingredientPage = pages.getOrNull(i + 1)?.second.orEmpty()
             if (!ingredientPage.contains("Składniki", true)) continue
             val ingredientsBlock = ingredientPage.substringAfter("Składniki")
