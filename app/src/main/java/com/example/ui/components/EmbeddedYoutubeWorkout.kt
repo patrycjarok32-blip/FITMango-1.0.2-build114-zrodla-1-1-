@@ -36,36 +36,18 @@ object YoutubeEmbed {
 fun EmbeddedYoutubeWorkout(url: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val videoId = remember(url) { YoutubeEmbed.videoId(url) }
-    var showPlayer by remember(url) { mutableStateOf(false) }
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         if (videoId == null) {
-            Text("Nie można osadzić tego adresu. Wklej poprawny link do filmu YouTube.")
+            Text("Nie można odtworzyć tego linku. Sprawdź adres filmu YouTube.")
         } else {
-            if (!showPlayer) Button(onClick = { showPlayer = true }) {
-                Text("▶ Odtwórz wewnątrz FITMango")
-            }
-            if (showPlayer) {
-                key(videoId) {
-                    AndroidView(
-                        factory = { ctx ->
-                            WebView(ctx).apply {
-                                settings.javaScriptEnabled = true
-                                settings.domStorageEnabled = true
-                                settings.mediaPlaybackRequiresUserGesture = true
-                                webChromeClient = WebChromeClient()
-                                webViewClient = WebViewClient()
-                                loadUrl("https://www.youtube-nocookie.com/embed/$videoId?playsinline=1")
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth().height(230.dp),
-                        onRelease = { it.stopLoading(); it.loadUrl("about:blank"); it.destroy() }
-                    )
-                }
-                TextButton(onClick = { showPlayer = false }) { Text("Zamknij odtwarzacz") }
-            }
+            // The technique button already opens the dialog: do not require a second play action.
+            MangoInAppVideoPlayer(url, Modifier.fillMaxWidth())
+            Text("Jeśli YouTube zablokuje osadzanie, użyj przycisku poniżej.",
+                style = MaterialTheme.typography.bodySmall)
             TextButton(onClick = {
-                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
-            }) { Text("Otwórz w YouTube, jeśli osadzanie jest niedostępne") }
+                val target = Uri.parse("https://www.youtube.com/watch?v=$videoId")
+                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, target)) }
+            }) { Text("▶ Otwórz film w YouTube") }
         }
     }
 }
