@@ -85,8 +85,8 @@ object ProductPhotoSupport {
             ?.let { array -> (0 until array.length()).mapNotNull { index ->
                 array.optString(index).trim().takeIf { it.isNotBlank() && it != "null" }
             }.take(20) }.orEmpty()
-        return "Rozpoznane danie: $dish\\nSkładniki do sprawdzenia: " +
-            ingredients.joinToString(", ").ifBlank { "nieustalone" } + "\\nKalorie: ${estimate("kcal_estimate", "kcal")}\\nBiałko: ${estimate("protein_g", "g")}\\nWęglowodany: ${estimate("carbs_g", "g")}\\nTłuszcz: ${estimate("fat_g", "g")}\\nWeryfikuj skład i wielkość porcji przed zapisaniem."
+        return "Rozpoznane danie: $dish\nSkładniki do sprawdzenia: " +
+            ingredients.joinToString(", ").ifBlank { "nieustalone" } + "\nKalorie: ${estimate("kcal_estimate", "kcal")}\nBiałko: ${estimate("protein_g", "g")}\nWęglowodany: ${estimate("carbs_g", "g")}\nTłuszcz: ${estimate("fat_g", "g")}\nWeryfikuj skład i wielkość porcji przed zapisaniem."
     }
 
     suspend fun recognize(context: Context, uri: Uri): String {
