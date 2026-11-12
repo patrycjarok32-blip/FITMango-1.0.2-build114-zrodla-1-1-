@@ -25,7 +25,7 @@ object WorkoutInsights {
             if (challenges.any { it.workouts.isNotEmpty() && it.workouts.all { w -> w.completedAt > 0 } })
                 add("🌟 Ukończone wyzwanie")
         }
-        return Summary(count, finished.sumOf { ((it.ended - it.started) / 60000).coerceAtLeast(0) },
+        return Summary(count, finished.sumOf { WorkoutSessionStore.activeDurationMillis(it) / 60000L },
             entries.size, entries.sumOf { it.kg * it.reps }, videos.sumOf { it.minutes }, best, badges)
     }
     fun previousKg(sets: List<SportSet>, exercise: String): Double? =
