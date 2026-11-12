@@ -164,6 +164,41 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
         }
         if (activitySection == "training") item {
+            val weekStart = today.minusDays((today.dayOfWeek.value - 1).toLong())
+            Card(shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFAF4))) {
+                Column(Modifier.fillMaxWidth().padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("🗓️ Kalendarz treningów — 7 dni",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold, color = Color(0xFF43235E))
+                    (0..6).forEach { offset ->
+                        val day = weekStart.plusDays(offset.toLong())
+                        val plans = data.plans.filter { it.date == day.toString() }
+                        val done = workouts.count { it.date == day.toString() && it.ended > 0L }
+                        val active = workouts.any { it.date == day.toString() && it.ended == 0L }
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(day.toString().substring(5), modifier = Modifier.width(58.dp),
+                                color = Color(0xFF43235E))
+                            Column(Modifier.weight(1f)) {
+                                Text(if (plans.isEmpty()) "Bez zaplanowanego treningu"
+                                    else plans.joinToString(" • ") { if (it.rest) "Regeneracja" else it.title },
+                                    color = Color(0xFF43235E))
+                                if (done > 0 || active) Text(
+                                    (if (done > 0) "✓ Ukończone: $done " else "") +
+                                        (if (active) "▶ W trakcie" else ""),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFF625573))
+                            }
+                        }
+                        HorizontalDivider(color = Color(0xFFE8DDEA))
+                    }
+                    Text("Widok odczytuje istniejący plan siłowy. Treningi wideo pozostają w sekcji wyzwań.",
+                        style = MaterialTheme.typography.bodySmall, color = Color(0xFF625573))
+                }
+            }
+        }
+        if (activitySection == "training") item {
             val suggestions = remember(workouts) { MangoTrainingCoach.suggestions(workouts) }
             if (suggestions.isNotEmpty()) {
                 Card(shape = RoundedCornerShape(20.dp),
