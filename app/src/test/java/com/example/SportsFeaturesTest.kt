@@ -121,4 +121,21 @@ class SportsFeaturesTest {
         assertEquals(2000L, awards.single().completedAt)
     }
 
+    @Test fun multiDayStrengthProgramRequiresAllScheduledDaysBeforeAward() {
+        val firstDay = "2026-11-02"
+        val secondDay = "2026-11-04"
+        val exercise = listOf(PlannedExercise("Przysiad", 3, 10))
+        val program = SportsData(plans = listOf(
+            SportPlan(firstDay, "Plan siłowy A", false, exercise),
+            SportPlan(secondDay, "Plan siłowy A", false, exercise)))
+        val first = WorkoutSession("first", firstDay, "Plan siłowy A", 100L, emptyList(), 200L)
+        val second = WorkoutSession("second", secondDay, "Plan siłowy A", 300L, emptyList(), 400L)
+        assertTrue(PlanAchievementSupport.awards(program, listOf(first), emptyList()).isEmpty())
+        val awards = PlanAchievementSupport.awards(program, listOf(first, second), emptyList())
+        assertEquals(1, awards.size)
+        assertEquals(2, awards.single().total)
+        assertEquals(2, awards.single().completed)
+        assertEquals(400L, awards.single().completedAt)
+    }
+
 }
