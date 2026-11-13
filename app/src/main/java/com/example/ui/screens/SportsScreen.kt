@@ -871,12 +871,18 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     var selectedSessionKey by rememberSaveable(workoutDate) { mutableStateOf("") }
                     Text("Sesje zaplanowane na ten dzień (${dayPlans.size})",
                         style = MaterialTheme.typography.titleMedium)
+                    var transferKey by rememberSaveable(workoutDate) { mutableStateOf("") }
+                    var transferDate by rememberSaveable(workoutDate) { mutableStateOf(workoutDate) }
+                    var transferCopy by rememberSaveable(workoutDate) { mutableStateOf(true) }
                     dayPlans.forEachIndexed { index, plan ->
                         val key = plan.sessionId.ifBlank { "legacy:$index" }
                         val chosen = selectedSessionKey == key || (selectedSessionKey.isBlank() && index == 0)
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             FilterChip(selected = chosen, onClick = { selectedSessionKey = key },
                                 label = { Text("${plan.title} • ${plan.category}") })
+                            TextButton(enabled = !busy, onClick = {
+                                transferKey = key; transferDate = workoutDate
+                            }) { Text("Kopiuj / przenieś") }
                             if (plan.sessionId.isNotBlank()) {
                                 TextButton(enabled = !busy, onClick = {
                                     sports.removePlannedActivity(plan.sessionId) { saved(); selectedSessionKey = "" }
@@ -890,6 +896,26 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                 if (plan.description.isNotBlank()) append(plan.description)
                             }, style = MaterialTheme.typography.bodySmall)
                         }
+                    }
+                    if (transferKey.isNotBlank()) {
+                        Text("Przenieś lub skopiuj wybraną sesję", style = MaterialTheme.typography.titleSmall)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilterChip(selected = transferCopy, onClick = { transferCopy = true }, label = { Text("Kopiuj") })
+                            FilterChip(selected = !transferCopy, onClick = { transferCopy = false }, label = { Text("Przenieś") })
+                        }
+                        OutlinedTextField(value = transferDate, onValueChange = { transferDate = it.take(10) },
+                            label = { Text("Data docelowa (RRRR-MM-DD)") }, modifier = Modifier.fillMaxWidth())
+                        val targetValid = runCatching { LocalDate.parse(transferDate) }.isSuccess && transferDate != workoutDate
+                        Button(enabled = targetValid && !busy, onClick = {
+                            val original = dayPlans.firstOrNull { plan ->
+                                plan.sessionId.ifBlank { "legacy:${dayPlans.indexOf(plan)}" } == transferKey
+                            }
+                            if (original != null) {
+                                sports.transferPlannedActivity(original.sessionId, workoutDate, transferDate, transferCopy) {
+                                    saved(); transferKey = ""
+                                }
+                            }
+                        }) { Text(if (transferCopy) "Skopiuj sesję" else "Przenieś sesję") }
                     }
                     val selectedPlan = dayPlans.firstOrNull { plan ->
                         val index = dayPlans.indexOf(plan)
