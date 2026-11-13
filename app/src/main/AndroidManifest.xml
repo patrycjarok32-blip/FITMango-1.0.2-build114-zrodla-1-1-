@@ -104,6 +104,10 @@
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/mango_workout_widget" />
         </receiver>
+        <receiver android:name=".MangoWaterWidget" android:exported="true">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/mango_water_widget" />
+        </receiver>
     </application>
 
 </manifest>
