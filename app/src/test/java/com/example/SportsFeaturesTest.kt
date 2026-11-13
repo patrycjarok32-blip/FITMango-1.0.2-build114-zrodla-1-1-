@@ -171,7 +171,7 @@ class SportsFeaturesTest {
     }
 
     @Test fun videoPlayerOnlyEmbedsRecognizedSecureYouTubeUrls() {
-        assertEquals("https://www.youtube.com/embed/dQw4w9WgXcQ?playsinline=1&rel=0&origin=https%3A%2F%2Fwww.youtube.com",
+        assertEquals("https://www.youtube.com/embed/dQw4w9WgXcQ?playsinline=1&rel=0&mute=1&origin=https%3A%2F%2Fwww.youtube.com",
             com.example.ui.components.MangoVideoUrl.embed("https://youtu.be/dQw4w9WgXcQ"))
         assertNull(com.example.ui.components.MangoVideoUrl.embed("http://youtu.be/dQw4w9WgXcQ"))
         assertNull(com.example.ui.components.MangoVideoUrl.embed("https://youtube.com.evil.test/watch?v=dQw4w9WgXcQ"))
