@@ -25,6 +25,26 @@ object ActivityRecoverySupport {
         require(end <= now) { "Aktywność musi być już zakończona. Sprawdź godzinę i czas trwania." }
         return SportSession("manual|" + java.util.UUID.randomUUID(), title, start.toString(), end.toString(), "Wpis ręczny", activityType = type)
     }
+    /** Copy a manual entry as a new, independent record. Never copy Health Connect IDs. */
+    fun copyManual(session: SportSession, targetDate: LocalDate, now: Instant,
+        zone: ZoneId = ZoneId.systemDefault()): SportSession {
+        require(manual(session)) { "Tylko ręczne aktywności można kopiować." }
+        val sourceStart = Instant.parse(session.start).atZone(zone)
+        val start = targetDate.atTime(sourceStart.toLocalTime()).atZone(zone).toInstant()
+        val duration = Duration.between(Instant.parse(session.start), Instant.parse(session.end))
+        require(!duration.isNegative && !duration.isZero && duration <= Duration.ofDays(1))
+        require(start.plus(duration) <= now) { "Nie można zapisać przyszłego treningu jako wykonanego." }
+        return session.copy(id = "manual|" + java.util.UUID.randomUUID(),
+            start = start.toString(), end = start.plus(duration).toString(),
+            activeKcal = null, distanceKm = null, source = "Wpis ręczny • kopia")
+    }
+    fun daySessions(data: SportsData, date: LocalDate, zone: ZoneId = ZoneId.systemDefault()) =
+        unique(data.history).filter { Instant.parse(it.start).atZone(zone).toLocalDate() == date }
+            .sortedBy { it.start }
+    fun dayMinutes(data: SportsData, date: LocalDate, zone: ZoneId = ZoneId.systemDefault()): Long =
+        daySessions(data, date, zone).sumOf {
+            Duration.between(Instant.parse(it.start), Instant.parse(it.end)).toMinutes().coerceAtLeast(0)
+        }
     fun manual(session: SportSession) = session.id.startsWith("manual|")
     private fun title(raw: String) = Normalizer.normalize(raw.lowercase(Locale.ROOT), Normalizer.Form.NFD)
         .replace(Regex("\\p{M}+"), "").replace(Regex("\\s+"), " ").trim()
