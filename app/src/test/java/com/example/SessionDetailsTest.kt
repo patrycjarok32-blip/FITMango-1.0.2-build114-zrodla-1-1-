@@ -27,4 +27,25 @@ class SessionDetailsTest {
         assertEquals(60, updated.targetMinutes)
         assertEquals(existing.exercises, updated.exercises)
     }
+    @Test fun sessionDetailsSurviveBackupRoundTrip() {
+        val original = com.example.viewmodel.SportsData(plans = listOf(
+            SportPlan("2026-11-13", "Long Run", false,
+                category = "Cardio", description = "Spokojne tempo",
+                targetDistanceKm = 9.0, targetMinutes = 60, distanceRange = "8–10 km")))
+        val restored = com.example.viewmodel.SportsSupport.decode(
+            com.example.viewmodel.SportsSupport.encode(original))
+        assertEquals(original.plans, restored.plans)
+    }
+
+    @Test fun legacyBackupWithoutNewFieldsStillLoads() {
+        val raw = com.example.viewmodel.SportsSupport.encode(
+            com.example.viewmodel.SportsData(plans = listOf(SportPlan("2026-11-13", "PULL", false))))
+        val json = org.json.JSONObject(raw)
+        val oldPlan = json.getJSONArray("plans").getJSONObject(0)
+        listOf("category", "description", "targetDistanceKm", "targetMinutes", "distanceRange")
+            .forEach { oldPlan.remove(it) }
+        val restored = com.example.viewmodel.SportsSupport.decode(json.toString())
+        assertEquals("Siłowy", restored.plans.single().category)
+        assertNull(restored.plans.single().targetDistanceKm)
+    }
 }
