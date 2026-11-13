@@ -252,9 +252,17 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                             Text(day.toString().substring(5), modifier = Modifier.width(58.dp),
                                 color = Color(0xFF43235E))
                             Column(Modifier.weight(1f)) {
-                                Text(if (plans.isEmpty()) "Bez zaplanowanego treningu"
-                                    else plans.joinToString(" • ") { if (it.rest) "Regeneracja" else it.title },
-                                    color = Color(0xFF43235E))
+                                if (plans.isEmpty()) {
+                                    Text("Bez zaplanowanego treningu", color = Color(0xFF43235E))
+                                } else {
+                                    plans.forEach { plan ->
+                                        Text("• " + (if (plan.rest) "Regeneracja" else plan.title) +
+                                            (if (plan.rest) "" else " · " + plan.category) +
+                                            (plan.targetDistanceKm?.let { " · ${it} km" } ?: "") +
+                                            (plan.targetMinutes?.let { " · ${it} min" } ?: ""),
+                                            color = Color(0xFF43235E))
+                                    }
+                                }
                                 Text(status + if (completedVideo > 0) " • 🎬 Wideo: $completedVideo" else "",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFF625573))
