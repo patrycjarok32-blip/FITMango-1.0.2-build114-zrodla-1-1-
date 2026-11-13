@@ -109,6 +109,65 @@ fun WorkoutModeCard(
             Text("Ocena regeneracji zależy od dostępnych wpisów snu i samopoczucia.",
                 style = MaterialTheme.typography.bodySmall)
         }
+        var transferMessage by rememberSaveable { mutableStateOf<String?>(null) }
+        var pendingImport by remember { mutableStateOf<String?>(null) }
+        val saveHistory = androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/json")
+        ) { uri ->
+            if (uri != null) {
+                transferMessage = runCatching {
+                    context.contentResolver.openOutputStream(uri, "wt")!!.bufferedWriter().use {
+                        it.write(WorkoutSessionStore.exportJson(context))
+                    }
+                    "Historia zapisana w pliku JSON."
+                }.getOrElse { "Eksport nieudany: ${it.message}" }
+            }
+        }
+        val openHistory = androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+        ) { uri ->
+            if (uri != null) {
+                transferMessage = runCatching {
+                    val bytes = context.contentResolver.openInputStream(uri)!!.use { stream ->
+                        val output = java.io.ByteArrayOutputStream()
+                        val chunk = ByteArray(8192)
+                        while (true) {
+                            val count = stream.read(chunk)
+                            if (count < 0) break
+                            require(output.size() + count <= 2_000_000) { "Plik jest za duży" }
+                            output.write(chunk, 0, count)
+                        }
+                        output.toString("UTF-8")
+                    }
+                    WorkoutSessionStore.validateRaw(bytes)
+                    pendingImport = bytes
+                    "Plik sprawdzony. Potwierdź przywrócenie."
+                }.getOrElse { "Nie można odczytać historii: ${it.message}" }
+            }
+        }
+        OutlinedButton(onClick = { saveHistory.launch("FITMango-historia-treningow.json") },
+            modifier = Modifier.fillMaxWidth()) { Text("📁 Zapisz historię do pliku JSON") }
+        OutlinedButton(onClick = { openHistory.launch(arrayOf("application/json", "text/plain")) },
+            modifier = Modifier.fillMaxWidth()) { Text("📂 Wczytaj historię z pliku JSON") }
+        transferMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+        if (pendingImport != null) {
+            AlertDialog(onDismissRequest = { pendingImport = null },
+                title = { Text("Wczytać historię treningów?") },
+                text = { Text("Obecna historia zostanie zachowana jako punkt cofnięcia. " +
+                    "Nowa historia zastąpi bieżącą. Po operacji otwórz ponownie ekran.") },
+                confirmButton = {
+                    Button(onClick = {
+                        transferMessage = runCatching {
+                            val count = WorkoutSessionStore.importJson(context, pendingImport!!)
+                            "Wczytano $count sesji. Otwórz ponownie ekran treningu."
+                        }.getOrElse { "Import nieudany: ${it.message}" }
+                        pendingImport = null
+                    }) { Text("Wczytaj") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { pendingImport = null }) { Text("Anuluj") }
+                })
+        }
         OutlinedButton(onClick = {
             runCatching {
                 val json = WorkoutSessionStore.exportJson(context)
