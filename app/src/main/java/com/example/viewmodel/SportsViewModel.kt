@@ -241,6 +241,20 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
             else plan
         })
     }, onSaved)
+    /** Move or copy exactly one session; existing sessions on target day are untouched. */
+    fun transferPlannedActivity(sessionId: String, fromDate: String, toDate: String,
+        copy: Boolean, onSaved: () -> Unit) = edit({ current ->
+        java.time.LocalDate.parse(fromDate)
+        java.time.LocalDate.parse(toDate)
+        require(fromDate != toDate) { "Wybierz inny dzień." }
+        val index = current.plans.indexOfFirst { it.date == fromDate && it.sessionId == sessionId }
+        require(index >= 0) { "Nie znaleziono sesji do przeniesienia." }
+        val source = current.plans[index]
+        val transferred = source.copy(date = toDate,
+            sessionId = if (copy) java.util.UUID.randomUUID().toString() else source.sessionId)
+        current.copy(plans = if (copy) current.plans + transferred
+            else current.plans.mapIndexed { i, p -> if (i == index) transferred else p })
+    }, onSaved)
     /** Saves the complete generated week atomically, without deleting recorded sets or activities. */
     fun saveTrainingWeek(plans: List<SportPlan>, onSaved: () -> Unit) = edit({ current ->
         require(plans.isNotEmpty() && plans.size <= 7)
@@ -278,10 +292,10 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         }
         require(source.isNotEmpty()) { "Brak planów w wybranym tygodniu." }
         val copies = (1..count).flatMap { offset ->
-            source.map { it.copy(date = java.time.LocalDate.parse(it.date).plusWeeks(offset.toLong()).toString()) }
+            source.map { it.copy(date = java.time.LocalDate.parse(it.date).plusWeeks(offset.toLong()).toString(), sessionId = java.util.UUID.randomUUID().toString()) }
         }
         val existing = current.plans.map { it.date }.toSet()
-        require(copies.none { it.date in existing }) {
+        require(copies.none { it.date in existing && current.plans.any { old -> old.date == it.date && old.sessionId.isBlank() } }) {
             "W kolejnych tygodniach są już plany. Zmień zakres lub przenieś je przed kopiowaniem."
         }
         current.copy(plans = current.plans + copies)
