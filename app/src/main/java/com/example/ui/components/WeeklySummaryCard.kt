@@ -116,7 +116,7 @@ fun WeeklySummaryCard(viewModel: DietaViewModel) {
         Text("— brak wpisu; 0 = zapisane zero. Linia: aktualny cel ${goal?.roundToInt()?.toString() ?: "nieustawiony"} ${if (goal != null) metric.unit else ""}. Cele mogły wcześniej być inne.", style = MaterialTheme.typography.bodySmall)
         if (today >= start && today <= end) Text("Dziś w toku — nie uwzględniamy tego dnia w analizie.", style = MaterialTheme.typography.bodySmall)
         val present = foodValues.filterNotNull()
-        if (present.isNotEmpty()) Text("Średnia z ${present.size} dni z wpisami: ${(present.sum() / present.size).roundToInt()} ${metric.unit}", style = MaterialTheme.typography.titleSmall)
+        if (present.isNotEmpty()) Text("Średnia z ${present.size} dni z wpisami (łącznie z dziś): ${(present.sum() / present.size).roundToInt()} ${metric.unit}", style = MaterialTheme.typography.titleSmall)
         if (metric == WeeklyMetric.ENERGY) {
             val completedDays = dates.filter { it < today }
             val foodRecorded = completedDays.count { d ->
@@ -131,9 +131,9 @@ fun WeeklySummaryCard(viewModel: DietaViewModel) {
                     verticalArrangement = Arrangement.spacedBy(5.dp)) {
                     Text("Jakość danych tygodnia", style = MaterialTheme.typography.titleSmall,
                         color = com.example.ui.theme.MangoMint)
-                    Text("Dni z wpisami posiłków: $foodRecorded / ${completedDays.size}",
+                    Text("Zakończone dni z wpisami posiłków: $foodRecorded / ${completedDays.size}",
                         style = MaterialTheme.typography.bodySmall)
-                    Text("Dni z danymi o wydatku energii: $energyRecorded / ${completedDays.size}",
+                    Text("Zakończone dni z danymi o wydatku energii: $energyRecorded / ${completedDays.size}",
                         style = MaterialTheme.typography.bodySmall)
                     Text("Bilans jest orientacyjny. Brak odczytu nie oznacza zera spalonych kalorii; bieżący dzień nie jest zakończony.",
                         style = MaterialTheme.typography.bodySmall)
