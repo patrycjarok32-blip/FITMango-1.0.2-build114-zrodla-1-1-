@@ -55,6 +55,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
     var activitySection by rememberSaveable { mutableStateOf("today") }
     var trainingPage by rememberSaveable { mutableStateOf("session") }
+    var showWeeklyTrainingCalendar by rememberSaveable { mutableStateOf(false) }
     var showTrainingProfile by rememberSaveable { mutableStateOf(false) }
     var showProgramLibrary by rememberSaveable { mutableStateOf(false) }
     var showExtendedProgress by rememberSaveable { mutableStateOf(false) }
@@ -228,16 +229,17 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 }
             }
         }
-        if (activitySection == "training") item {
+        if (activitySection == "training" && trainingPage == "session") item {
             val weekStart = today.minusDays((today.dayOfWeek.value - 1).toLong())
             Card(shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFAF4))) {
                 Column(Modifier.fillMaxWidth().padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("🗓️ Kalendarz treningów — 7 dni",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold, color = Color(0xFF43235E))
-                    (0..6).forEach { offset ->
+                    TextButton(onClick = { showWeeklyTrainingCalendar = !showWeeklyTrainingCalendar }) {
+                        Text(if (showWeeklyTrainingCalendar) "🗓️ Zwiń kalendarz tygodnia" else "🗓️ Rozwiń kalendarz tygodnia (7 dni)",
+                            style = MaterialTheme.typography.titleMedium)
+                    }
+                    if (showWeeklyTrainingCalendar) (0..6).forEach { offset ->
                         val day = weekStart.plusDays(offset.toLong())
                         val plans = data.plans.filter { it.date == day.toString() }
                         val done = workouts.count { it.date == day.toString() && it.ended > 0L }
@@ -273,7 +275,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         }
                         HorizontalDivider(color = Color(0xFFE8DDEA))
                     }
-                    Text("Widok łączy sesje siłowe i ukończone treningi wideo. Planowanie posiłków pozostaje w Jadłospisie.",
+                    if (showWeeklyTrainingCalendar) Text("Kalendarz pokazuje plany oraz aktywności z Health Connect osobno.",
                         style = MaterialTheme.typography.bodySmall, color = Color(0xFF625573))
                 }
             }
@@ -540,8 +542,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 onRecovery = { activitySection = "recovery" })
         }
         if (activitySection == "training") item {
-            Text("Wybierz dział treningowy", style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Trening • plan, wykonanie i historia", style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface)
             androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(Triple("session", "▶", "Trenuj"), Triple("plan", "🗓", "Edytuj plan"),
                     Triple("diary", "📒", "Dziennik")).forEach { (key, icon, label) ->
@@ -862,7 +864,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     var selectedSessionKey by rememberSaveable(workoutDate) { mutableStateOf("") }
                     val healthDaySessions = ActivityRecoverySupport.daySessions(
                         data, LocalDate.parse(workoutDate))
-                    Text("Wykonane aktywności z dziennika i Health Connect: ${healthDaySessions.size}",
+                    Text("Zarejestrowane aktywności (${healthDaySessions.size})",
                         style = MaterialTheme.typography.bodySmall)
                     healthDaySessions.forEach { recorded ->
                         Text("✓ ${recorded.title} · " +
@@ -875,7 +877,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     Text("Aktywności z zegarka są widoczne osobno. Nie zaliczamy automatycznie " +
                         "konkretnej sesji planu bez potwierdzonego dopasowania.",
                         style = MaterialTheme.typography.bodySmall)
-                    Text("Sesje zaplanowane na ten dzień (${dayPlans.size})",
+                    Text("Twoje zaplanowane sesje (${dayPlans.size})",
                         style = MaterialTheme.typography.titleMedium)
                     var transferKey by rememberSaveable(workoutDate) { mutableStateOf("") }
                     var transferDate by rememberSaveable(workoutDate) { mutableStateOf(workoutDate) }
