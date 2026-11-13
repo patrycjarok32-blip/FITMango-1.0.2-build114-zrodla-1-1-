@@ -103,6 +103,36 @@ fun WorkoutModeCard(
         }, modifier = Modifier.fillMaxWidth()) { Text("💾 Eksportuj historię treningów (JSON)") }
         Text("Eksport obejmuje wyłącznie historię treningów. Nie zawiera kluczy API ani danych konta.",
             style = MaterialTheme.typography.bodySmall)
+        val weekly = remember(workouts) {
+            MangoWorkoutInsights.weeklyReport(java.time.LocalDate.now(), workouts)
+        }
+        var showWeekly by rememberSaveable { mutableStateOf(false) }
+        TextButton(onClick = { showWeekly = !showWeekly }) {
+            Text(if (showWeekly) "Ukryj raport tygodniowy" else "📊 Raport tygodniowy Premium")
+        }
+        if (showWeekly) {
+            Card {
+                Column(Modifier.fillMaxWidth().padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Ten tydzień / poprzedni", style = MaterialTheme.typography.titleMedium)
+                    Text("Treningi: ${weekly.sessions} / ${weekly.previousSessions} • serie: ${weekly.sets}")
+                    Text("Czas aktywny: ${weekly.minutes} / ${weekly.previousMinutes} min")
+                    Text("Rekordy ciężaru: ${weekly.records}")
+                    weekly.averageEffort?.let { Text("Średni wysiłek: ${"%.1f".format(it)}/10") }
+                    Text("Objętość: ${"%.0f".format(weekly.volumeKg)} / ${"%.0f".format(weekly.previousVolumeKg)} kg")
+                    val maxVolume = maxOf(weekly.volumeKg, weekly.previousVolumeKg, 1.0)
+                    Text("Bieżący tydzień", style = MaterialTheme.typography.labelSmall)
+                    LinearProgressIndicator(progress = {
+                        (weekly.volumeKg / maxVolume).toFloat().coerceIn(0f, 1f)
+                    }, modifier = Modifier.fillMaxWidth())
+                    Text("Poprzedni tydzień", style = MaterialTheme.typography.labelSmall)
+                    LinearProgressIndicator(progress = {
+                        (weekly.previousVolumeKg / maxVolume).toFloat().coerceIn(0f, 1f)
+                    }, modifier = Modifier.fillMaxWidth())
+                    Text("Zmiana objętości: ${"%+.0f".format(weekly.volumeKg - weekly.previousVolumeKg)} kg")
+                }
+            }
+        }
         val lastCompleted = workouts.filter { it.ended > 0L }.maxByOrNull { it.ended }
         if (lastCompleted != null) {
             TextButton(onClick = { recoveryNote = !recoveryNote }) {
