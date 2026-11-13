@@ -827,7 +827,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             items(listOf("Long Run", "Easy Run", "Interwały", "HIIT", "Full Body",
                                 "Core", "Stretching", "Mobilność", "PULL", "PUSH", "LEGS")) { name ->
-                                AssistChip(onClick = {
+                                androidx.compose.material3.AssistChip(onClick = {
                                     extraTitle = name
                                     extraCategory = when (name) {
                                         "Long Run", "Easy Run", "Interwały", "HIIT" -> "Cardio"
