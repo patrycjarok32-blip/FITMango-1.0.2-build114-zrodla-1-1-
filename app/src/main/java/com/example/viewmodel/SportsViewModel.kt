@@ -226,6 +226,21 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
             targetDistanceKm = distanceKm, targetMinutes = minutes, distanceRange = distanceRange.trim())
         current.copy(plans = current.plans.filterNot { it.date == date && it.sessionId.isBlank() } + plan)
     }, onSaved)
+    /** Edit exactly one planned session; legacy sessions are identified by date. */
+    fun updatePlannedActivity(sessionId: String, date: String, title: String, category: String,
+        minutes: Int?, distanceKm: Double?, description: String, onSaved: () -> Unit) = edit({ current ->
+        require(title.isNotBlank() && title.length <= 120 && description.length <= 1000)
+        require(category in setOf("Siłowy", "Cardio", "Wzmacnianie", "Mobilność i stretching", "Trening z filmem", "Inna aktywność"))
+        require(minutes == null || minutes in 1..1440)
+        require(distanceKm == null || (distanceKm.isFinite() && distanceKm > 0 && distanceKm <= 1000))
+        val index = current.plans.indexOfFirst { it.date == date && it.sessionId == sessionId }
+        require(index >= 0) { "Nie znaleziono sesji." }
+        current.copy(plans = current.plans.mapIndexed { i, plan ->
+            if (i == index) plan.copy(title = title.trim(), category = category,
+                description = description.trim(), targetMinutes = minutes, targetDistanceKm = distanceKm)
+            else plan
+        })
+    }, onSaved)
     /** Saves the complete generated week atomically, without deleting recorded sets or activities. */
     fun saveTrainingWeek(plans: List<SportPlan>, onSaved: () -> Unit) = edit({ current ->
         require(plans.isNotEmpty() && plans.size <= 7)
