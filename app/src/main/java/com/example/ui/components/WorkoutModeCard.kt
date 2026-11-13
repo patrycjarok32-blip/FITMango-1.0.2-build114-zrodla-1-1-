@@ -58,6 +58,19 @@ fun WorkoutModeCard(
             Text("💾 Sesja zapisana automatycznie. Po ponownym uruchomieniu aplikacji możesz ją wznowić.",
                 style = MaterialTheme.typography.bodySmall)
         }
+        OutlinedButton(onClick = {
+            runCatching {
+                val json = WorkoutSessionStore.exportJson(context)
+                val send = Intent(Intent.ACTION_SEND).apply {
+                    type = "application/json"
+                    putExtra(Intent.EXTRA_SUBJECT, "FITMango — historia treningów")
+                    putExtra(Intent.EXTRA_TEXT, json)
+                }
+                context.startActivity(Intent.createChooser(send, "Eksportuj historię treningów"))
+            }
+        }, modifier = Modifier.fillMaxWidth()) { Text("💾 Eksportuj historię treningów (JSON)") }
+        Text("Eksport obejmuje wyłącznie historię treningów. Nie zawiera kluczy API ani danych konta.",
+            style = MaterialTheme.typography.bodySmall)
         val lastCompleted = workouts.filter { it.ended > 0L }.maxByOrNull { it.ended }
         if (lastCompleted != null) {
             TextButton(onClick = { recoveryNote = !recoveryNote }) {
