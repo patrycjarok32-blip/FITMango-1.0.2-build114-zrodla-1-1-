@@ -277,10 +277,16 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         require(swap || existing == null) {
             "Dzień docelowy jest zajęty. Wybierz zamianę treningów lub wolny dzień."
         }
-        val unchanged = current.plans.filterNot { it.date == from || it.date == to }
-        val moved = moving.copy(date = target.toString())
-        val other = if (swap) existing?.copy(date = source.toString()) else null
-        current.copy(plans = unchanged + moved + listOfNotNull(other))
+        // Legacy date-level control moves only the selected primary plan, not other sessions.
+        val movingIndex = current.plans.indexOf(moving)
+        val existingIndex = if (swap && existing != null) current.plans.indexOf(existing) else -1
+        current.copy(plans = current.plans.mapIndexed { index, plan ->
+            when (index) {
+                movingIndex -> plan.copy(date = target.toString())
+                existingIndex -> plan.copy(date = source.toString())
+                else -> plan
+            }
+        })
     }, onSaved)
     /** Copy one planned week to 1–4 future weeks, refusing to overwrite existing plans. */
     fun copyWorkoutWeeks(start: String, count: Int, onSaved: () -> Unit) = edit({ current ->
