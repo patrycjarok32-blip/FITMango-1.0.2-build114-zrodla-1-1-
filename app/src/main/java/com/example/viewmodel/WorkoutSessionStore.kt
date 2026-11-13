@@ -100,6 +100,23 @@ object WorkoutSessionStore {
         validateRaw(raw)
         return raw
     }
+    /** Explicit import from an exported JSON document. Validation happens before any write.
+     * A single atomic preference commit stores the previous history as a restore point. */
+    fun importJson(context: Context, raw: String): Int {
+        require(raw.toByteArray(Charsets.UTF_8).size <= 2_000_000) { "Plik jest za duży" }
+        val imported = parse(raw)
+        require(imported.count { it.ended == 0L } <= 1) { "Za dużo aktywnych sesji" }
+        require(imported.map { it.id }.distinct().size == imported.size) { "Powtórzone identyfikatory" }
+        val prefs = context.getSharedPreferences("FITMangoUsability", 0)
+        val previous = prefs.getString(KEY, "[]") ?: "[]"
+        validateRaw(previous)
+        val normalized = JSONArray().also { a -> imported.forEach { a.put(encode(it)) } }.toString()
+        if (normalized != previous) {
+            check(prefs.edit().putString("${KEY}_restore_point", previous)
+                .putString(KEY, normalized).commit()) { "Nie udało się zapisać historii" }
+        }
+        return imported.size
+    }
     fun create(plan: SportPlan, date: String, now: Long = System.currentTimeMillis()): WorkoutSession {
         require(!plan.rest && plan.exercises.isNotEmpty())
         return WorkoutSession(UUID.randomUUID().toString(), date, plan.title, now,
