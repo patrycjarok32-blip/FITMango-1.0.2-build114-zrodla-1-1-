@@ -247,6 +247,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                     .atZone(java.time.ZoneId.systemDefault()).toLocalDate() == day
                         }
                         val active = workouts.any { it.date == day.toString() && it.ended == 0L }
+                        val recordedActivities = ActivityRecoverySupport.daySessions(data, day)
                         val status = MangoWorkoutInsights.calendarStatus(day, today, plans, workouts)
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Text(day.toString().substring(5), modifier = Modifier.width(58.dp),
@@ -263,7 +264,9 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                             color = Color(0xFF43235E))
                                     }
                                 }
-                                Text(status + if (completedVideo > 0) " • 🎬 Wideo: $completedVideo" else "",
+                                Text((if (recordedActivities.isNotEmpty()) {
+                                    "✓ Health Connect / dziennik: ${recordedActivities.size} aktywności (niepowiązane z planem)"
+                                } else status) + if (completedVideo > 0) " • 🎬 Wideo: $completedVideo" else "",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFF625573))
                             }
@@ -794,27 +797,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     }
                     val dayPlans = data.plans.filter { it.date == workoutDate && !it.rest }
                     var showAddActivity by rememberSaveable(workoutDate) { mutableStateOf(false) }
-                    Text("Sesje na wybrany dzień: ${dayPlans.size}", style = MaterialTheme.typography.titleMedium)
-                    dayPlans.forEach { session ->
-                        Card(Modifier.fillMaxWidth()) {
-                            Row(Modifier.fillMaxWidth().padding(10.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(session.title, style = MaterialTheme.typography.titleSmall)
-                                    Text(buildString {
-                                        append(session.category)
-                                        session.targetDistanceKm?.let { append(" • ${it} km") }
-                                        session.targetMinutes?.let { append(" • ${it} min") }
-                                    }, style = MaterialTheme.typography.bodySmall)
-                                }
-                                if (session.sessionId.isNotBlank()) {
-                                    TextButton(enabled = !busy, onClick = {
-                                        sports.removePlannedActivity(session.sessionId) { saved() }
-                                    }) { Text("Usuń") }
-                                }
-                            }
-                        }
-                    }
+                    Text("Plan dnia: ${dayPlans.size} sesji. Wybierz sesję poniżej, aby ją edytować, rozpocząć lub przenieść.",
+                        style = MaterialTheme.typography.bodyMedium)
                     OutlinedButton(onClick = { showAddActivity = !showAddActivity }) {
                         Text(if (showAddActivity) "Zamknij" else "＋ Dodaj kolejną aktywność")
                     }
@@ -881,11 +865,15 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     Text("Wykonane aktywności z dziennika i Health Connect: ${healthDaySessions.size}",
                         style = MaterialTheme.typography.bodySmall)
                     healthDaySessions.forEach { recorded ->
-                        Text("✓ ${recorded.title} · ${recorded.source}",
+                        Text("✓ ${recorded.title} · " +
+                            (if (recorded.source.contains("huawei", ignoreCase = true)) "Zegarek Huawei / Health Connect"
+                             else if (recorded.source.contains("manual", ignoreCase = true) ||
+                                 recorded.id.startsWith("manual|")) "Wpis ręczny"
+                             else "Health Connect"),
                             style = MaterialTheme.typography.bodySmall)
                     }
-                    Text("Plan to zamiar; wykonanie potwierdzają osobne zapisy aktywności. " +
-                        "Nie dodajemy automatycznie kalorii ani treningów do Google Health Connect.",
+                    Text("Aktywności z zegarka są widoczne osobno. Nie zaliczamy automatycznie " +
+                        "konkretnej sesji planu bez potwierdzonego dopasowania.",
                         style = MaterialTheme.typography.bodySmall)
                     Text("Sesje zaplanowane na ten dzień (${dayPlans.size})",
                         style = MaterialTheme.typography.titleMedium)
