@@ -1032,8 +1032,11 @@ fun RecipesScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}, op
                         .height(420.dp).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Button(onClick = { cookingRecipe = recipe; selectedRecipe = null }, modifier = Modifier.testTag("recipe_start_cooking")) {
-                        Text("Gotuj krok po kroku")
+                    Button(onClick = { cookingRecipe = recipe; selectedRecipe = null },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp)
+                            .testTag("recipe_start_cooking"),
+                        shape = RoundedCornerShape(18.dp)) {
+                        Text("👩‍🍳 Gotuj teraz • krok po kroku")
                     }
                     TextButton(onClick = { viewModel.toggleRecipeFavorite(recipe.id) }, modifier = Modifier.testTag("recipe_detail_favorite")) {
                         Text(if (recipe.isFavorite) "♥ W ulubionych — usuń" else "♡ Dodaj do ulubionych")
