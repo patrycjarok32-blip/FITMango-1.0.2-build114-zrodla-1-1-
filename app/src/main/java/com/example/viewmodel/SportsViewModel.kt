@@ -194,6 +194,20 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
     fun plan(date: String, title: String, rest: Boolean, onSaved: () -> Unit) = edit({ current ->
         current.copy(plans = current.plans.filterNot { it.date == date } + SportPlan(date, if (rest) "Odpoczynek" else title.trim(), rest))
     }, onSaved)
+    fun saveSessionDetails(date: String, title: String, category: String, description: String,
+        distanceKm: Double?, minutes: Int?, distanceRange: String, onSaved: () -> Unit) = edit({ current ->
+        java.time.LocalDate.parse(date)
+        require(title.isNotBlank() && title.length <= 120)
+        require(category in setOf("Siłowy", "Cardio", "Wzmacnianie", "Mobilność i stretching", "Trening z filmem", "Inna aktywność"))
+        require(description.length <= 1000 && distanceRange.length <= 80)
+        require(distanceKm == null || (distanceKm.isFinite() && distanceKm > 0.0 && distanceKm <= 1000.0))
+        require(minutes == null || minutes in 1..1440)
+        val existing = current.plans.firstOrNull { it.date == date }
+        val plan = (existing ?: SportPlan(date, title, false)).copy(
+            title = title.trim(), rest = false, category = category, description = description.trim(),
+            targetDistanceKm = distanceKm, targetMinutes = minutes, distanceRange = distanceRange.trim())
+        current.copy(plans = current.plans.filterNot { it.date == date } + plan)
+    }, onSaved)
     /** Saves the complete generated week atomically, without deleting recorded sets or activities. */
     fun saveTrainingWeek(plans: List<SportPlan>, onSaved: () -> Unit) = edit({ current ->
         require(plans.isNotEmpty() && plans.size <= 7)
