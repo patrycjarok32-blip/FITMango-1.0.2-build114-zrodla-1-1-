@@ -192,7 +192,7 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
     }, onSaved)
     fun removeSet(id: String, onSaved: () -> Unit) = edit({ it.copy(sets = it.sets.filterNot { s -> s.id == id }) }, onSaved)
     fun plan(date: String, title: String, rest: Boolean, onSaved: () -> Unit) = edit({ current ->
-        current.copy(plans = current.plans.filterNot { it.date == date } + SportPlan(date, if (rest) "Odpoczynek" else title.trim(), rest))
+        current.copy(plans = current.plans.filterNot { it.date == date && it.sessionId.isBlank() } + SportPlan(date, if (rest) "Odpoczynek" else title.trim(), rest))
     }, onSaved)
     /** Adds another independent planned activity; planning never writes a completed Health Connect record. */
     fun addPlannedActivity(date: String, title: String, category: String, minutes: Int?,
@@ -224,7 +224,7 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         val plan = (existing ?: SportPlan(date, title, false)).copy(
             title = title.trim(), rest = false, category = category, description = description.trim(),
             targetDistanceKm = distanceKm, targetMinutes = minutes, distanceRange = distanceRange.trim())
-        current.copy(plans = current.plans.filterNot { it.date == date } + plan)
+        current.copy(plans = current.plans.filterNot { it.date == date && it.sessionId.isBlank() } + plan)
     }, onSaved)
     /** Saves the complete generated week atomically, without deleting recorded sets or activities. */
     fun saveTrainingWeek(plans: List<SportPlan>, onSaved: () -> Unit) = edit({ current ->
@@ -235,7 +235,7 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
             require(it.title.isNotBlank() && it.title.length <= 120)
         }
         val dates = plans.map { it.date }.toSet()
-        current.copy(plans = current.plans.filterNot { it.date in dates } + plans)
+        current.copy(plans = current.plans.filterNot { it.date in dates && it.sessionId.isBlank() } + plans)
     }, onSaved)
     /** Move or swap complete planned sessions across weeks, keeping their exercises and all logged history. */
     fun movePlannedWorkout(from: String, to: String, swap: Boolean, onSaved: () -> Unit) = edit({ current ->
