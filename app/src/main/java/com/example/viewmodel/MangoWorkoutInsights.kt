@@ -50,6 +50,32 @@ object MangoWorkoutInsights {
             else -> "— Bez treningu"
         }
     }
+    data class WeeklyReport(
+        val sessions: Int, val sets: Int, val volumeKg: Double, val minutes: Long,
+        val records: Int, val averageEffort: Double?, val previousSessions: Int,
+        val previousVolumeKg: Double, val previousMinutes: Long
+    )
+    /** Local calendar weeks, Monday through Sunday; incomplete sessions never count. */
+    fun weeklyReport(weekStart: LocalDate, history: List<WorkoutSession>): WeeklyReport {
+        val monday = weekStart.minusDays((weekStart.dayOfWeek.value - 1).toLong())
+        fun inWeek(start: LocalDate): List<WorkoutSession> =
+            history.filter { session ->
+                session.ended > 0L && runCatching { LocalDate.parse(session.date) }.getOrNull()
+                    ?.let { !it.isBefore(start) && it.isBefore(start.plusDays(7)) } == true
+            }
+        val current = inWeek(monday)
+        val previous = inWeek(monday.minusDays(7))
+        fun volume(items: List<WorkoutSession>) = items.sumOf { session ->
+            session.entries.filter { it.done }.sumOf { it.kg * it.reps }
+        }
+        fun minutes(items: List<WorkoutSession>) =
+            items.sumOf { WorkoutSessionStore.activeDurationMillis(it) / 60000L }
+        val records = current.sumOf { session -> summary(session, history).personalRecords }
+        return WeeklyReport(current.size, current.sumOf { it.entries.count { e -> e.done } },
+            volume(current), minutes(current), records,
+            current.map { it.effort }.filter { it > 0 }.takeIf { it.isNotEmpty() }?.average(),
+            previous.size, volume(previous), minutes(previous))
+    }
     fun quickPlan(plan: SportPlan, minutes: Int): SportPlan {
         require(minutes in listOf(15, 20, 30))
         var budget = minutes * 60
