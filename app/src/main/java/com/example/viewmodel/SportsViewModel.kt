@@ -194,6 +194,25 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
     fun plan(date: String, title: String, rest: Boolean, onSaved: () -> Unit) = edit({ current ->
         current.copy(plans = current.plans.filterNot { it.date == date && it.sessionId.isBlank() } + SportPlan(date, if (rest) "Odpoczynek" else title.trim(), rest))
     }, onSaved)
+    /** User-confirmed association. Never writes or duplicates a Health Connect workout. */
+    fun linkRecordedActivity(planId: String, activityId: String, onSaved: () -> Unit) = edit({ current ->
+        require(planId.isNotBlank() && activityId.isNotBlank())
+        val plan = current.plans.firstOrNull { it.sessionId == planId }
+            ?: error("Nie znaleziono zaplanowanej sesji.")
+        val activity = current.history.firstOrNull { it.id == activityId }
+            ?: error("Nie znaleziono aktywności. Odśwież Health Connect.")
+        val activityDate = java.time.Instant.parse(activity.start)
+            .atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString()
+        require(plan.date == activityDate) { "Aktywność musi pochodzić z dnia zaplanowanej sesji." }
+        require(current.linkedActivities.none { it.key != planId && it.value == activityId }) {
+            "Ta aktywność jest już przypisana do innej sesji."
+        }
+        current.copy(linkedActivities = current.linkedActivities + (planId to activityId))
+    }, onSaved)
+    fun unlinkRecordedActivity(planId: String, onSaved: () -> Unit) = edit({ current ->
+        current.copy(linkedActivities = current.linkedActivities - planId)
+    }, onSaved)
+
     /** Adds another independent planned activity; planning never writes a completed Health Connect record. */
     fun addPlannedActivity(date: String, title: String, category: String, minutes: Int?,
         distanceKm: Double?, description: String, onSaved: () -> Unit) = edit({ current ->
