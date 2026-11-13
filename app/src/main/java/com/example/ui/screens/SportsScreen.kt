@@ -822,6 +822,13 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         var sessionDistance by rememberSaveable(workoutDate) { mutableStateOf(selectedPlan?.targetDistanceKm?.toString() ?: "") }
                         var sessionMinutes by rememberSaveable(workoutDate) { mutableStateOf(selectedPlan?.targetMinutes?.toString() ?: "") }
                         var sessionRange by rememberSaveable(workoutDate) { mutableStateOf(selectedPlan?.distanceRange ?: "") }
+                        Text("Rodzaj treningu", style = MaterialTheme.typography.titleMedium)
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            listOf("Siłowy", "Cardio", "Wzmacnianie", "Mobilność i stretching").forEach { kind ->
+                                FilterChip(selected = sessionCategory == kind, onClick = { sessionCategory = kind },
+                                    label = { Text(kind) })
+                            }
+                        }
                         Text("Szablony sesji", style = MaterialTheme.typography.titleMedium)
                         androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             items(templates.size) { index ->
@@ -961,7 +968,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     Text(when {
                         todayPlan == null -> "Nie masz zaplanowanej sesji na dziś."
                         todayPlan.rest -> "Dzisiaj regeneracja • odpoczynek jest częścią planu."
-                        else -> todayPlan.title + " • " + todayPlan.exercises.size + " ćwiczeń"
+                        else -> buildString { append(todayPlan.title); if (todayPlan.category == "Siłowy" && todayPlan.exercises.isNotEmpty()) append(" • ${todayPlan.exercises.size} ćwiczeń") else { append(" • ${todayPlan.category}"); todayPlan.distanceRange.takeIf { it.isNotBlank() }?.let { append(" • $it") }; todayPlan.targetMinutes?.let { append(" • $it min") } } }
                     })
                     Button(onClick = {
                         activitySection = "training"
