@@ -251,6 +251,10 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         val active = workouts.any { it.date == day.toString() && it.ended == 0L }
                         val recordedActivities = ActivityRecoverySupport.daySessions(data, day)
                         val status = MangoWorkoutInsights.calendarStatus(day, today, plans, workouts)
+                        val confirmed = plans.count { plan ->
+                            val linked = data.linkedActivities[plan.sessionId]
+                            linked != null && recordedActivities.any { it.id == linked }
+                        }
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Text(day.toString().substring(5), modifier = Modifier.width(58.dp),
                                 color = Color(0xFF43235E))
@@ -267,7 +271,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                     }
                                 }
                                 Text((if (recordedActivities.isNotEmpty()) {
-                                    "✓ Health Connect / dziennik: ${recordedActivities.size} aktywności (niepowiązane z planem)"
+                                    "✓ Zarejestrowano: ${recordedActivities.size} • Powiązano z planem: $confirmed"
                                 } else status) + if (completedVideo > 0) " • 🎬 Wideo: $completedVideo" else "",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFF625573))
