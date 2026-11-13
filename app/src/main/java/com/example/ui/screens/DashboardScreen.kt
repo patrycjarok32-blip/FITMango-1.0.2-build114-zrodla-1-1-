@@ -353,12 +353,25 @@ fun DashboardScreen(
                         event = if (consumedCalories >= targetCalories && !incompleteNutrition) 1 else 0,
                         size = 34.dp
                     )
+                    Text("Mój dzień • podpowiedź", style = MaterialTheme.typography.labelMedium)
+                    Text(com.example.viewmodel.MangoDayAssistant.message(
+                        consumedCalories, targetCalories, waterTotal,
+                        sportsData.plans.any { it.date == currentDate && !it.rest }),
+                        style = MaterialTheme.typography.bodyMedium)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = onNavigateToMealPlan, modifier = Modifier.weight(1f)) {
                             Text("🥗 Posiłki")
                         }
                         OutlinedButton(onClick = onNavigateToSport, modifier = Modifier.weight(1f)) {
                             Text("🏋️ Trening")
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = onNavigateToRecipes, modifier = Modifier.weight(1f)) {
+                            Text("🍽️ Przepisy")
+                        }
+                        TextButton(onClick = onNavigateToBarcodeScanner, modifier = Modifier.weight(1f)) {
+                            Text("▦ Skanuj produkt")
                         }
                     }
                 }
