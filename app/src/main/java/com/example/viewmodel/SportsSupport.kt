@@ -8,7 +8,9 @@ import java.time.Instant
 
 data class SportSet(val id: String, val date: String, val exercise: String, val reps: Int, val kg: Double, val time: Long)
 data class PlannedExercise(val name: String, val sets: Int, val reps: Int, val restSeconds: Int = 90)
-data class SportPlan(val date: String, val title: String, val rest: Boolean, val exercises: List<PlannedExercise> = emptyList())
+data class SportPlan(val date: String, val title: String, val rest: Boolean, val exercises: List<PlannedExercise> = emptyList(),
+    val category: String = "Siłowy", val description: String = "", val targetDistanceKm: Double? = null,
+    val targetMinutes: Int? = null, val distanceRange: String = "")
 data class SportSession(val id: String, val title: String, val start: String, val end: String, val source: String,
     val activeKcal: Double? = null, val distanceKm: Double? = null, val activityType: Int? = null)
 data class SportsData(val sets: List<SportSet> = emptyList(), val plans: List<SportPlan> = emptyList(),
