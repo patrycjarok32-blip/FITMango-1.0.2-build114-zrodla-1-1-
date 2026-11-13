@@ -12,16 +12,18 @@ import com.example.viewmodel.MealPlannerSupport
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.time.temporal.WeekFields
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlanDateSelector(value: String, onDate: (String) -> Unit, tag: String, showDays: Boolean = true) {
     val date = MealPlannerSupport.dateForDay(value) ?: LocalDate.now()
     var calendar by remember { mutableStateOf(false) }
-    if (showDays) Text("Data: ${MealPlannerSupport.planDateLabel(date.toString())}", style = MaterialTheme.typography.labelLarge)
+    if (showDays) Text("Wybrany dzień: ${MealPlannerSupport.planDateLabel(date.toString())} • tydzień ${date.get(WeekFields.ISO.weekOfWeekBasedYear())}", style = MaterialTheme.typography.labelLarge)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         TextButton(onClick = { onDate(date.minusWeeks(1).toString()) }, modifier = Modifier.testTag("${tag}_previous_week")) { Text(if (showDays) "← Tydzień" else "←") }
-        TextButton(onClick = { onDate(LocalDate.now().toString()) }) { Text("Dziś") }
+        TextButton(enabled = date != LocalDate.now(), onClick = { onDate(LocalDate.now().toString()) }) { Text("Dziś") }
         if (!showDays) TextButton(onClick = { calendar = true }, modifier = Modifier.testTag("${tag}_calendar")) { Text("Kalendarz") }
         TextButton(onClick = { onDate(date.plusWeeks(1).toString()) }, modifier = Modifier.testTag("${tag}_next_week")) { Text(if (showDays) "Tydzień →" else "→") }
     }
@@ -30,7 +32,7 @@ fun PlanDateSelector(value: String, onDate: (String) -> Unit, tag: String, showD
         items(MealPlannerSupport.weekDays(date)) { day ->
             val dayDate = MealPlannerSupport.dateForDay(day.canonicalName, date)!!
             FilterChip(selected = date == dayDate, onClick = { onDate(dayDate.toString()) },
-                label = { Text(day.chipLabelWithDate) }, modifier = Modifier.testTag("${tag}_${day.canonicalName}"))
+                label = { Text(day.chipLabelWithDate + if (dayDate == LocalDate.now()) " • dziś" else "") }, modifier = Modifier.testTag("${tag}_${day.canonicalName}"))
         }
     }
     if (calendar) {
