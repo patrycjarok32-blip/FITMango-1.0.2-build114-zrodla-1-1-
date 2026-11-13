@@ -875,7 +875,6 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                 mins, km, extraDescription) { saved(); showAddActivity = false }
                         }) { Text("Zapisz dodatkową sesję") }
                     }
-                    val dayPlans = data.plans.filter { it.date == workoutDate && !it.rest }
                     var selectedSessionKey by rememberSaveable(workoutDate) { mutableStateOf("") }
                     val healthDaySessions = ActivityRecoverySupport.daySessions(
                         data, LocalDate.parse(workoutDate))
