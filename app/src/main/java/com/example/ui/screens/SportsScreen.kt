@@ -958,6 +958,24 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         if (showSportNutrition && activitySection == "training" && trainingPage == "diary") item { NutritionWeekCard(viewModel) }
 
         if (activitySection == "training" && trainingPage == "diary") item {
+            val sessionsToday = ActivityRecoverySupport.daySessions(data, today)
+            val totalMinutes = ActivityRecoverySupport.dayMinutes(data, today)
+            MangoCard(Modifier.fillMaxWidth().testTag("journal3_day_summary")) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("📅 Dziennik 3.0 • ${today}", style = MaterialTheme.typography.titleMedium)
+                    Text("${sessionsToday.size} aktywności • ${totalMinutes} minut", style = MaterialTheme.typography.bodyMedium)
+                    if (sessionsToday.isEmpty()) Text("Brak zapisanych aktywności na ten dzień.")
+                    sessionsToday.forEach { session ->
+                        val mins = java.time.Duration.between(Instant.parse(session.start), Instant.parse(session.end)).toMinutes()
+                        Text("${sportActivityIcon(session.title)} ${session.title} • ${mins} min • ${session.source}",
+                            style = MaterialTheme.typography.bodySmall)
+                    }
+                    Text("Health Connect i wpisy ręczne są pokazywane razem, bez powtórzeń.",
+                        style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        }
+        if (activitySection == "training" && trainingPage == "diary") item {
             TextButton(onClick = { showHistory = !showHistory }) { Text(if (showHistory) "Zwiń historię treningów −" else "Historia treningów (${visible.size}) +") }
             Text("Kalorie treningów mają charakter informacyjny. Nie zwiększają celu jedzenia i nie są ponownie dodawane do spalania ogółem.", style = MaterialTheme.typography.bodySmall)
             if (duplicates.isNotEmpty()) TextButton(onClick = { showDuplicates = !showDuplicates }) { Text("Pominięte powtórzenia: ${duplicates.size} • ${if (showDuplicates) "zwiń" else "pokaż"}") }
@@ -975,7 +993,12 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     Text("${sportTime(Instant.parse(session.start).toEpochMilli())} • $duration min")
                     Text("Aktywne: ${session.activeKcal?.let { "${it.toInt()} kcal" } ?: "brak danych"} • Dystans: ${session.distanceKm?.let { String.format(java.util.Locale.getDefault(), "%.2f km", it) } ?: "brak danych"}")
                     Text("Źródło: ${session.source}", style = MaterialTheme.typography.bodySmall)
-                    if (ActivityRecoverySupport.manual(session)) TextButton(enabled = !busy, onClick = { sports.removeActivity(session.id, ::saved) }) { Text("Usuń wpis ręczny") }
+                    if (ActivityRecoverySupport.manual(session)) {
+                        Row {
+                            TextButton(enabled = !busy, onClick = { sports.copyActivity(session.id, today.toString(), ::saved) }) { Text("Kopiuj na dziś") }
+                            TextButton(enabled = !busy, onClick = { sports.removeActivity(session.id, ::saved) }) { Text("Usuń wpis ręczny") }
+                        }
+                    }
                 } }
             }
         }
