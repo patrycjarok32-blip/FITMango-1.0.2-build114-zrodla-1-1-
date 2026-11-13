@@ -270,6 +270,15 @@ fun DashboardScreen(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold)
                     Text(mangoNextStep, style = MaterialTheme.typography.bodyMedium)
+                    val plannedTraining = sportsData.plans.any {
+                        it.date == today.toString() && !it.rest && it.exercises.isNotEmpty()
+                    }
+                    Text(
+                        com.example.viewmodel.MangoDayAssistant.message(
+                            consumedCalories, targetCalories, waterTotal, plannedTraining),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TextButton(onClick = onNavigateToMealPlan) { Text("Jadłospis") }
                         TextButton(onClick = onNavigateToAiCoach) { Text("Zapytaj Mango") }
