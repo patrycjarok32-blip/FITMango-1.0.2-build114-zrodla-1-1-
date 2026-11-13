@@ -10,7 +10,7 @@ data class SportSet(val id: String, val date: String, val exercise: String, val 
 data class PlannedExercise(val name: String, val sets: Int, val reps: Int, val restSeconds: Int = 90)
 data class SportPlan(val date: String, val title: String, val rest: Boolean, val exercises: List<PlannedExercise> = emptyList(),
     val category: String = "Siłowy", val description: String = "", val targetDistanceKm: Double? = null,
-    val targetMinutes: Int? = null, val distanceRange: String = "")
+    val targetMinutes: Int? = null, val distanceRange: String = "", val sessionId: String = "")
 data class SportSession(val id: String, val title: String, val start: String, val end: String, val source: String,
     val activeKcal: Double? = null, val distanceKm: Double? = null, val activityType: Int? = null)
 data class SportsData(val sets: List<SportSet> = emptyList(), val plans: List<SportPlan> = emptyList(),
@@ -43,7 +43,7 @@ object SportsSupport {
             .put("energy", d.energy).put("fatigue", d.fatigue)) } })
         .put("sets", JSONArray().also { array -> data.sets.forEach { s -> array.put(JSONObject().put("id", s.id).put("date", s.date)
             .put("exercise", s.exercise).put("reps", s.reps).put("kg", s.kg).put("time", s.time)) } })
-        .put("plans", JSONArray().also { array -> data.plans.forEach { p -> array.put(JSONObject().put("date", p.date).put("title", p.title).put("rest", p.rest).put("category", p.category).put("description", p.description).put("targetDistanceKm", p.targetDistanceKm ?: JSONObject.NULL).put("targetMinutes", p.targetMinutes ?: JSONObject.NULL).put("distanceRange", p.distanceRange).put("exercises", JSONArray().also { a -> p.exercises.forEach { e -> a.put(JSONObject().put("name", e.name).put("sets", e.sets).put("reps", e.reps).put("restSeconds", e.restSeconds)) } })) } })
+        .put("plans", JSONArray().also { array -> data.plans.forEach { p -> array.put(JSONObject().put("date", p.date).put("title", p.title).put("rest", p.rest).put("category", p.category).put("description", p.description).put("targetDistanceKm", p.targetDistanceKm ?: JSONObject.NULL).put("targetMinutes", p.targetMinutes ?: JSONObject.NULL).put("distanceRange", p.distanceRange).put("sessionId", p.sessionId).put("exercises", JSONArray().also { a -> p.exercises.forEach { e -> a.put(JSONObject().put("name", e.name).put("sets", e.sets).put("reps", e.reps).put("restSeconds", e.restSeconds)) } })) } })
         .put("history", JSONArray().also { array -> data.history.forEach { h -> array.put(JSONObject().put("id", h.id).put("title", h.title)
             .put("start", h.start).put("end", h.end).put("source", h.source).put("kcal", h.activeKcal ?: JSONObject.NULL)
             .put("km", h.distanceKm ?: JSONObject.NULL).put("type", h.activityType ?: JSONObject.NULL)) } }).toString()
@@ -61,7 +61,7 @@ object SportsSupport {
                 it.optString("category", "Siłowy"), it.optString("description", ""),
                 if (it.isNull("targetDistanceKm")) null else it.getDouble("targetDistanceKm"),
                 if (it.isNull("targetMinutes")) null else it.getInt("targetMinutes"),
-                it.optString("distanceRange", "")) },
+                it.optString("distanceRange", ""), it.optString("sessionId", "")) },
             rows("history").map { SportSession(it.getString("id"), it.getString("title"), it.getString("start"), it.getString("end"),
                 it.getString("source"), if (it.isNull("kcal")) null else it.getDouble("kcal"), if (it.isNull("km")) null else it.getDouble("km"), if (it.isNull("type")) null else it.getInt("type")) },
             json.optLong("updated", 0), json.optInt("goal", 3),
