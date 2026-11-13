@@ -80,4 +80,18 @@ class MangoWorkoutInsightsTest {
         }
     }
 
+    @Test fun weeklyReportSeparatesCalendarWeeksAndIgnoresUnfinishedSessions() {
+        val previous = session("previous", "2026-11-05", 61000L, 10.0)
+        val current = session("current", "2026-11-12", 121000L, 12.0)
+        val active = session("active", "2026-11-13", 0L, 100.0)
+        val report = MangoWorkoutInsights.weeklyReport(
+            LocalDate.parse("2026-11-13"), listOf(previous, current, active))
+        assertEquals(1, report.sessions)
+        assertEquals(1, report.previousSessions)
+        assertEquals(216.0, report.volumeKg, 0.001)
+        assertEquals(180.0, report.previousVolumeKg, 0.001)
+        assertEquals(2, report.sets)
+        assertEquals(1, report.records)
+    }
+
 }
