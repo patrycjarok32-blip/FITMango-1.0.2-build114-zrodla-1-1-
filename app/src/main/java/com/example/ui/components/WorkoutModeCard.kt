@@ -55,6 +55,25 @@ fun WorkoutModeCard(
     }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (active != null) {
+            val completedCount = active.entries.count { it.done }
+            val totalCount = active.entries.size
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                shape = RoundedCornerShape(20.dp)) {
+                Column(Modifier.fillMaxWidth().padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("🥭 Teraz trenujesz", style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold)
+                    Text("$completedCount / $totalCount ukończonych serii")
+                    LinearProgressIndicator(progress = {
+                        if (totalCount == 0) 0f else completedCount.toFloat() / totalCount
+                    }, modifier = Modifier.fillMaxWidth())
+                    Text(if (completedCount == totalCount && totalCount > 0)
+                        "Brawo! Wszystkie serie ukończone." else "Skup się na następnej serii.",
+                        style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+        if (active != null) {
             Text("💾 Sesja zapisana automatycznie. Po ponownym uruchomieniu aplikacji możesz ją wznowić.",
                 style = MaterialTheme.typography.bodySmall)
         }
