@@ -51,7 +51,7 @@ class ActivityRecoveryTest {
         assertEquals(2, ActivityRecoverySupport.summary(data, LocalDate.parse("2026-10-24"), LocalDate.parse("2026-10-25"), end, zone).activeDays)
     }
     @Test fun refreshPreservesManualEntriesAndFailuresPreservePriorReads() {
-        val manual = session("manual|a")
+        val manual = session("manual|a", "2026-10-20T12:00:00Z", "2026-10-20T13:00:00Z")
         val old = session("old")
         val metric = ActivityDay(day.toString(), 5000, 420, readAt = 10)
         val data = SportsData(history = listOf(old, manual), daily = listOf(metric), updated = 10, healthUpdated = 10,
@@ -64,6 +64,14 @@ class ActivityRecoveryTest {
         assertEquals(data.recovery, refreshed.recovery)
         assertEquals(100L, refreshed.updated)
     }
+    @Test fun refreshPrefersHealthConnectWhenManualEntryIsAnExactDuplicate() {
+        val manual = session("manual|duplicate").copy(source = "Wpis ręczny", activeKcal = null)
+        val imported = session("health|same")
+        val merged = ActivityRecoverySupport.mergeImported(
+            SportsData(history = listOf(manual)), listOf(imported), null, 100, "")
+        assertEquals(listOf("health|same"), merged.history.map { it.id })
+    }
+
     @Test fun manualActivityRequiresPastEndAndIsNotAnEstimatedCalorieEntry() {
         val entry = ActivityRecoverySupport.manualSession("2026-10-20", "12:00", 30, "Spacer", 79, now, zone)
         assertTrue(ActivityRecoverySupport.manual(entry)); assertNull(entry.activeKcal); assertNull(entry.distanceKm)
