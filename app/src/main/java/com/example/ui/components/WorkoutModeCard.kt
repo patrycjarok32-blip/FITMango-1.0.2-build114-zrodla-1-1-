@@ -103,6 +103,38 @@ fun WorkoutModeCard(
         }, modifier = Modifier.fillMaxWidth()) { Text("💾 Eksportuj historię treningów (JSON)") }
         Text("Eksport obejmuje wyłącznie historię treningów. Nie zawiera kluczy API ani danych konta.",
             style = MaterialTheme.typography.bodySmall)
+        var confirmRestore by rememberSaveable { mutableStateOf(false) }
+        var restoreMessage by rememberSaveable { mutableStateOf<String?>(null) }
+        val restoreAvailable = remember(workouts) {
+            runCatching { WorkoutSessionStore.restorePoint(context) != null }.getOrDefault(false)
+        }
+        if (restoreAvailable) {
+            OutlinedButton(onClick = { confirmRestore = true }, modifier = Modifier.fillMaxWidth()) {
+                Text("↩ Przywróć poprzednią historię treningów")
+            }
+        }
+        restoreMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+        if (confirmRestore) {
+            AlertDialog(
+                onDismissRequest = { confirmRestore = false },
+                title = { Text("Przywrócić historię?") },
+                text = { Text("Zastąpi to bieżącą historię poprzednim punktem przywracania. " +
+                    "Obecna historia zostanie zachowana jako punkt cofnięcia. " +
+                    "Po przywróceniu otwórz ponownie ekran treningu.") },
+                confirmButton = {
+                    Button(onClick = {
+                        restoreMessage = runCatching {
+                            val count = WorkoutSessionStore.restorePrevious(context)
+                            "Przywrócono $count sesji. Odśwież ekran treningu."
+                        }.getOrElse { "Nie udało się przywrócić historii: ${it.message ?: "błąd danych"}" }
+                        confirmRestore = false
+                    }) { Text("Przywróć") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { confirmRestore = false }) { Text("Anuluj") }
+                }
+            )
+        }
         val weekly = remember(workouts) {
             MangoWorkoutInsights.weeklyReport(java.time.LocalDate.now(), workouts)
         }
