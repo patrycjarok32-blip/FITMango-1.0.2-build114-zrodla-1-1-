@@ -7,22 +7,32 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 
-/** Privacy-safe launcher widget: never displays stale or invented health data. */
-class MangoHomeWidget : AppWidgetProvider() {
+/** Three small offline launcher widgets. No sensitive or stale health values are exposed. */
+open class MangoHomeWidget : AppWidgetProvider() {
+    protected open val title = "🥭 FITMango • Mój dzień"
+    protected open val subtitle = "Otwórz podsumowanie dnia"
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
         ids.forEach { id ->
-            val launch = Intent(context, MainActivity::class.java)
+            val intent = Intent(context, MainActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             val pending = PendingIntent.getActivity(
-                context, 0, launch,
+                context, 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            val views = RemoteViews(context.packageName, android.R.layout.simple_list_item_2)
-            views.setTextViewText(android.R.id.text1, "🥭 FITMango • Mój dzień")
-            views.setTextViewText(android.R.id.text2, "Dotknij, aby otworzyć posiłki, wodę i trening")
-            views.setOnClickPendingIntent(android.R.id.text1, pending)
-            views.setOnClickPendingIntent(android.R.id.text2, pending)
+            val views = RemoteViews(context.packageName, R.layout.mango_widget_card)
+            views.setTextViewText(R.id.widget_title, title)
+            views.setTextViewText(R.id.widget_subtitle, subtitle)
+            views.setOnClickPendingIntent(R.id.widget_title, pending)
+            views.setOnClickPendingIntent(R.id.widget_subtitle, pending)
             manager.updateAppWidget(id, views)
         }
     }
+}
+class MangoMealsWidget : MangoHomeWidget() {
+    override val title = "🥗 FITMango • Posiłki"
+    override val subtitle = "Jadłospis i przepisy w aplikacji"
+}
+class MangoWorkoutWidget : MangoHomeWidget() {
+    override val title = "🏋️ FITMango • Trening"
+    override val subtitle = "Otwórz trening i historię"
 }
