@@ -41,4 +41,27 @@ class WorkoutHistoryPersistenceTest {
         }
         assertEquals("safe", WorkoutSessionStore.read(context).single().id)
     }
+    @Test fun importedJsonRestoresHistoryAndKeepsPreviousVersion() {
+        val context = RuntimeEnvironment.getApplication()
+        context.getSharedPreferences("FITMangoUsability", 0).edit().clear().commit()
+        val first = sample("first", 20.0)
+        val second = sample("second", 30.0)
+        WorkoutSessionStore.write(context, listOf(first))
+        val exported = WorkoutSessionStore.exportJson(context)
+        WorkoutSessionStore.write(context, listOf(second))
+        assertEquals(1, WorkoutSessionStore.importJson(context, exported))
+        assertEquals(first, WorkoutSessionStore.read(context).single())
+        assertEquals(second, WorkoutSessionStore.restorePoint(context)!!.single())
+    }
+
+    @Test fun invalidImportNeverOverwritesExistingSessions() {
+        val context = RuntimeEnvironment.getApplication()
+        context.getSharedPreferences("FITMangoUsability", 0).edit().clear().commit()
+        WorkoutSessionStore.write(context, listOf(sample("safe", 25.0)))
+        assertThrows(Exception::class.java) {
+            WorkoutSessionStore.importJson(context, "{invalid json}")
+        }
+        assertEquals("safe", WorkoutSessionStore.read(context).single().id)
+    }
+
 }
