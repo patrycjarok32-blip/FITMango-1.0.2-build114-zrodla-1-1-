@@ -310,7 +310,6 @@ fun WorkoutModeCard(
                         onClick = { onStart(plan.copy(exercises = expressExercises)) },
                         enabled = !busy,
                         modifier = Modifier.fillMaxWidth()
-                            .then(Modifier)
                     ) { Text("⚡ Plan B • trening ekspresowy 20 min") }
                     Text("Skrócona sesja nie zmienia zapisanego planu.",
                         style = MaterialTheme.typography.bodySmall)
