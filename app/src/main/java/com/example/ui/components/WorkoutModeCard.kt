@@ -329,12 +329,11 @@ fun WorkoutModeCard(
                                 it.name == selected
                             }?.tip ?: "Wykonuj ruch powoli i kontroluj technikę.")
                             Text("Etapy ruchu", style = MaterialTheme.typography.titleSmall)
-                            ExerciseMovementGuide.steps(selected.orEmpty()).forEach { step ->
+                            ExerciseMovementGuide.steps(selected.orEmpty()).forEachIndexed { stepIndex, step ->
                                 Text(step.title, style = MaterialTheme.typography.labelLarge)
                                 Text(step.instruction, style = MaterialTheme.typography.bodySmall)
+                                OfflineExercisePhotoStep(selected.orEmpty(), stepIndex)
                             }
-                            Text("Zdjęcie dodasz z galerii na karcie ćwiczenia.",
-                                style = MaterialTheme.typography.bodySmall)
                         }
                     },
                     confirmButton = { TextButton(onClick = { showTechnique = false }) { Text("Zamknij") } })
