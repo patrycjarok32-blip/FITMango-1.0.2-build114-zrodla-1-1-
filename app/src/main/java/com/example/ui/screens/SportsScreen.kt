@@ -252,8 +252,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         val recordedActivities = ActivityRecoverySupport.daySessions(data, day)
                         val status = MangoWorkoutInsights.calendarStatus(day, today, plans, workouts)
                         val confirmed = plans.count { plan ->
-                            val linked = data.linkedActivities[plan.sessionId]
-                            linked != null && recordedActivities.any { it.id == linked }
+                            PlannedActivityMatching.match(plan, data) != null
                         }
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Text(day.toString().substring(5), modifier = Modifier.width(58.dp),
@@ -878,8 +877,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                              else "Health Connect"),
                             style = MaterialTheme.typography.bodySmall)
                     }
-                    Text("Aktywności z zegarka są widoczne osobno. Nie zaliczamy automatycznie " +
-                        "konkretnej sesji planu bez potwierdzonego dopasowania.",
+                    Text("Jednoznacznie dopasowane biegi są oznaczane jako wykonane. " +
+                        "Pozostałe aktywności można powiązać ręcznie.",
                         style = MaterialTheme.typography.bodySmall)
                     Text("Twoje zaplanowane sesje (${dayPlans.size})",
                         style = MaterialTheme.typography.titleMedium)
@@ -902,11 +901,11 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                             }
                         }
                         val linkedId = data.linkedActivities[plan.sessionId]
-                        val linkedRecord = healthDaySessions.firstOrNull { it.id == linkedId }
+                        val linkedRecord = PlannedActivityMatching.match(plan, data)
                         if (linkedRecord != null) {
                             Text("✓ Wykonano: ${linkedRecord.title} · zapis z dziennika / Health Connect",
                                 color = LeafGreen, style = MaterialTheme.typography.bodyMedium)
-                            TextButton(enabled = !busy, onClick = {
+                            if (linkedId != null) TextButton(enabled = !busy, onClick = {
                                 sports.unlinkRecordedActivity(plan.sessionId) { saved() }
                             }) { Text("Cofnij powiązanie") }
                         } else if (plan.sessionId.isNotBlank() && !plan.rest && chosen) {
@@ -1149,7 +1148,9 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 onUpdateExercises = { date, exercises -> sports.updatePlannedExercises(date, exercises) { saved() } })
         }
         if (activitySection == "today") item {
-            val todayPlan = data.plans.firstOrNull { it.date == today.toString() }
+            val todayPlan = data.plans.firstOrNull { it.date == today.toString() && !it.rest }
+                ?: data.plans.firstOrNull { it.date == today.toString() }
+            val completedToday = todayPlan?.let { PlannedActivityMatching.match(it, data) }
             Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1157,18 +1158,25 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     Text(when {
                         todayPlan == null -> "Nie masz zaplanowanej sesji na dziś."
                         todayPlan.rest -> "Dzisiaj regeneracja • odpoczynek jest częścią planu."
+                         completedToday != null -> "✓ Wykonano: ${completedToday.title} • ${completedToday.distanceKm?.let { "$it km" } ?: "Health Connect"}"
                         else -> buildString { append(todayPlan.title); if (todayPlan.category == "Siłowy" && todayPlan.exercises.isNotEmpty()) append(" • ${todayPlan.exercises.size} ćwiczeń") else { append(" • ${todayPlan.category}"); todayPlan.distanceRange.takeIf { it.isNotBlank() }?.let { append(" • $it") }; todayPlan.targetMinutes?.let { append(" • $it min") } } }
                     })
                     Button(onClick = {
                         activitySection = "training"
                         trainingPage = if (todayPlan != null && !todayPlan.rest) "session" else "plan"
                     }, modifier = Modifier.fillMaxWidth()) {
-                        Text(if (todayPlan != null && !todayPlan.rest) "▶ Przejdź do treningu" else "🗓 Otwórz plan")
+                        Text(if (completedToday != null) "✓ Zobacz wykonany trening" else if (todayPlan != null && !todayPlan.rest) "▶ Przejdź do treningu" else "🗓 Otwórz plan")
                     }
                 }
             }
         }
-        if (activitySection == "today") item { StrengthWeeklyReview(data, today) }
+        if (activitySection == "today") item {
+            var showWeeklyReview by rememberSaveable { mutableStateOf(false) }
+            TextButton(onClick = { showWeeklyReview = !showWeeklyReview }) {
+                Text(if (showWeeklyReview) "Zwiń podsumowanie tygodnia" else "📊 Pokaż podsumowanie tygodnia")
+            }
+            if (showWeeklyReview) StrengthWeeklyReview(data, today)
+        }
         if (activitySection == "today") item {
             val check = data.recovery.firstOrNull { it.date == today.toString() }
             var quickEnergy by rememberSaveable { mutableIntStateOf(check?.energy ?: 3) }
@@ -1281,7 +1289,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     if (sessionsToday.isEmpty()) Text("Brak zapisanych aktywności na ten dzień.")
                     sessionsToday.forEach { session ->
                         val mins = java.time.Duration.between(Instant.parse(session.start), Instant.parse(session.end)).toMinutes()
-                        Text("${sportActivityIcon(session.title)} ${session.title} • ${mins} min • ${session.source}",
+                        Text("${sportActivityIcon(session.title)} ${session.title} • ${mins} min • Health Connect / dziennik",
                             style = MaterialTheme.typography.bodySmall)
                     }
                     Text("Health Connect i wpisy ręczne są pokazywane razem, bez powtórzeń.",
@@ -1306,7 +1314,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     Text("${sportActivityIcon(session.title)}  ${session.title}", style = MaterialTheme.typography.titleMedium)
                     Text("${sportTime(Instant.parse(session.start).toEpochMilli())} • $duration min")
                     Text("Aktywne: ${session.activeKcal?.let { "${it.toInt()} kcal" } ?: "brak danych"} • Dystans: ${session.distanceKm?.let { String.format(java.util.Locale.getDefault(), "%.2f km", it) } ?: "brak danych"}")
-                    Text("Źródło: ${session.source}", style = MaterialTheme.typography.bodySmall)
+                    Text("Źródło: " + (if (session.source.contains("huawei", ignoreCase = true)) "Zegarek Huawei" else if (ActivityRecoverySupport.manual(session)) "Wpis ręczny" else "Health Connect"), style = MaterialTheme.typography.bodySmall)
                     if (ActivityRecoverySupport.manual(session)) {
                         Row {
                             TextButton(enabled = !busy, onClick = { sports.copyActivity(session.id, today.toString(), ::saved) }) { Text("Kopiuj na dziś") }
