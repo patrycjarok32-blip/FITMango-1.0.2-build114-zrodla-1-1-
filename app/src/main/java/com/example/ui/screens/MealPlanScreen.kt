@@ -312,22 +312,6 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                 com.example.ui.components.PlanDateSelector(selectedDayName, { selectedDayName = it }, "planner_date", showDays = false)
             }
 
-            // Navigate entire weeks without replacing or regenerating existing meal plans.
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween) {
-                TextButton(onClick = { selectedDayName = selectedDate.minusWeeks(1).toString() },
-                    modifier = Modifier.testTag("meal_previous_week")) {
-                    Icon(Icons.Outlined.ChevronLeft, contentDescription = null)
-                    Text("Poprzedni")
-                }
-                Text("Tydzień ${selectedDate.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR)}",
-                    fontSize = 13.sp, fontWeight = FontWeight.Bold, color = LeafGreen)
-                TextButton(onClick = { selectedDayName = selectedDate.plusWeeks(1).toString() },
-                    modifier = Modifier.testTag("meal_next_week")) {
-                    Text("Następny")
-                    Icon(Icons.Outlined.ChevronRight, contentDescription = null)
-                }
-            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
