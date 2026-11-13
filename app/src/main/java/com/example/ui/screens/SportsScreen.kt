@@ -867,7 +867,35 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                 mins, km, extraDescription) { saved(); showAddActivity = false }
                         }) { Text("Zapisz dodatkową sesję") }
                     }
-                    val selectedPlan = data.plans.firstOrNull { it.date == workoutDate }
+                    val dayPlans = data.plans.filter { it.date == workoutDate && !it.rest }
+                    var selectedSessionKey by rememberSaveable(workoutDate) { mutableStateOf("") }
+                    Text("Sesje zaplanowane na ten dzień (${dayPlans.size})",
+                        style = MaterialTheme.typography.titleMedium)
+                    dayPlans.forEachIndexed { index, plan ->
+                        val key = plan.sessionId.ifBlank { "legacy:$index" }
+                        val chosen = selectedSessionKey == key || (selectedSessionKey.isBlank() && index == 0)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilterChip(selected = chosen, onClick = { selectedSessionKey = key },
+                                label = { Text("${plan.title} • ${plan.category}") })
+                            if (plan.sessionId.isNotBlank()) {
+                                TextButton(enabled = !busy, onClick = {
+                                    sports.removePlannedActivity(plan.sessionId) { saved(); selectedSessionKey = "" }
+                                }) { Text("Usuń") }
+                            }
+                        }
+                        if (chosen) {
+                            Text(buildString {
+                                plan.targetDistanceKm?.let { append("$it km  ") }
+                                plan.targetMinutes?.let { append("$it min  ") }
+                                if (plan.description.isNotBlank()) append(plan.description)
+                            }, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    val selectedPlan = dayPlans.firstOrNull { plan ->
+                        val index = dayPlans.indexOf(plan)
+                        selectedSessionKey == plan.sessionId.ifBlank { "legacy:$index" }
+                    } ?: dayPlans.firstOrNull() ?: data.plans.firstOrNull { it.date == workoutDate }
+
                     var editSessionDetails by rememberSaveable(workoutDate) { mutableStateOf(false) }
                     if (selectedPlan != null && !selectedPlan.rest) {
                         TextButton(onClick = { editSessionDetails = !editSessionDetails }) {
