@@ -784,6 +784,89 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                 label = { Text(d.substring(8)) })
                         }
                     }
+                    val dayPlans = data.plans.filter { it.date == workoutDate && !it.rest }
+                    var showAddActivity by rememberSaveable(workoutDate) { mutableStateOf(false) }
+                    Text("Sesje na wybrany dzień: ${dayPlans.size}", style = MaterialTheme.typography.titleMedium)
+                    dayPlans.forEach { session ->
+                        Card(Modifier.fillMaxWidth()) {
+                            Row(Modifier.fillMaxWidth().padding(10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(session.title, style = MaterialTheme.typography.titleSmall)
+                                    Text(buildString {
+                                        append(session.category)
+                                        session.targetDistanceKm?.let { append(" • ${it} km") }
+                                        session.targetMinutes?.let { append(" • ${it} min") }
+                                    }, style = MaterialTheme.typography.bodySmall)
+                                }
+                                if (session.sessionId.isNotBlank()) {
+                                    TextButton(enabled = !busy, onClick = {
+                                        sports.removePlannedActivity(session.sessionId) { saved() }
+                                    }) { Text("Usuń") }
+                                }
+                            }
+                        }
+                    }
+                    OutlinedButton(onClick = { showAddActivity = !showAddActivity }) {
+                        Text(if (showAddActivity) "Zamknij" else "＋ Dodaj kolejną aktywność")
+                    }
+                    if (showAddActivity) {
+                        var extraCategory by rememberSaveable(workoutDate) { mutableStateOf("Cardio") }
+                        var extraTitle by rememberSaveable(workoutDate) { mutableStateOf("Long Run") }
+                        var extraMinutes by rememberSaveable(workoutDate) { mutableStateOf("60") }
+                        var extraDistance by rememberSaveable(workoutDate) { mutableStateOf("9") }
+                        var extraDescription by rememberSaveable(workoutDate) { mutableStateOf("") }
+                        Text("Rodzaj aktywności", style = MaterialTheme.typography.titleSmall)
+                        androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            items(listOf("Siłowy", "Cardio", "Wzmacnianie", "Mobilność i stretching", "Inna aktywność")) { kind ->
+                                FilterChip(selected = extraCategory == kind, onClick = { extraCategory = kind },
+                                    label = { Text(kind) })
+                            }
+                        }
+                        Text("Gotowe propozycje", style = MaterialTheme.typography.titleSmall)
+                        androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            items(listOf("Long Run", "Easy Run", "Interwały", "HIIT", "Full Body",
+                                "Core", "Stretching", "Mobilność", "PULL", "PUSH", "LEGS")) { name ->
+                                AssistChip(onClick = {
+                                    extraTitle = name
+                                    extraCategory = when (name) {
+                                        "Long Run", "Easy Run", "Interwały", "HIIT" -> "Cardio"
+                                        "Stretching", "Mobilność" -> "Mobilność i stretching"
+                                        "Core", "Full Body" -> "Wzmacnianie"
+                                        else -> "Siłowy"
+                                    }
+                                    extraMinutes = when (name) {
+                                        "Long Run" -> "60"
+                                        "Stretching", "Mobilność" -> "20"
+                                        else -> "30"
+                                    }
+                                    extraDistance = when (name) {
+                                        "Long Run" -> "9"
+                                        "Easy Run" -> "4"
+                                        else -> ""
+                                    }
+                                }, label = { Text(name) })
+                            }
+                        }
+                        OutlinedTextField(value = extraTitle, onValueChange = { extraTitle = it.take(120) },
+                            label = { Text("Nazwa sesji") }, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(value = extraMinutes, onValueChange = { extraMinutes = it },
+                            label = { Text("Czas (minuty)") }, modifier = Modifier.fillMaxWidth())
+                        if (extraCategory == "Cardio") {
+                            OutlinedTextField(value = extraDistance, onValueChange = { extraDistance = it },
+                                label = { Text("Dystans (km, opcjonalnie)") }, modifier = Modifier.fillMaxWidth())
+                        }
+                        OutlinedTextField(value = extraDescription, onValueChange = { extraDescription = it.take(1000) },
+                            label = { Text("Opis (opcjonalnie)") }, modifier = Modifier.fillMaxWidth())
+                        val mins = extraMinutes.toIntOrNull()
+                        val km = if (extraCategory == "Cardio") extraDistance.replace(',', '.').toDoubleOrNull() else null
+                        val validExtra = extraTitle.isNotBlank() && (mins == null && extraMinutes.isBlank() || mins != null && mins in 1..1440) &&
+                            (extraCategory != "Cardio" || extraDistance.isBlank() || km != null && km.isFinite() && km > 0 && km <= 1000)
+                        Button(enabled = validExtra && !busy, onClick = {
+                            sports.addPlannedActivity(workoutDate, extraTitle, extraCategory,
+                                mins, km, extraDescription) { saved(); showAddActivity = false }
+                        }) { Text("Zapisz dodatkową sesję") }
+                    }
                     val selectedPlan = data.plans.firstOrNull { it.date == workoutDate }
                     var editSessionDetails by rememberSaveable(workoutDate) { mutableStateOf(false) }
                     if (selectedPlan != null && !selectedPlan.rest) {
