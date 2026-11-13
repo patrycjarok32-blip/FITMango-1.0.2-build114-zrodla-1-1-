@@ -246,14 +246,14 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
     }
     Scaffold(
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            SmallFloatingActionButton(
                 onClick = { showQuickAdd = true },
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Dodaj") },
                 containerColor = JuicyOrange,
                 contentColor = MangoButtonInk,
-                modifier = Modifier.testTag("fresh_mango_quick_add").height(44.dp)
-            )
+                modifier = Modifier.testTag("fresh_mango_quick_add")
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Szybko dodaj posiłek")
+            }
         },
         topBar = {
             TopAppBar(
