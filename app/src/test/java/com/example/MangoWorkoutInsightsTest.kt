@@ -94,4 +94,23 @@ class MangoWorkoutInsightsTest {
         assertEquals(1, report.records)
     }
 
+    @Test fun weeklyComparisonIgnoresActiveSessionsAndTracksVolume() {
+        val prior = session("prior", "2026-11-03", 61000L, 10.0)
+        val recent = session("recent", "2026-11-12", 121000L, 12.0)
+        val unfinished = session("unfinished", "2026-11-13", 0L, 100.0)
+        val report = MangoWorkoutWeeklyReport.compare(
+            listOf(prior, recent, unfinished), LocalDate.parse("2026-11-13"))
+        assertEquals(1, report.current.sessions)
+        assertEquals(216.0, report.current.volumeKg, 0.001)
+        assertEquals(0, report.previous.sessions)
+    }
+    @Test fun weeklyReportDoesNotCountSessionsOutsideWeek() {
+        val recent = session("recent", "2026-11-12", 121000L, 12.0)
+        val old = session("old", "2026-10-20", 61000L, 10.0)
+        val report = MangoWorkoutInsights.weeklyReport(
+            LocalDate.parse("2026-11-13"), listOf(old, recent))
+        assertEquals(1, report.sessions)
+        assertEquals(0, report.previousSessions)
+    }
+
 }
