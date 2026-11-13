@@ -877,6 +877,17 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     }
                     val dayPlans = data.plans.filter { it.date == workoutDate && !it.rest }
                     var selectedSessionKey by rememberSaveable(workoutDate) { mutableStateOf("") }
+                    val healthDaySessions = ActivityRecoverySupport.daySessions(
+                        data, LocalDate.parse(workoutDate))
+                    Text("Wykonane aktywności z dziennika i Health Connect: ${healthDaySessions.size}",
+                        style = MaterialTheme.typography.bodySmall)
+                    healthDaySessions.forEach { recorded ->
+                        Text("✓ ${recorded.title} · ${recorded.source}",
+                            style = MaterialTheme.typography.bodySmall)
+                    }
+                    Text("Plan to zamiar; wykonanie potwierdzają osobne zapisy aktywności. " +
+                        "Nie dodajemy automatycznie kalorii ani treningów do Google Health Connect.",
+                        style = MaterialTheme.typography.bodySmall)
                     Text("Sesje zaplanowane na ten dzień (${dayPlans.size})",
                         style = MaterialTheme.typography.titleMedium)
                     var transferKey by rememberSaveable(workoutDate) { mutableStateOf("") }
