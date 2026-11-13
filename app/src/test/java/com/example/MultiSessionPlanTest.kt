@@ -24,6 +24,24 @@ class MultiSessionPlanTest {
         assertEquals(plans, restored.plans)
         assertTrue(restored.history.isEmpty())
     }
+    @Test fun multipleSessionsOnSameDayPassValidation() {
+        val date = "2026-11-13"
+        val data = SportsData(plans = listOf(
+            SportPlan(date, "PULL", false),
+            SportPlan(date, "Run", false, category = "Cardio", sessionId = "run-1"),
+            SportPlan(date, "Stretch", false, category = "Mobilność i stretching", sessionId = "stretch-1")))
+        assertEquals(3, SportsSupport.decode(SportsSupport.encode(data)).plans.size)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun duplicateSessionIdsAreRejected() {
+        val date = "2026-11-13"
+        val data = SportsData(plans = listOf(
+            SportPlan(date, "Run", false, sessionId = "same-id"),
+            SportPlan(date, "Stretch", false, sessionId = "same-id")))
+        SportsSupport.decode(SportsSupport.encode(data))
+    }
+
     @Test fun removingOneSessionDoesNotRemoveTheOthers() {
         val plans = listOf(
             SportPlan("2026-11-13", "PULL", false),
