@@ -51,7 +51,11 @@ object ActivityRecoverySupport {
     /** Conservative duplicate matching. Imported original records are retained for inspection. */
     fun duplicate(a: SportSession, b: SportSession): Boolean {
         if (a.id == b.id) return true
-        val sameKind = if (a.activityType != null && b.activityType != null) a.activityType == b.activityType else title(a.title) == title(b.title)
+        // Two independently logged manual activities must not collapse merely because
+        // Health Connect represents both with the generic OTHER_WORKOUT type.
+        val sameKind = if (manual(a) && manual(b)) title(a.title) == title(b.title)
+            else if (a.activityType != null && b.activityType != null) a.activityType == b.activityType
+            else title(a.title) == title(b.title)
         val aStart = Instant.parse(a.start); val aEnd = Instant.parse(a.end)
         val bStart = Instant.parse(b.start); val bEnd = Instant.parse(b.end)
         val overlap = Duration.between(maxOf(aStart, bStart), minOf(aEnd, bEnd)).seconds.coerceAtLeast(0)
