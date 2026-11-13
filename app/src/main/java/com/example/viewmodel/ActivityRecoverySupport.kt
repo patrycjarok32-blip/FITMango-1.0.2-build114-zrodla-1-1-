@@ -18,7 +18,7 @@ object ActivityRecoverySupport {
         zone: ZoneId = ZoneId.systemDefault()): SportSession {
         val day = LocalDate.parse(date)
         require(day <= now.atZone(zone).toLocalDate()) { "Wybierz dzisiejszą lub wcześniejszą datę." }
-        require(minutes in 1..1440 && title in setOf("Spacer", "Bieganie", "Rower", "Pływanie", "Joga", "Inna aktywność")) { "Podaj czas od 1 do 1440 minut." }
+        require(minutes in 1..1440 && title in setOf("Spacer", "Bieganie", "Rower", "Pływanie", "Joga", "Inna aktywność", "Siłowy", "Cardio", "Wzmacnianie", "Mobilność i stretching", "Trening z filmem")) { "Podaj czas od 1 do 1440 minut." }
         val local = day.atTime(java.time.LocalTime.parse(time))
         require(zone.rules.getValidOffsets(local).isNotEmpty()) { "Ta godzina nie istnieje w dniu zmiany czasu. Wybierz inną godzinę." }
         val start = local.atZone(zone).toInstant(); val end = start.plusSeconds(minutes * 60L)
@@ -52,7 +52,7 @@ object ActivityRecoverySupport {
         return result
     }
     fun mergeImported(current: SportsData, imported: List<SportSession>?, days: List<ActivityDay>?, readAt: Long, note: String): SportsData = current.copy(
-        history = if (imported == null) current.history else (current.history.filter { manual(it) } + imported).distinctBy { it.id },
+        history = if (imported == null) current.history else unique(current.history.filter { manual(it) } + imported),
         updated = if (imported == null) current.updated else readAt,
         daily = if (days == null) current.daily else (current.daily.filter { old -> days.none { it.date == old.date } } + days)
             .sortedByDescending { it.date }.take(400),
