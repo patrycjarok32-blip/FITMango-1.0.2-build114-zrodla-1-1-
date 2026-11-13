@@ -1003,13 +1003,13 @@ private fun AddActivitySheet(today: LocalDate, busy: Boolean, message: String?, 
     var time by rememberSaveable { mutableStateOf(initial.toLocalTime().toString()) }
     var minutes by rememberSaveable { mutableStateOf("30") }
     var kind by rememberSaveable { mutableIntStateOf(0) }
-    val types = listOf("Spacer" to ExerciseSessionRecord.EXERCISE_TYPE_WALKING, "Bieganie" to ExerciseSessionRecord.EXERCISE_TYPE_RUNNING,
+    val types = listOf("Siłowy" to ExerciseSessionRecord.EXERCISE_TYPE_STRENGTH_TRAINING, "Cardio" to ExerciseSessionRecord.EXERCISE_TYPE_OTHER_WORKOUT, "Wzmacnianie" to ExerciseSessionRecord.EXERCISE_TYPE_OTHER_WORKOUT, "Mobilność i stretching" to ExerciseSessionRecord.EXERCISE_TYPE_YOGA, "Trening z filmem" to ExerciseSessionRecord.EXERCISE_TYPE_OTHER_WORKOUT, "Spacer" to ExerciseSessionRecord.EXERCISE_TYPE_WALKING, "Bieganie" to ExerciseSessionRecord.EXERCISE_TYPE_RUNNING,
         "Rower" to ExerciseSessionRecord.EXERCISE_TYPE_BIKING, "Pływanie" to ExerciseSessionRecord.EXERCISE_TYPE_SWIMMING_POOL,
         "Joga" to ExerciseSessionRecord.EXERCISE_TYPE_YOGA, "Inna aktywność" to ExerciseSessionRecord.EXERCISE_TYPE_OTHER_WORKOUT)
     val valid = minutes.toIntOrNull()?.let { it in 1..1440 } == true && runCatching { LocalDate.parse(date) <= today && java.time.LocalTime.parse(time).second == 0 }.getOrDefault(false)
     ModalBottomSheet(onDismissRequest = { if (!busy) onDismiss() }) {
         LazyColumn(Modifier.fillMaxWidth().imePadding().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 28.dp)) {
-            item { Text("Dodaj aktywność", style = MaterialTheme.typography.titleLarge); Text("Zapis lokalny, bez szacowania kalorii i bez wysyłania do Health Connect.") }
+            item { Text("Dziennik Treningowy 3.0 • dodaj aktywność", style = MaterialTheme.typography.titleLarge); Text("Możesz zapisać kilka różnych aktywności tego samego dnia. Każda ma osobny czas i typ. Zapis lokalny, bez szacowania kalorii i bez wysyłania do Health Connect.") }
             item { PlanDateSelector(date, { if (!busy) date = it }, "manual_activity", showDays = false); Text("Data: $date") }
             item { androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 items(types.size) { index -> FilterChip(selected = kind == index, enabled = !busy, onClick = { kind = index }, label = { Text(types[index].first) }) }
