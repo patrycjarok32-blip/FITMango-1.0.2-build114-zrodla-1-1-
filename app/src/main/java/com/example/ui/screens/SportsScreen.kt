@@ -974,10 +974,16 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                             (sessionDistance.isBlank() || (parsedDistance != null && parsedDistance.isFinite() && parsedDistance > 0.0 && parsedDistance <= 1000.0)) &&
                             (sessionMinutes.isBlank() || (parsedMinutes != null && parsedMinutes in 1..1440))
                         Button(enabled = valid && !busy, onClick = {
-                            sports.saveSessionDetails(workoutDate, sessionTitle, sessionCategory,
-                                sessionDescription, parsedDistance, parsedMinutes, sessionRange) {
-                                saved()
-                                editSessionDetails = false
+                            if (selectedPlan?.sessionId?.isNotBlank() == true) {
+                                sports.updatePlannedActivity(selectedPlan.sessionId, workoutDate, sessionTitle,
+                                    sessionCategory, parsedMinutes, parsedDistance, sessionDescription) {
+                                    saved(); editSessionDetails = false
+                                }
+                            } else {
+                                sports.saveSessionDetails(workoutDate, sessionTitle, sessionCategory,
+                                    sessionDescription, parsedDistance, parsedMinutes, sessionRange) {
+                                    saved(); editSessionDetails = false
+                                }
                             }
                         }) { Text("Zapisz szczegóły sesji") }
                     }
