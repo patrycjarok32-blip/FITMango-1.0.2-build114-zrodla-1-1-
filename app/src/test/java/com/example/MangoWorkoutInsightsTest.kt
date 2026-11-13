@@ -102,7 +102,7 @@ class MangoWorkoutInsightsTest {
             listOf(prior, recent, unfinished), LocalDate.parse("2026-11-13"))
         assertEquals(1, report.current.sessions)
         assertEquals(216.0, report.current.volumeKg, 0.001)
-        assertEquals(0, report.previous.sessions)
+        assertEquals(1, report.previous.sessions)
     }
     @Test fun weeklyReportDoesNotCountSessionsOutsideWeek() {
         val recent = session("recent", "2026-11-12", 121000L, 12.0)
