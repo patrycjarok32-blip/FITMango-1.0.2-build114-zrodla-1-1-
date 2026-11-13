@@ -20,6 +20,36 @@ data class SportsData(val sets: List<SportSet> = emptyList(), val plans: List<Sp
     val healthUpdated: Long = 0, val readNote: String = "",
     val linkedActivities: Map<String, String> = emptyMap())
 
+/** Read-only completion projection: only unique, same-day, same-sport records qualify. */
+object PlannedActivityMatching {
+    fun match(plan: SportPlan, data: SportsData): SportSession? {
+        if (plan.rest) return null
+        val explicit = data.linkedActivities[plan.sessionId]
+        if (explicit != null) return data.history.firstOrNull { it.id == explicit }
+        val isRun = plan.category == "Cardio" &&
+            listOf("run", "bieg").any { plan.title.contains(it, ignoreCase = true) }
+        if (!isRun) return null
+        val matches = ActivityRecoverySupport.unique(data.history).filter { record ->
+            val day = runCatching { Instant.parse(record.start)
+                .atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString() }.getOrNull()
+            val running = record.activityType == 56 || record.activityType == 57 ||
+                listOf("run", "bieg").any { record.title.contains(it, ignoreCase = true) }
+            val duration = runCatching { java.time.Duration.between(
+                Instant.parse(record.start), Instant.parse(record.end)).toMinutes() }.getOrDefault(0)
+            val timeFits = plan.targetMinutes == null ||
+                duration >= (plan.targetMinutes * 0.75).toLong()
+            val distanceFits = plan.targetDistanceKm == null || record.distanceKm == null ||
+                record.distanceKm >= plan.targetDistanceKm * 0.8
+            day == plan.date && running && timeFits && distanceFits &&
+                data.linkedActivities.values.none { it == record.id }
+        }
+        val competing = data.plans.count { other -> other.date == plan.date && !other.rest &&
+            other.category == "Cardio" && listOf("run", "bieg").any {
+                other.title.contains(it, ignoreCase = true) } }
+        return matches.singleOrNull()?.takeIf { competing == 1 }
+    }
+}
+
 object SportsSupport {
     const val KEY = "sports_v1"
     fun week(date: LocalDate) = date.minusDays(date.dayOfWeek.value - 1L)
