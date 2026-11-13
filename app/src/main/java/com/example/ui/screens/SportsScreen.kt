@@ -897,6 +897,40 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                 }) { Text("Usuń") }
                             }
                         }
+                        val linkedId = data.linkedActivities[plan.sessionId]
+                        val linkedRecord = healthDaySessions.firstOrNull { it.id == linkedId }
+                        if (linkedRecord != null) {
+                            Text("✓ Wykonano: ${linkedRecord.title} · zapis z dziennika / Health Connect",
+                                color = LeafGreen, style = MaterialTheme.typography.bodyMedium)
+                            TextButton(enabled = !busy, onClick = {
+                                sports.unlinkRecordedActivity(plan.sessionId) { saved() }
+                            }) { Text("Cofnij powiązanie") }
+                        } else if (plan.sessionId.isNotBlank() && !plan.rest && chosen) {
+                            val availableRecords = healthDaySessions.filter { recorded ->
+                                data.linkedActivities.none { it.key != plan.sessionId && it.value == recorded.id }
+                            }
+                            val isRun = plan.category == "Cardio" &&
+                                listOf("run", "bieg").any { plan.title.contains(it, ignoreCase = true) }
+                            val suggestions = availableRecords.filter { recorded ->
+                                if (isRun) listOf("run", "bieg").any { recorded.title.contains(it, ignoreCase = true) }
+                                else recorded.title.equals(plan.title, ignoreCase = true)
+                            }
+                            if (suggestions.isNotEmpty()) Text(
+                                "Znaleziono ${suggestions.size} możliwych dopasowań. Potwierdź właściwą aktywność:",
+                                style = MaterialTheme.typography.bodySmall)
+                            else if (availableRecords.isNotEmpty()) Text(
+                                "Brak pewnego dopasowania. Możesz ręcznie wskazać aktywność z tego dnia.",
+                                style = MaterialTheme.typography.bodySmall)
+                            (if (suggestions.isNotEmpty()) suggestions else availableRecords).forEach { recorded ->
+                                TextButton(enabled = !busy, onClick = {
+                                    sports.linkRecordedActivity(plan.sessionId, recorded.id) { saved() }
+                                }) {
+                                    Text("✓ Powiąż: ${recorded.title} · " +
+                                        "${java.time.Duration.between(Instant.parse(recorded.start), Instant.parse(recorded.end)).toMinutes()} min" +
+                                        (recorded.distanceKm?.let { " · ${it} km" } ?: ""))
+                                }
+                            }
+                        }
                         if (chosen) {
                             Text(buildString {
                                 plan.targetDistanceKm?.let { append("$it km  ") }
