@@ -1507,7 +1507,7 @@ internal fun PlannedMealDetailCard(
             if (expanded) nutrition.note?.let { Text(it, color = GoldAccent, fontSize = 12.sp) }
             if (expanded || missingIngredients.isNotEmpty() || nutrition.isPartial) {
                 NutritionStatusBadge(if (missingIngredients.isEmpty() && !nutrition.isPartial) NutritionStatus.COMPLETE else NutritionStatus.MISSING,
-                    if (missingIngredients.isEmpty() && !nutrition.isPartial) "Pełne dane kalorii i makro" else "Niepełne dane (${missingIngredients.size})",
+                    if (missingIngredients.isEmpty() && !nutrition.isPartial) "Pełne dane kalorii i makro" else if (missingIngredients.isNotEmpty()) "Brak wartości dla ${missingIngredients.size} składników" else "Część wartości odżywczych jest szacowana",
                     Modifier.testTag("nutrition_completeness_${meal.id}"))
             }
             if (expanded) Text("Rozpoznane produkty dostają kalorie i makro automatycznie, także po odmianie nazwy. Szacunki z tabeli oraz masy jajek i ząbków są oznaczone. Zapisane przez Ciebie wartości mają pierwszeństwo.", color = GoldAccent, fontSize = 12.sp)
@@ -1753,7 +1753,7 @@ private fun buildNutritionDisplayLine(nutrition: com.example.viewmodel.ScaledMea
     return if (parts.isEmpty()) {
         "Brak danych o wartościach odżywczych"
     } else {
-        parts.joinToString(" • ") + if (nutrition.isPartial) " • niepełne dane" else ""
+        parts.joinToString(" • ") + if (nutrition.isPartial) " • część wartości szacowana" else ""
     }
 }
 
