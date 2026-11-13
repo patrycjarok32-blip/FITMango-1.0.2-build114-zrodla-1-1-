@@ -58,6 +58,38 @@ fun WorkoutModeCard(
             Text("💾 Sesja zapisana automatycznie. Po ponownym uruchomieniu aplikacji możesz ją wznowić.",
                 style = MaterialTheme.typography.bodySmall)
         }
+        var showWeeklyReport by rememberSaveable { mutableStateOf(false) }
+        TextButton(onClick = { showWeeklyReport = !showWeeklyReport }) {
+            Text(if (showWeeklyReport) "Ukryj raport tygodniowy" else "📊 Raport tygodniowy Premium")
+        }
+        if (showWeeklyReport) {
+            val comparison = remember(workouts) {
+                MangoWorkoutWeeklyReport.compare(workouts, java.time.LocalDate.now())
+            }
+            val now = comparison.current
+            val before = comparison.previous
+            Text("Ostatnie 7 dni vs poprzednie 7 dni", style = MaterialTheme.typography.titleSmall)
+            listOf(
+                Triple("Treningi", now.sessions.toDouble(), before.sessions.toDouble()),
+                Triple("Serie", now.sets.toDouble(), before.sets.toDouble()),
+                Triple("Objętość (kg)", now.volumeKg, before.volumeKg),
+                Triple("Rekordy", now.records.toDouble(), before.records.toDouble())
+            ).forEach { (label, current, previous) ->
+                Text("$label: ${"%.0f".format(current)} (poprzednio ${"%.0f".format(previous)})",
+                    style = MaterialTheme.typography.bodySmall)
+                LinearProgressIndicator(progress = {
+                    if (current <= 0.0) 0f
+                    else (current / maxOf(current, previous, 1.0)).toFloat().coerceIn(0f, 1f)
+                }, modifier = Modifier.fillMaxWidth())
+            }
+            Text("Średni wysiłek: " +
+                (now.averageEffort?.let { "%.1f/10".format(it) } ?: "brak danych") +
+                " • poprzednio: " +
+                (before.averageEffort?.let { "%.1f/10".format(it) } ?: "brak danych"),
+                style = MaterialTheme.typography.bodySmall)
+            Text("Ocena regeneracji zależy od dostępnych wpisów snu i samopoczucia.",
+                style = MaterialTheme.typography.bodySmall)
+        }
         OutlinedButton(onClick = {
             runCatching {
                 val json = WorkoutSessionStore.exportJson(context)
