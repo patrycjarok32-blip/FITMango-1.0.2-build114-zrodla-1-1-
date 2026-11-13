@@ -133,8 +133,9 @@ fun WeeklySummaryCard(viewModel: DietaViewModel) {
                         color = com.example.ui.theme.MangoMint)
                     Text("Zakończone dni z wpisami posiłków: $foodRecorded / ${completedDays.size}",
                         style = MaterialTheme.typography.bodySmall)
-                    Text("Zakończone dni z danymi o wydatku energii: $energyRecorded / ${completedDays.size}",
+                    Text(if (profileEnergy) "Dni z oszacowanym zapotrzebowaniem: $energyRecorded / ${completedDays.size}" else "Dni z całkowitym wydatkiem energii (Health Connect): $energyRecorded / ${completedDays.size}",
                         style = MaterialTheme.typography.bodySmall)
+                    Text("Ten wykres pokazuje bilans energii, a nie liczbę treningów ani kroków. Aktywności z Health Connect sprawdzisz w Trening → Dziennik.", style = MaterialTheme.typography.bodySmall)
                     Text("Bilans jest orientacyjny. Brak odczytu nie oznacza zera spalonych kalorii; bieżący dzień nie jest zakończony.",
                         style = MaterialTheme.typography.bodySmall)
                     if (sync?.isConnected != true && !profileEnergy)
