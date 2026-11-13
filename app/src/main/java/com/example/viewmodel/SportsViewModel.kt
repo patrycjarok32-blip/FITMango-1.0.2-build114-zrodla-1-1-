@@ -280,6 +280,16 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
         require(current.history.none { ActivityRecoverySupport.duplicate(it, session) }) { "Podobna aktywność jest już zapisana w tych godzinach. Nie dodano powtórzenia." }
         current.copy(history = current.history + session)
     }, onSaved)
+    fun copyActivity(id: String, targetDate: String, onSaved: () -> Unit) = edit({ current ->
+        val source = current.history.firstOrNull { it.id == id }
+            ?: error("Nie znaleziono aktywności do skopiowania.")
+        val copied = ActivityRecoverySupport.copyManual(source, java.time.LocalDate.parse(targetDate),
+            java.time.Instant.now())
+        require(current.history.none { ActivityRecoverySupport.duplicate(it, copied) }) {
+            "Podobna aktywność jest już zapisana w tych godzinach."
+        }
+        current.copy(history = current.history + copied)
+    }, onSaved)
     fun removeActivity(id: String, onSaved: () -> Unit) = edit({ current ->
         current.copy(history = current.history.filterNot { it.id == id && ActivityRecoverySupport.manual(it) })
     }, onSaved)
