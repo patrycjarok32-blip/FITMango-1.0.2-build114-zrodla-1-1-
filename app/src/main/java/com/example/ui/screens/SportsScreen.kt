@@ -893,6 +893,46 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
         }
         if (activitySection == "training" && trainingPage == "plan" && showTrainingProfile) item {
+            var plannerDays by rememberSaveable { mutableIntStateOf(3) }
+            var plannerMinutes by rememberSaveable { mutableIntStateOf(45) }
+            var plannerPreview by rememberSaveable { mutableStateOf(false) }
+            val suggestions = MangoTrainingPlanner.suggest(today, plannerDays, plannerMinutes, data.plans)
+            MangoCard(Modifier.fillMaxWidth().testTag("training4_week_planner")) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("✨ Inteligentny planer tygodnia", style = MaterialTheme.typography.titleMedium)
+                    Text("Wybierz liczbę dni i czas. Twoje zapisane treningi pozostaną bez zmian.",
+                        style = MaterialTheme.typography.bodySmall)
+                    Text("Dni treningowe w tygodniu")
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        listOf(2, 3, 4, 5).forEach { days ->
+                            FilterChip(selected = plannerDays == days, onClick = { plannerDays = days; plannerPreview = false },
+                                label = { Text("$days") })
+                        }
+                    }
+                    Text("Czas jednej sesji")
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        listOf(20, 30, 45, 60).forEach { minutes ->
+                            FilterChip(selected = plannerMinutes == minutes, onClick = { plannerMinutes = minutes; plannerPreview = false },
+                                label = { Text("$minutes min") })
+                        }
+                    }
+                    OutlinedButton(onClick = { plannerPreview = !plannerPreview }) {
+                        Text(if (plannerPreview) "Ukryj propozycję" else "Pokaż propozycję")
+                    }
+                    if (plannerPreview) {
+                        if (suggestions.isEmpty()) Text("Wszystkie proponowane dni są już zajęte.")
+                        suggestions.forEach { plan ->
+                            Text("${plan.date} • ${plan.title} • ${plan.targetMinutes} min",
+                                style = MaterialTheme.typography.bodySmall)
+                        }
+                        Button(enabled = !busy && suggestions.isNotEmpty(), onClick = {
+                            sports.saveTrainingWeek(suggestions) { saved(); plannerPreview = false }
+                        }) { Text("Zapisz wolne dni") }
+                    }
+                }
+            }
+        }
+        if (activitySection == "training" && trainingPage == "plan" && showTrainingProfile) item {
             MangoCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(14.dp)) {
                     WorkoutOverviewCard(today, data, workouts, videoChallenges, busy,
