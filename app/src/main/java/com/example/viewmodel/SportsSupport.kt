@@ -82,7 +82,7 @@ object SportsSupport {
         require(data.sets.map { it.id }.distinct().size == data.sets.size && data.plans.map { it.date }.distinct().size == data.plans.size)
         require(data.history.map { it.id }.distinct().size == data.history.size)
         data.sets.forEach { require(it.id.length in 1..200 && it.exercise.length in 1..120 && it.reps in 1..1000 && it.kg.isFinite() && it.kg in 0.0..2000.0 && it.time >= 0); LocalDate.parse(it.date) }
-        data.plans.forEach { require(it.title.length in 1..120); LocalDate.parse(it.date); require(it.exercises.size <= 30); it.exercises.forEach { e -> require(e.name.length in 1..120 && e.sets in 1..12 && e.reps in 1..100 && e.restSeconds in 10..3600) } }
+        data.plans.forEach { require(it.title.length in 1..120); LocalDate.parse(it.date); require(it.exercises.size <= 30); require(it.category.length in 1..80 && it.description.length <= 1000 && it.distanceRange.length <= 80); require(it.targetDistanceKm == null || (it.targetDistanceKm.isFinite() && it.targetDistanceKm > 0.0 && it.targetDistanceKm <= 1000.0)); require(it.targetMinutes == null || it.targetMinutes in 1..1440); it.exercises.forEach { e -> require(e.name.length in 1..120 && e.sets in 1..12 && e.reps in 1..100 && e.restSeconds in 10..3600) } }
         data.history.forEach { require(it.id.length in 1..500 && it.title.length in 1..200 && it.source.length <= 200)
             require(Instant.parse(it.end) > Instant.parse(it.start))
             require(it.activeKcal == null || it.activeKcal.isFinite() && it.activeKcal >= 0)
