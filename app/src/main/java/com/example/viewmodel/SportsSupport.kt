@@ -17,7 +17,8 @@ data class SportsData(val sets: List<SportSet> = emptyList(), val plans: List<Sp
     val history: List<SportSession> = emptyList(), val updated: Long = 0, val goal: Int = 3,
     val daily: List<ActivityDay> = emptyList(), val recovery: List<RecoveryCheck> = emptyList(),
     val goalMode: String = "days", val minuteGoal: Int = 150, val walkGoal: Int = 3,
-    val healthUpdated: Long = 0, val readNote: String = "")
+    val healthUpdated: Long = 0, val readNote: String = "",
+    val linkedActivities: Map<String, String> = emptyMap())
 
 object SportsSupport {
     const val KEY = "sports_v1"
@@ -36,6 +37,7 @@ object SportsSupport {
     fun encode(data: SportsData): String = JSONObject().put("goal", data.goal).put("updated", data.updated)
         .put("goalMode", data.goalMode).put("minuteGoal", data.minuteGoal).put("walkGoal", data.walkGoal)
         .put("healthUpdated", data.healthUpdated).put("readNote", data.readNote)
+        .put("linkedActivities", JSONObject(data.linkedActivities))
         .put("daily", JSONArray().also { a -> data.daily.forEach { d -> a.put(JSONObject().put("date", d.date)
             .put("steps", d.steps ?: JSONObject.NULL).put("sleep", d.sleepMinutes ?: JSONObject.NULL)
             .put("sleepEstimated", d.sleepEstimated).put("sources", d.sources).put("readAt", d.readAt)) } })
@@ -70,7 +72,8 @@ object SportsSupport {
                 it.optString("sources", "Health Connect"), it.optLong("readAt", 0)) },
             rows("recovery").map { RecoveryCheck(it.getString("date"), it.getInt("energy"), it.getInt("fatigue")) },
             json.optString("goalMode", "days"), json.optInt("minuteGoal", 150), json.optInt("walkGoal", 3),
-            json.optLong("healthUpdated", 0), json.optString("readNote", ""))
+            json.optLong("healthUpdated", 0), json.optString("readNote", ""),
+            json.optJSONObject("linkedActivities")?.let { links -> links.keys().asSequence().associateWith { links.getString(it) } } ?: emptyMap())
         require(data.goal in 1..7 && data.updated >= 0)
         require(data.goalMode in setOf("days", "minutes", "walks") && data.minuteGoal in 10..1500 && data.walkGoal in 1..21)
         require(data.healthUpdated >= 0 && data.readNote.length <= 2000)
@@ -81,6 +84,9 @@ object SportsSupport {
         data.recovery.forEach { LocalDate.parse(it.date); require(it.energy in 1..5 && it.fatigue in 1..5) }
         require(data.sets.map { it.id }.distinct().size == data.sets.size && data.plans.filter { it.sessionId.isNotBlank() }.map { it.sessionId }.distinct().size == data.plans.count { it.sessionId.isNotBlank() } && data.plans.filter { it.sessionId.isBlank() }.map { it.date }.distinct().size == data.plans.count { it.sessionId.isBlank() })
         require(data.history.map { it.id }.distinct().size == data.history.size)
+        require(data.linkedActivities.size <= 5000 && data.linkedActivities.keys.all { it.isNotBlank() && it.length <= 200 } &&
+            data.linkedActivities.values.all { it.isNotBlank() && it.length <= 500 } &&
+            data.linkedActivities.values.distinct().size == data.linkedActivities.size)
         data.sets.forEach { require(it.id.length in 1..200 && it.exercise.length in 1..120 && it.reps in 1..1000 && it.kg.isFinite() && it.kg in 0.0..2000.0 && it.time >= 0); LocalDate.parse(it.date) }
         data.plans.forEach { require(it.title.length in 1..120); LocalDate.parse(it.date); require(it.exercises.size <= 30); require(it.category.length in 1..80 && it.description.length <= 1000 && it.distanceRange.length <= 80); require(it.targetDistanceKm == null || (it.targetDistanceKm.isFinite() && it.targetDistanceKm > 0.0 && it.targetDistanceKm <= 1000.0)); require(it.targetMinutes == null || it.targetMinutes in 1..1440); it.exercises.forEach { e -> require(e.name.length in 1..120 && e.sets in 1..12 && e.reps in 1..100 && e.restSeconds in 10..3600) } }
         data.history.forEach { require(it.id.length in 1..500 && it.title.length in 1..200 && it.source.length <= 200)
