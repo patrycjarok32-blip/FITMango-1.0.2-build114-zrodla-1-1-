@@ -194,6 +194,24 @@ class SportsViewModel(app: Application) : AndroidViewModel(app) {
     fun plan(date: String, title: String, rest: Boolean, onSaved: () -> Unit) = edit({ current ->
         current.copy(plans = current.plans.filterNot { it.date == date } + SportPlan(date, if (rest) "Odpoczynek" else title.trim(), rest))
     }, onSaved)
+    /** Adds another independent planned activity; planning never writes a completed Health Connect record. */
+    fun addPlannedActivity(date: String, title: String, category: String, minutes: Int?,
+        distanceKm: Double?, description: String, onSaved: () -> Unit) = edit({ current ->
+        java.time.LocalDate.parse(date)
+        require(title.isNotBlank() && title.length <= 120)
+        require(category in setOf("Siłowy", "Cardio", "Wzmacnianie", "Mobilność i stretching", "Trening z filmem", "Inna aktywność"))
+        require(minutes == null || minutes in 1..1440)
+        require(distanceKm == null || (distanceKm.isFinite() && distanceKm > 0 && distanceKm <= 1000))
+        require(description.length <= 1000)
+        val session = SportPlan(date, title.trim(), false, category = category,
+            description = description.trim(), targetMinutes = minutes, targetDistanceKm = distanceKm,
+            sessionId = java.util.UUID.randomUUID().toString())
+        current.copy(plans = current.plans + session)
+    }, onSaved)
+    fun removePlannedActivity(sessionId: String, onSaved: () -> Unit) = edit({ current ->
+        require(sessionId.isNotBlank())
+        current.copy(plans = current.plans.filterNot { it.sessionId == sessionId })
+    }, onSaved)
     fun saveSessionDetails(date: String, title: String, category: String, description: String,
         distanceKm: Double?, minutes: Int?, distanceRange: String, onSaved: () -> Unit) = edit({ current ->
         java.time.LocalDate.parse(date)
