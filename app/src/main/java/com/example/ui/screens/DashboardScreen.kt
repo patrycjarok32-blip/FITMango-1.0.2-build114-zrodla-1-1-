@@ -257,6 +257,45 @@ fun DashboardScreen(
                     }
                 }
             }
+            // Premium 6.0: one-tap, read-only timeline; existing destinations own all writes.
+            Card(modifier = Modifier.fillMaxWidth().testTag("premium6_day_timeline"),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("📅 Mój dzień • szybka oś", style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold)
+                    Text("🥗 Posiłki • ${consumedCalories} / ${targetCalories} kcal",
+                        style = MaterialTheme.typography.bodyMedium)
+                    Text("💧 Woda • ${waterTotal} ml", style = MaterialTheme.typography.bodyMedium)
+                    val todayTraining = sportsData.plans.firstOrNull {
+                        it.date == today.toString() && !it.rest && it.exercises.isNotEmpty()
+                    }
+                    Text(if (todayTraining != null) "🏋️ Trening • ${todayTraining.title}"
+                        else "🏋️ Trening • brak zaplanowanej sesji",
+                        style = MaterialTheme.typography.bodyMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        TextButton(onClick = onNavigateToMealPlan) { Text("Posiłki") }
+                        TextButton(onClick = onNavigateToSport) { Text("Trening") }
+                        TextButton(onClick = onNavigateToMeasurements) { Text("Pomiary") }
+                    }
+                }
+            }
+            val mangoTreeStage = remember(habitDays) {
+                com.example.viewmodel.MangoPremium6.treeStage(habitDays.count { it.date <= today.toString() })
+            }
+            Surface(shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                modifier = Modifier.fillMaxWidth().testTag("premium6_mango_tree")) {
+                Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(mangoTreeStage.icon, style = MaterialTheme.typography.headlineLarge)
+                    Column {
+                        Text("Moje drzewko Mango • ${mangoTreeStage.title}",
+                            style = MaterialTheme.typography.titleSmall)
+                        Text("Rośnie wraz z zapisanymi dniami. Bez kar za przerwy.",
+                            style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
             val mangoNextStep = remember(today, sportsData.plans, waterTotal, consumedCalories, targetCalories) {
                 com.example.viewmodel.MangoDailyTools.nextAction(
                     today, sportsData.plans, waterTotal,
