@@ -1148,29 +1148,6 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 onUpdateExercises = { date, exercises -> sports.updatePlannedExercises(date, exercises) { saved() } })
         }
         if (activitySection == "today") item {
-            val todayPlan = data.plans.firstOrNull { it.date == today.toString() && !it.rest }
-                ?: data.plans.firstOrNull { it.date == today.toString() }
-            val completedToday = todayPlan?.let { PlannedActivityMatching.match(it, data) }
-            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("🏋️ Twój trening na dziś", style = MaterialTheme.typography.titleLarge)
-                    Text(when {
-                        todayPlan == null -> "Nie masz zaplanowanej sesji na dziś."
-                        todayPlan.rest -> "Dzisiaj regeneracja • odpoczynek jest częścią planu."
-                         completedToday != null -> "✓ Wykonano: ${completedToday.title} • ${completedToday.distanceKm?.let { "$it km" } ?: "Health Connect"}"
-                        else -> buildString { append(todayPlan.title); if (todayPlan.category == "Siłowy" && todayPlan.exercises.isNotEmpty()) append(" • ${todayPlan.exercises.size} ćwiczeń") else { append(" • ${todayPlan.category}"); todayPlan.distanceRange.takeIf { it.isNotBlank() }?.let { append(" • $it") }; todayPlan.targetMinutes?.let { append(" • $it min") } } }
-                    })
-                    Button(onClick = {
-                        activitySection = "training"
-                        trainingPage = if (todayPlan != null && !todayPlan.rest) "session" else "plan"
-                    }, modifier = Modifier.fillMaxWidth()) {
-                        Text(if (completedToday != null) "✓ Zobacz wykonany trening" else if (todayPlan != null && !todayPlan.rest) "▶ Przejdź do treningu" else "🗓 Otwórz plan")
-                    }
-                }
-            }
-        }
-        if (activitySection == "today") item {
             var showWeeklyReview by rememberSaveable { mutableStateOf(false) }
             TextButton(onClick = { showWeeklyReview = !showWeeklyReview }) {
                 Text(if (showWeeklyReview) "Zwiń podsumowanie tygodnia" else "📊 Pokaż podsumowanie tygodnia")
