@@ -80,6 +80,19 @@ object WorkoutSessionStore {
             .getString("${KEY}_restore_point", null) ?: return null
         return parse(raw)
     }
+    /** Restore only after explicit confirmation; validate first, keep a snapshot of current data. */
+    fun restorePrevious(context: Context): Int {
+        val prefs = context.getSharedPreferences("FITMangoUsability", 0)
+        val backup = prefs.getString("${KEY}_restore_point", null)
+            ?: throw IllegalStateException("Brak punktu przywracania")
+        val restored = parse(backup)
+        require(restored.count { it.ended == 0L } <= 1)
+        val current = prefs.getString(KEY, "[]") ?: "[]"
+        validateRaw(current)
+        check(prefs.edit().putString(KEY, backup)
+            .putString("${KEY}_restore_point", current).commit())
+        return restored.size
+    }
     /** Validated JSON export of the existing workout history; no API keys or profile data. */
     fun exportJson(context: Context): String {
         val raw = context.getSharedPreferences("FITMangoUsability", 0)
