@@ -927,12 +927,12 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                             Triple("Wzmacnianie", "Wzmacnianie", ""),
                             Triple("Trening z filmem", "Trening z filmem", ""),
                             Triple("Inna aktywność", "Własna sesja", ""))
-                        var sessionCategory by rememberSaveable(workoutDate) { mutableStateOf(selectedPlan?.category ?: "Cardio") }
-                        var sessionTitle by rememberSaveable(workoutDate) { mutableStateOf(selectedPlan?.title ?: "") }
-                        var sessionDescription by rememberSaveable(workoutDate) { mutableStateOf(selectedPlan?.description ?: "") }
-                        var sessionDistance by rememberSaveable(workoutDate) { mutableStateOf(selectedPlan?.targetDistanceKm?.toString() ?: "") }
-                        var sessionMinutes by rememberSaveable(workoutDate) { mutableStateOf(selectedPlan?.targetMinutes?.toString() ?: "") }
-                        var sessionRange by rememberSaveable(workoutDate) { mutableStateOf(selectedPlan?.distanceRange ?: "") }
+                        var sessionCategory by rememberSaveable(workoutDate, selectedPlan?.sessionId, selectedPlan?.title) { mutableStateOf(selectedPlan?.category ?: "Cardio") }
+                        var sessionTitle by rememberSaveable(workoutDate, selectedPlan?.sessionId, selectedPlan?.title) { mutableStateOf(selectedPlan?.title ?: "") }
+                        var sessionDescription by rememberSaveable(workoutDate, selectedPlan?.sessionId, selectedPlan?.title) { mutableStateOf(selectedPlan?.description ?: "") }
+                        var sessionDistance by rememberSaveable(workoutDate, selectedPlan?.sessionId, selectedPlan?.title) { mutableStateOf(selectedPlan?.targetDistanceKm?.toString() ?: "") }
+                        var sessionMinutes by rememberSaveable(workoutDate, selectedPlan?.sessionId, selectedPlan?.title) { mutableStateOf(selectedPlan?.targetMinutes?.toString() ?: "") }
+                        var sessionRange by rememberSaveable(workoutDate, selectedPlan?.sessionId, selectedPlan?.title) { mutableStateOf(selectedPlan?.distanceRange ?: "") }
                         Text("Rodzaj treningu", style = MaterialTheme.typography.titleMedium)
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             listOf("Siłowy", "Cardio", "Wzmacnianie", "Mobilność i stretching").forEach { kind ->
