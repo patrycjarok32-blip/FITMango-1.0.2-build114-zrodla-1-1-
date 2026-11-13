@@ -51,4 +51,20 @@ class SessionDetailsTest {
         assertEquals("Siłowy", restored.plans.single().category)
         assertNull(restored.plans.single().targetDistanceKm)
     }
+    @Test fun severalSessionsOnOneDaySurviveBackup() {
+        val day = "2026-11-13"
+        val plans = listOf(
+            SportPlan(day, "PULL", false, sessionId = "strength-1"),
+            SportPlan(day, "Long Run", false, category = "Cardio",
+                targetDistanceKm = 9.0, targetMinutes = 60, sessionId = "run-1"),
+            SportPlan(day, "Stretching", false, category = "Mobilność i stretching",
+                targetMinutes = 20, sessionId = "stretch-1"))
+        val data = com.example.viewmodel.SportsData(plans = plans)
+        val restored = com.example.viewmodel.SportsSupport.decode(
+            com.example.viewmodel.SportsSupport.encode(data))
+        assertEquals(3, restored.plans.count { it.date == day })
+        assertEquals(plans, restored.plans)
+        assertEquals(3, restored.plans.map { it.sessionId }.distinct().size)
+    }
+
 }
