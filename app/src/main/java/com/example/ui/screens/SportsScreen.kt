@@ -797,7 +797,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                 if (selectedPlan.distanceRange.isNotBlank()) append(" • cel: ${selectedPlan.distanceRange}")
                                 selectedPlan.targetDistanceKm?.let { append(" • ${it} km") }
                                 selectedPlan.targetMinutes?.let { append(" • ${it} min") }
-                                if (selectedPlan.description.isNotBlank()) append("\\n${selectedPlan.description}")
+                                if (selectedPlan.description.isNotBlank()) append("\n${selectedPlan.description}")
                             }, style = MaterialTheme.typography.bodyMedium)
                         }
                     }
@@ -826,7 +826,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             items(templates.size) { index ->
                                 val template = templates[index]
-                                AssistChip(onClick = {
+                                androidx.compose.material3.AssistChip(onClick = {
                                     sessionCategory = template.first
                                     sessionTitle = template.second
                                     sessionRange = template.third
