@@ -785,6 +785,84 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         }
                     }
                     val selectedPlan = data.plans.firstOrNull { it.date == workoutDate }
+                    var editSessionDetails by rememberSaveable(workoutDate) { mutableStateOf(false) }
+                    if (selectedPlan != null && !selectedPlan.rest) {
+                        TextButton(onClick = { editSessionDetails = !editSessionDetails }) {
+                            Text(if (editSessionDetails) "Zamknij edytor sesji" else "✏️ Edytuj rodzaj, opis i cel sesji")
+                        }
+                        if (selectedPlan.description.isNotBlank() || selectedPlan.targetMinutes != null ||
+                            selectedPlan.targetDistanceKm != null || selectedPlan.distanceRange.isNotBlank()) {
+                            Text(buildString {
+                                append(selectedPlan.category)
+                                if (selectedPlan.distanceRange.isNotBlank()) append(" • cel: ${selectedPlan.distanceRange}")
+                                selectedPlan.targetDistanceKm?.let { append(" • ${it} km") }
+                                selectedPlan.targetMinutes?.let { append(" • ${it} min") }
+                                if (selectedPlan.description.isNotBlank()) append("\\n${selectedPlan.description}")
+                            }, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                    if (editSessionDetails) {
+                        val templates = listOf(
+                            Triple("Cardio", "Long Run", "8–10 km"),
+                            Triple("Cardio", "Easy Run", "3–5 km"),
+                            Triple("Cardio", "Interwały", ""),
+                            Triple("Cardio", "Rower", ""),
+                            Triple("Mobilność i stretching", "Full Body Stretch", ""),
+                            Triple("Mobilność i stretching", "Lower Body Stretch", ""),
+                            Triple("Mobilność i stretching", "Mobility Flow", ""),
+                            Triple("Siłowy", "Push", ""),
+                            Triple("Siłowy", "Pull", ""),
+                            Triple("Siłowy", "Legs", ""),
+                            Triple("Wzmacnianie", "Wzmacnianie", ""),
+                            Triple("Trening z filmem", "Trening z filmem", ""),
+                            Triple("Inna aktywność", "Własna sesja", ""))
+                        var sessionCategory by rememberSaveable(workoutDate) { mutableStateOf(selectedPlan?.category ?: "Cardio") }
+                        var sessionTitle by rememberSaveable(workoutDate) { mutableStateOf(selectedPlan?.title ?: "") }
+                        var sessionDescription by rememberSaveable(workoutDate) { mutableStateOf(selectedPlan?.description ?: "") }
+                        var sessionDistance by rememberSaveable(workoutDate) { mutableStateOf(selectedPlan?.targetDistanceKm?.toString() ?: "") }
+                        var sessionMinutes by rememberSaveable(workoutDate) { mutableStateOf(selectedPlan?.targetMinutes?.toString() ?: "") }
+                        var sessionRange by rememberSaveable(workoutDate) { mutableStateOf(selectedPlan?.distanceRange ?: "") }
+                        Text("Szablony sesji", style = MaterialTheme.typography.titleMedium)
+                        androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            items(templates.size) { index ->
+                                val template = templates[index]
+                                AssistChip(onClick = {
+                                    sessionCategory = template.first
+                                    sessionTitle = template.second
+                                    sessionRange = template.third
+                                    if (template.second == "Long Run") {
+                                        sessionDistance = "9"
+                                        sessionMinutes = "60"
+                                    }
+                                }, label = { Text(template.second) })
+                            }
+                        }
+                        OutlinedTextField(value = sessionCategory, onValueChange = { sessionCategory = it },
+                            label = { Text("Rodzaj aktywności") }, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(value = sessionTitle, onValueChange = { sessionTitle = it.take(120) },
+                            label = { Text("Nazwa sesji") }, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(value = sessionRange, onValueChange = { sessionRange = it.take(80) },
+                            label = { Text("Cel, np. 8–10 km") }, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(value = sessionDistance, onValueChange = { sessionDistance = it },
+                            label = { Text("Docelowy dystans (km)") }, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(value = sessionMinutes, onValueChange = { sessionMinutes = it },
+                            label = { Text("Docelowy czas (min)") }, modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(value = sessionDescription, onValueChange = { sessionDescription = it.take(1000) },
+                            label = { Text("Opis i wskazówki") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+                        val parsedDistance = sessionDistance.replace(',', '.').toDoubleOrNull()
+                        val parsedMinutes = sessionMinutes.toIntOrNull()
+                        val valid = sessionTitle.isNotBlank() && sessionCategory in setOf(
+                            "Siłowy", "Cardio", "Wzmacnianie", "Mobilność i stretching", "Trening z filmem", "Inna aktywność") &&
+                            (sessionDistance.isBlank() || (parsedDistance != null && parsedDistance.isFinite() && parsedDistance > 0.0 && parsedDistance <= 1000.0)) &&
+                            (sessionMinutes.isBlank() || (parsedMinutes != null && parsedMinutes in 1..1440))
+                        Button(enabled = valid && !busy, onClick = {
+                            sports.saveSessionDetails(workoutDate, sessionTitle, sessionCategory,
+                                sessionDescription, parsedDistance, parsedMinutes, sessionRange) {
+                                saved()
+                                editSessionDetails = false
+                            }
+                        }) { Text("Zapisz szczegóły sesji") }
+                    }
                     var quickMinutes by rememberSaveable(workoutDate) { mutableIntStateOf(0) }
                     if (workouts.none { it.ended == 0L } && selectedPlan != null &&
                         !selectedPlan.rest && selectedPlan.exercises.isNotEmpty()) {
