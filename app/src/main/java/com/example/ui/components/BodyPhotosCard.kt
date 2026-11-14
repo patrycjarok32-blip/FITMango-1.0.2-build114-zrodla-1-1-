@@ -62,6 +62,7 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
     var selected by rememberSaveable { mutableStateOf(emptyList<Long>()) }
     var comparing by rememberSaveable { mutableStateOf(false) }
     var aiConsent by remember { mutableStateOf(false) }
+    var aiExplicitApproval by remember { mutableStateOf(false) }
     var aiResult by remember { mutableStateOf<String?>(null) }
     var aiBusy by remember { mutableStateOf(false) }
     val aiScope = rememberCoroutineScope()
@@ -166,7 +167,7 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
             Text("Porównaj wybrane (${pair.size}/2)")
         }
         if (pair.size == 2) {
-            OutlinedButton(enabled = !aiBusy, onClick = { aiConsent = true },
+            OutlinedButton(enabled = !aiBusy, onClick = { aiExplicitApproval = false; aiConsent = true },
                 modifier = Modifier.fillMaxWidth().testTag("body_photos_ai_compare")) {
                 Text("✨ Analizuj zmiany na zdjęciach przez AI")
             }
@@ -194,11 +195,17 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
         }
     }
     if (aiConsent && pair.size == 2) AlertDialog(
-        onDismissRequest = { if (!aiBusy) aiConsent = false },
+        onDismissRequest = { if (!aiBusy) { aiConsent = false; aiExplicitApproval = false } },
         title = { Text("Zgoda na analizę zdjęć przez Gemini") },
-        text = { Text("Po potwierdzeniu wybrane zdjęcia przód/bok/tył zostaną przesłane do Gemini w celu porównania. To wrażliwe zdjęcia sylwetki. Analiza jest opcjonalna, nie określa procentu tkanki tłuszczowej ani diagnozy. Bez zgody nic nie jest wysyłane.") },
-        confirmButton = { TextButton(enabled = !aiBusy, onClick = {
-            aiConsent = false; aiBusy = true; aiResult = null
+        text = { Column {
+            Text("Wybrane zdjęcia przód/bok/tył zostaną przesłane do Google Gemini tylko dla tej analizy. To wrażliwe zdjęcia sylwetki. Zwykłe porównanie zdjęć pozostaje lokalne.")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(checked = aiExplicitApproval, onCheckedChange = { aiExplicitApproval = it })
+                Text("Zgadzam się na jednorazowe wysłanie wybranych zdjęć do Gemini")
+            }
+        } },
+        confirmButton = { TextButton(enabled = !aiBusy && aiExplicitApproval, onClick = {
+            aiConsent = false; aiExplicitApproval = false; aiBusy = true; aiResult = null
             val selectedPair = pair.toList()
             aiScope.launch {
                 val result = runCatching {
@@ -217,7 +224,7 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
                 aiBusy = false
             }
         }) { Text("Wyślij wybrane zdjęcia") } },
-        dismissButton = { TextButton(onClick = { aiConsent = false }) { Text("Anuluj") } }
+        dismissButton = { TextButton(onClick = { aiConsent = false; aiExplicitApproval = false }) { Text("Anuluj") } }
     )
     preview?.let { (uri, title) ->
         BodyPhotoViewer(title, onClose = { preview = null }) {
