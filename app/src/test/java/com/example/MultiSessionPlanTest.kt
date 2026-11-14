@@ -102,4 +102,26 @@ class MultiSessionPlanTest {
         val remaining = plans.filterNot { it.sessionId == "run-1" }
         assertEquals(listOf("PULL", "Stretching"), remaining.map { it.title })
     }
+    @Test fun duplicateHuaweiImportDoesNotMakeRunAmbiguous() {
+        val plan = SportPlan("2026-11-13", "Long Run", false, category = "Cardio",
+            targetDistanceKm = 9.0, targetMinutes = 60, sessionId = "long-run")
+        val record = com.example.viewmodel.SportSession("huawei-1", "Bieganie",
+            "2026-11-13T20:49:00Z", "2026-11-13T21:47:00Z", "Huawei",
+            372.0, 8.01)
+        val duplicate = record.copy(id = "huawei-2")
+        val data = SportsData(plans = listOf(plan), history = listOf(record, duplicate))
+        assertEquals("huawei-1", com.example.viewmodel.PlannedActivityMatching.match(plan, data)?.id)
+    }
+
+    @Test fun oneRunDoesNotCompleteTwoPlans() {
+        val day = "2026-11-13"
+        val first = SportPlan(day, "Long Run", false, category = "Cardio", sessionId = "run-1")
+        val second = SportPlan(day, "Easy Run", false, category = "Cardio", sessionId = "run-2")
+        val record = com.example.viewmodel.SportSession("huawei-1", "Bieganie",
+            "2026-11-13T20:49:00Z", "2026-11-13T21:47:00Z", "Huawei", 372.0, 8.01)
+        val data = SportsData(plans = listOf(first, second), history = listOf(record))
+        assertEquals(null, com.example.viewmodel.PlannedActivityMatching.match(first, data))
+        assertEquals(null, com.example.viewmodel.PlannedActivityMatching.match(second, data))
+    }
+
 }
