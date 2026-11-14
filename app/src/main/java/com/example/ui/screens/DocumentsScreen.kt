@@ -345,7 +345,10 @@ fun DocumentsScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}) 
                 }
             },
             confirmButton = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     if (nextChunk > 0 || state is com.example.viewmodel.PdfAnalysisState.RateLimited) {
                         MangoSecondaryButton(
                             text = "Kontynuuj analizę",
@@ -364,6 +367,22 @@ fun DocumentsScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}) 
                             }
                         )
                     }
+                    MangoPrimaryButton(
+                        text = "Analizuj cały PDF z AI",
+                        enabled = !isAnalyzing,
+                        onClick = {
+                            errorMessage = null
+                            viewModel.parsePdfRecipes(doc, resume = false) { recipes, err ->
+                                if (err != null) {
+                                    errorMessage = err
+                                } else if (recipes.isNotEmpty()) {
+                                    parsedRecipesPreview = recipes
+                                    selectedRecipeIndices = recipes.indices.filter { i -> recipes[i].ingredients.isNotBlank() && recipes[i].instructions.isNotBlank() }.toSet()
+                                    selectedDoc = null
+                                }
+                            }
+                        }
+                    )
                     OutlinedButton(
                         enabled = !isAnalyzing,
                         onClick = {
@@ -382,22 +401,7 @@ fun DocumentsScreen(viewModel: DietaViewModel, onNavigateHome: () -> Unit = {}) 
                         },
                         modifier = Modifier.fillMaxWidth().testTag("pdf_vision_preview_three")
                     ) { Text("Próbny import 3 przepisów (Vision)") }
-                    MangoPrimaryButton(
-                        text = "Analizuj z AI",
-                        enabled = !isAnalyzing,
-                        onClick = {
-                            errorMessage = null
-                            viewModel.parsePdfRecipes(doc, resume = false) { recipes, err ->
-                                if (err != null) {
-                                    errorMessage = err
-                                } else if (recipes.isNotEmpty()) {
-                                    parsedRecipesPreview = recipes
-                                    selectedRecipeIndices = recipes.indices.filter { i -> recipes[i].ingredients.isNotBlank() && recipes[i].instructions.isNotBlank() }.toSet()
-                                    selectedDoc = null
-                                }
-                            }
-                        }
-                    )
+
                 }
             },
             dismissButton = {
