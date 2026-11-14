@@ -272,8 +272,6 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 }
             }
         }
-            }
-        }
         if (activitySection == "achievements") item {
             val finished = workouts.filter { it.ended > 0L }
             val finishedCount = finished.size
