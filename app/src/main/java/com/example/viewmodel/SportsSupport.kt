@@ -22,34 +22,47 @@ data class SportsData(val sets: List<SportSet> = emptyList(), val plans: List<Sp
 
 /** Read-only completion projection: only unique, same-day, same-sport records qualify. */
 object PlannedActivityMatching {
+    private fun isRun(plan: SportPlan): Boolean =
+        !plan.rest && (plan.category.equals("Cardio", true) ||
+            plan.category.equals("Bieganie", true)) &&
+            listOf("run", "bieg", "jogging").any { plan.title.contains(it, ignoreCase = true) }
+
+    private fun isRunning(record: SportSession): Boolean =
+        record.activityType == 56 || record.activityType == 57 ||
+            listOf("run", "bieg", "jogging").any { record.title.contains(it, ignoreCase = true) }
+
+    private fun candidates(plan: SportPlan, data: SportsData): List<SportSession> =
+        ActivityRecoverySupport.unique(data.history).filter { record ->
+            val start = runCatching { Instant.parse(record.start) }.getOrNull() ?: return@filter false
+            val end = runCatching { Instant.parse(record.end) }.getOrNull() ?: return@filter false
+            val duration = java.time.Duration.between(start, end).toMinutes()
+            val day = start.atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString()
+            val minutesFit = plan.targetMinutes == null ||
+                duration >= (plan.targetMinutes * 0.75).toLong()
+            val distanceFit = plan.targetDistanceKm == null || record.distanceKm == null ||
+                record.distanceKm >= plan.targetDistanceKm * 0.8
+            day == plan.date && isRunning(record) && duration > 0 &&
+                minutesFit && distanceFit &&
+                data.linkedActivities.values.none { it == record.id }
+        }
+
+    /** Only an unambiguous running record can complete a plan automatically.
+     * Manual links always take precedence; no Health Connect record is modified.
+     */
     fun match(plan: SportPlan, data: SportsData): SportSession? {
         if (plan.rest) return null
         val explicit = data.linkedActivities[plan.sessionId]
         if (explicit != null) return data.history.firstOrNull { it.id == explicit }
-        val isRun = plan.category == "Cardio" &&
-            listOf("run", "bieg").any { plan.title.contains(it, ignoreCase = true) }
-        if (!isRun) return null
-        // Do not collapse distinct source IDs before checking ambiguity: two Health Connect
-        // records with the same start/end may still represent separate workouts.
-        // Duplicates of the *same* source ID are safe to coalesce.
-        val matches = data.history.distinctBy { it.id }.filter { record ->
-            val day = runCatching { Instant.parse(record.start)
-                .atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString() }.getOrNull()
-            val running = record.activityType == 56 || record.activityType == 57 ||
-                listOf("run", "bieg").any { record.title.contains(it, ignoreCase = true) }
-            val duration = runCatching { java.time.Duration.between(
-                Instant.parse(record.start), Instant.parse(record.end)).toMinutes() }.getOrDefault(0)
-            val timeFits = plan.targetMinutes == null ||
-                duration >= (plan.targetMinutes * 0.75).toLong()
-            val distanceFits = plan.targetDistanceKm == null || record.distanceKm == null ||
-                record.distanceKm >= plan.targetDistanceKm * 0.8
-            day == plan.date && running && timeFits && distanceFits &&
-                data.linkedActivities.values.none { it == record.id }
+        if (!isRun(plan)) return null
+        val matches = candidates(plan, data)
+        if (matches.size != 1) return null
+        val record = matches.single()
+        // A run cannot automatically complete two planned sessions on the same day.
+        val competing = data.plans.any { other ->
+            other != plan && isRun(other) && other.date == plan.date &&
+                candidates(other, data).any { it.id == record.id }
         }
-        val competing = data.plans.count { other -> other.date == plan.date && !other.rest &&
-            other.category == "Cardio" && listOf("run", "bieg").any {
-                other.title.contains(it, ignoreCase = true) } }
-        return matches.singleOrNull()?.takeIf { competing == 1 }
+        return record.takeUnless { competing }
     }
 }
 
