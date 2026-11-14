@@ -336,21 +336,24 @@ fun DashboardScreen(
                             Column {
                                 Text(suggestion.title, fontWeight = FontWeight.SemiBold)
                                 Text(suggestion.explanation, style = MaterialTheme.typography.bodySmall)
+                                if (suggestion.id == "check_nutrition") {
+                                    TextButton(
+                                        onClick = onNavigateToMealPlan,
+                                        modifier = Modifier.testTag("dashboard_fix_nutrition")
+                                    ) { Text("Uzupełnij lub usuń posiłek →") }
+                                }
                             }
                         }
-                        TextButton(onClick = onNavigateToMealPlan) {
-                            Text("Otwórz jadłospis")
+                        if (smartSuggestions.none { it.id == "check_nutrition" }) {
+                            TextButton(onClick = onNavigateToMealPlan) {
+                                Text("Otwórz jadłospis")
+                            }
                         }
                     }
                 }
             }
-            if (incompleteNutrition) {
-                Text("Niepełne dane odżywcze: wartości bilansu mogą być zaniżone. " +
-                    "Uzupełnij składniki, aby uzyskać dokładniejsze propozycje.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.testTag("dashboard_partial_nutrition"))
-            }
+            // One actionable warning above; it disappears when the nutrition snapshot becomes complete.
+
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Mój dzień • Cześć! 👋", fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = MaterialTheme.colorScheme.onBackground)
