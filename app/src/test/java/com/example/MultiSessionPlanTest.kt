@@ -85,6 +85,15 @@ class MultiSessionPlanTest {
             planB, SportsData(), listOf(workout)))
     }
 
+    @Test fun trainerDoesNotSuggestProgressionWithoutHistory() {
+        assertTrue(com.example.viewmodel.MangoWorkoutInsights.trainingSuggestion(
+            "Squat", emptyList()).contains("Brak danych"))
+    }
+    @Test fun olderStrengthWorkoutsDefaultToNoPlannedId() {
+        val legacy = com.example.viewmodel.WorkoutSession(
+            "old", "2026-11-13", "PULL", 1000L, emptyList())
+        assertEquals("", legacy.plannedSessionId)
+    }
     @Test fun removingOneSessionDoesNotRemoveTheOthers() {
         val plans = listOf(
             SportPlan("2026-11-13", "PULL", false),
