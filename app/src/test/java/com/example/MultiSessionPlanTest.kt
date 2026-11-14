@@ -42,6 +42,49 @@ class MultiSessionPlanTest {
         SportsSupport.decode(SportsSupport.encode(data))
     }
 
+    @Test fun matchingRunCompletesOnlyTheCorrespondingPlan() {
+        val day = "2026-11-13"
+        val run = SportPlan(day, "Long Run", false, category = "Cardio",
+            targetDistanceKm = 8.0, targetMinutes = 60, sessionId = "run")
+        val strength = SportPlan(day, "PULL", false, sessionId = "pull")
+        val activity = com.example.viewmodel.SportSession("huawei-run", "Bieganie",
+            "2026-11-13T20:49:00Z", "2026-11-13T21:47:00Z", "huawei",
+            372.0, 8.01)
+        val data = SportsData(plans = listOf(run, strength), history = listOf(activity))
+        assertEquals(activity.id, com.example.viewmodel.PlannedActivityMatching.match(run, data)?.id)
+        assertEquals(null, com.example.viewmodel.PlannedActivityMatching.match(strength, data))
+        assertEquals("✓ Wykonany", com.example.viewmodel.MangoWorkoutInsights.plannedStatus(run, data, emptyList()))
+        assertEquals("◷ Zaplanowany", com.example.viewmodel.MangoWorkoutInsights.plannedStatus(strength, data, emptyList()))
+    }
+    @Test fun ambiguousRunsRequireConfirmation() {
+        val day = "2026-11-13"
+        val plan = SportPlan(day, "Long Run", false, category = "Cardio", sessionId = "run")
+        val activities = listOf("a", "b").map { id ->
+            com.example.viewmodel.SportSession(id, "Bieganie", "2026-11-13T10:00:00Z",
+                "2026-11-13T10:45:00Z", "health")
+        }
+        val data = SportsData(plans = listOf(plan), history = activities)
+        assertEquals(null, com.example.viewmodel.PlannedActivityMatching.match(plan, data))
+        assertEquals("a", com.example.viewmodel.PlannedActivityMatching.match(
+            plan, data.copy(linkedActivities = mapOf("run" to "a")))?.id)
+    }
+    @Test fun linkedActivitiesSurviveSportsBackup() {
+        val data = SportsData(linkedActivities = mapOf("run" to "health-123"))
+        assertEquals(data.linkedActivities,
+            SportsSupport.decode(SportsSupport.encode(data)).linkedActivities)
+    }
+    @Test fun strengthCompletionUsesSessionIdRatherThanOnlyDate() {
+        val date = "2026-11-13"
+        val planA = SportPlan(date, "PULL", false, sessionId = "pull-a")
+        val planB = SportPlan(date, "PULL", false, sessionId = "pull-b")
+        val workout = com.example.viewmodel.WorkoutSession("w1", date, "PULL",
+            1000L, emptyList(), ended = 2000L, plannedSessionId = "pull-a")
+        assertEquals("✓ Wykonany", com.example.viewmodel.MangoWorkoutInsights.plannedStatus(
+            planA, SportsData(), listOf(workout)))
+        assertEquals("◷ Zaplanowany", com.example.viewmodel.MangoWorkoutInsights.plannedStatus(
+            planB, SportsData(), listOf(workout)))
+    }
+
     @Test fun removingOneSessionDoesNotRemoveTheOthers() {
         val plans = listOf(
             SportPlan("2026-11-13", "PULL", false),
