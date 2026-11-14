@@ -273,7 +273,7 @@ private fun bodyPhotoComparisonJpeg(context: android.content.Context, pair: List
             val uri = set.photo(angle)
             if (uri.isNotBlank()) {
                 val bitmap = context.contentResolver.openInputStream(Uri.parse(uri))?.use { input ->
-                    BitmapFactory.decodeStream(input)
+                    BitmapFactory.decodeStream(input, null, BitmapFactory.Options().apply { inSampleSize = 4 })
                 }
                 if (bitmap != null) {
                     val cell = android.graphics.Rect(col * 450, row * 450, (col + 1) * 450, (row + 1) * 450)
