@@ -50,6 +50,7 @@ fun DashboardScreen(
     onNavigateToRecipes: () -> Unit,
     onNavigateToRecipeImport: () -> Unit = onNavigateToRecipes,
     onNavigateToMealPlan: () -> Unit,
+    onNavigateToNutritionFix: () -> Unit = onNavigateToMealPlan,
     onNavigateToBarcodeScanner: () -> Unit,
     onNavigateToMeasurements: () -> Unit,
     onNavigateToDocuments: () -> Unit,
@@ -338,7 +339,7 @@ fun DashboardScreen(
                                 Text(suggestion.explanation, style = MaterialTheme.typography.bodySmall)
                                 if (suggestion.id == "check_nutrition") {
                                     TextButton(
-                                        onClick = onNavigateToMealPlan,
+                                        onClick = onNavigateToNutritionFix,
                                         modifier = Modifier.testTag("dashboard_fix_nutrition")
                                     ) { Text("Uzupełnij lub usuń posiłek →") }
                                 }
