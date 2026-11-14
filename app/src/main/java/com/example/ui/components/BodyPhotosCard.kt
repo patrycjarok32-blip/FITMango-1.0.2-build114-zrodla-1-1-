@@ -178,7 +178,7 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
         Text("Jeśli stare zdjęcie jest niedostępne, wskaż je ponownie przy właściwym widoku — data i pozostałe zdjęcia zestawu zostaną zachowane.", style = MaterialTheme.typography.bodySmall)
     }
     if (comparing && pair.size == 2) {
-        BodyPhotoViewer("Porównanie zmian sylwetki", onClose = { comparing = false }) {
+        BodyPhotoViewer("Porównanie sylwetki", onClose = { comparing = false }) {
             Text("Zdjęcia z dwóch dat są ustawione obok siebie, osobno dla każdego widoku. Porównanie odbywa się lokalnie, bez wysyłania do AI.",
                 style = MaterialTheme.typography.bodySmall)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
