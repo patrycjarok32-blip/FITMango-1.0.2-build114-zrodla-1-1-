@@ -212,7 +212,7 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
                     )
                 }
                 aiResult = result.fold(
-                    onSuccess = { it.toString() },
+                    onSuccess = { it.getOrElse { error -> "Analiza nie powiodła się: ${error.message ?: "sprawdź ustawienia Gemini"}" } },
                     onFailure = { "Analiza nie powiodła się: ${it.message ?: "sprawdź ustawienia Gemini"}" })
                 aiBusy = false
             }
