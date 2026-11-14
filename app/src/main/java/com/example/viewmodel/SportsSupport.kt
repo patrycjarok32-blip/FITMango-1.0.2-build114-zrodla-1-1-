@@ -55,6 +55,16 @@ object PlannedActivityMatching {
         if (explicit != null) return data.history.firstOrNull { it.id == explicit }
         if (!isRun(plan)) return null
         val matches = candidates(plan, data)
+        // Identical records without distance, calories or an activity type are
+        // insufficient evidence to decide which Health Connect entry completed
+        // the plan. Keep both records for manual confirmation.
+        val uncertainDuplicates = data.history.filter { record ->
+            record.id !in data.linkedActivities.values &&
+                record.distanceKm == null && record.activeKcal == null &&
+                record.activityType == null &&
+                matches.any { ActivityRecoverySupport.duplicate(it, record) }
+        }
+        if (uncertainDuplicates.size > 1) return null
         if (matches.size != 1) return null
         val record = matches.single()
         // A run cannot automatically complete two planned sessions on the same day.
