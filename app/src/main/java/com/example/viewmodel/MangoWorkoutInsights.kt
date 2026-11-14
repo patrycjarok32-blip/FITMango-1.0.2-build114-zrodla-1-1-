@@ -35,6 +35,28 @@ object MangoWorkoutInsights {
                 entries.maxOf { it.kg }, entries.maxOf { it.reps },
                 entries.sumOf { it.kg * it.reps })
         }
+    /** One status projection shared by daily cards and weekly calendar. */
+    fun plannedStatus(plan: SportPlan, data: SportsData, workouts: List<WorkoutSession>): String {
+        if (plan.rest) return "🌿 Regeneracja"
+        val strength = workouts.filter { it.date == plan.date &&
+            (plan.sessionId.isNotBlank() && it.plannedSessionId == plan.sessionId ||
+                plan.sessionId.isBlank() && it.title == plan.title) }
+        if (strength.any { it.ended > 0L }) return "✓ Wykonany"
+        if (PlannedActivityMatching.match(plan, data) != null) return "✓ Wykonany"
+        if (strength.any { it.ended == 0L }) return "▶ W trakcie"
+        return "◷ Zaplanowany"
+    }
+    fun trainingSuggestion(exercise: String, history: List<WorkoutSession>): String {
+        val recent = history.filter { it.ended > 0L }.sortedByDescending { it.ended }
+            .flatMap { it.entries.filter { e -> e.done && e.exercise.equals(exercise, true) } }
+        if (recent.isEmpty()) return "Brak danych — zacznij od wygodnego obciążenia."
+        val latest = recent.first()
+        val comparable = recent.take(6)
+        val repeated = comparable.count { it.kg == latest.kg && it.reps >= latest.reps }
+        return if (repeated >= 3 && latest.reps >= 8)
+            "Stabilne serie: możesz rozważyć niewielki wzrost obciążenia po ocenie regeneracji."
+        else "Utrzymaj ${latest.kg} kg i obserwuj technikę oraz regenerację."
+    }
     fun calendarStatus(day: LocalDate, today: LocalDate, plans: List<SportPlan>,
         workouts: List<WorkoutSession>): String {
         val sessions = workouts.filter { it.date == day.toString() }
