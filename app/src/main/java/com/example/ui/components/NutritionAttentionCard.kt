@@ -11,7 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable
-fun NutritionAttentionCard(viewModel: DietaViewModel) {
+fun NutritionAttentionCard(viewModel: DietaViewModel, openFirstMissing: Boolean = false) {
     val repairState by viewModel.nutritionRepair.collectAsStateWithLifecycle()
     val meals by viewModel.mealPlans.collectAsStateWithLifecycle()
     val recipes by viewModel.recipes.collectAsStateWithLifecycle()
@@ -21,10 +21,17 @@ fun NutritionAttentionCard(viewModel: DietaViewModel) {
     var query by remember { mutableStateOf("") }
     var visibleLimit by remember(query) { mutableIntStateOf(10) }
     var target by remember { mutableStateOf<NutritionRepairTarget?>(null) }
+    var initialTargetOpened by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(meals, recipes, rows, revision) {
         queue = withContext(Dispatchers.Default) { UniversalNutritionRepair.collect(recipes, meals, rows) }
+    }
+    LaunchedEffect(queue, openFirstMissing) {
+        if (openFirstMissing && !initialTargetOpened && queue.isNotEmpty()) {
+            target = queue.first()
+            initialTargetOpened = true
+        }
     }
     CollapsibleMangoCard("Co wymaga uwagi? (${queue.size})", "nutrition_attention") {
         UniversalNutritionRepairPanel(viewModel, queue)
