@@ -14,17 +14,11 @@ import java.util.Locale
 /** Navigation-only dashboard; all existing sports and challenge stores remain untouched. */
 @Composable
 fun SportTodayDashboard(today: LocalDate, data: SportsData,
-    workouts: List<WorkoutSession>, challenges: List<VideoChallenge>,
-    onStart: () -> Unit, onPlan: () -> Unit, onChallenges: () -> Unit, onRecovery: () -> Unit) {
+    workouts: List<WorkoutSession>,
+    onStart: () -> Unit, onPlan: () -> Unit, onRecovery: () -> Unit) {
     val plan = data.plans.firstOrNull { it.date == today.toString() }
     val active = workouts.firstOrNull { it.ended == 0L }
     val completed = workouts.count { it.ended > 0L }
-    val pendingVideos = challenges.sumOf { challenge ->
-        val start = runCatching { LocalDate.parse(challenge.startedOn) }.getOrNull()
-        if (start == null) 0 else challenge.workouts.count {
-            start.plusDays((it.day - 1).toLong()) == today && it.completedAt == 0L
-        }
-    }
     MangoCard(Modifier.fillMaxWidth().testTag("sport5_today_dashboard")) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Twój dzisiejszy plan", style = MaterialTheme.typography.titleLarge)
