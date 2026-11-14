@@ -56,6 +56,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     var activitySection by rememberSaveable { mutableStateOf("today") }
     var trainingPage by rememberSaveable { mutableStateOf("session") }
     var showWeeklyTrainingCalendar by rememberSaveable { mutableStateOf(false) }
+    var workoutDate by rememberSaveable { mutableStateOf(today.toString()) }
+    var showAddActivity by rememberSaveable(workoutDate) { mutableStateOf(false) }
     var showTrainingProfile by rememberSaveable { mutableStateOf(false) }
     var showProgramLibrary by rememberSaveable { mutableStateOf(false) }
     var showExtendedProgress by rememberSaveable { mutableStateOf(false) }
@@ -236,6 +238,15 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFF625573))
                             }
+                        }
+                        TextButton(onClick = {
+                            workoutDate = day.toString()
+                            showAddActivity = true
+                            activitySection = "training"
+                            trainingPage = "session"
+                            showWeeklyTrainingCalendar = false
+                        }, modifier = Modifier.testTag("add_training_day_${day}")) {
+                            Text("＋ Dodaj jednostkę • ${day.toString().substring(5)}")
                         }
                         HorizontalDivider(color = Color(0xFFE8DDEA))
                     }
@@ -756,7 +767,6 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
         }
         if (activitySection == "training" && trainingPage == "session") item {
-            var workoutDate by rememberSaveable { mutableStateOf(today.toString()) }
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(if (workouts.any { it.ended == 0L }) "▶ Trening w toku" else "▶ Wybierz trening i rozpocznij", style = MaterialTheme.typography.titleMedium)
@@ -768,7 +778,6 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         }
                     }
                     val dayPlans = data.plans.filter { it.date == workoutDate && !it.rest }
-                    var showAddActivity by rememberSaveable(workoutDate) { mutableStateOf(false) }
                     Text("Plan dnia: ${dayPlans.size} sesji. Wybierz sesję poniżej, aby ją edytować, rozpocząć lub przenieść.",
                         style = MaterialTheme.typography.bodyMedium)
                     OutlinedButton(onClick = { showAddActivity = !showAddActivity }) {
