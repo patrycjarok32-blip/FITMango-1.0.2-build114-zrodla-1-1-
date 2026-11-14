@@ -64,6 +64,13 @@ fun WorkoutModeCard(
                     Text("🥭 Teraz trenujesz", style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold)
                     Text("$completedCount / $totalCount ukończonych serii")
+                    val elapsedMinutes = WorkoutSessionStore.activeDurationMillis(active, clockNow) / 60000L
+                    Text("Czas aktywny (bez pauz): ${elapsedMinutes} min",
+                        style = MaterialTheme.typography.bodySmall)
+                    if (elapsedMinutes > 240) Text(
+                        "Sesja trwa ponad 4 godziny. Sprawdź, czy nie została przypadkowo otwarta.",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall)
                     LinearProgressIndicator(progress = {
                         if (totalCount == 0) 0f else completedCount.toFloat() / totalCount
                     }, modifier = Modifier.fillMaxWidth())
