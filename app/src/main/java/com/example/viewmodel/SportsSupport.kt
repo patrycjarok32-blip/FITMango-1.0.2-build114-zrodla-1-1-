@@ -29,7 +29,10 @@ object PlannedActivityMatching {
         val isRun = plan.category == "Cardio" &&
             listOf("run", "bieg").any { plan.title.contains(it, ignoreCase = true) }
         if (!isRun) return null
-        val matches = ActivityRecoverySupport.unique(data.history).filter { record ->
+        // Do not collapse distinct source IDs before checking ambiguity: two Health Connect
+        // records with the same start/end may still represent separate workouts.
+        // Duplicates of the *same* source ID are safe to coalesce.
+        val matches = data.history.distinctBy { it.id }.filter { record ->
             val day = runCatching { Instant.parse(record.start)
                 .atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString() }.getOrNull()
             val running = record.activityType == 56 || record.activityType == 57 ||
