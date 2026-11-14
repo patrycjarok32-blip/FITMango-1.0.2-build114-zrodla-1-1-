@@ -124,6 +124,15 @@ object ProgressEvidence {
                 .put("waga_do_kg", currentWeighIn.kg)
                 .put("zmiana_kg_nie_zmiana_tluszczu", currentWeighIn.kg - previousWeighIn.kg)
                 .put("dni_jedzenia_zatwierdzone", intervalApproved.size)
+                .put("pokrycie_dni_procent", if (count > 0) 100.0 * intervalApproved.size / count else JSONObject.NULL)
+                .put("dni_bez_zatwierdzonego_zapisu", (count - intervalApproved.size).coerceAtLeast(0))
+                .put("srednia_kcal_dotyczy_wylacznie_dni_zatwierdzonych", true)
+                .put("wiarygodnosc_porownania", when {
+                    intervalApproved.isEmpty() -> "Brak zatwierdzonych dni jedzenia w okresie: nie oceniaj spożycia."
+                    intervalApproved.size * 2 < count -> "Niskie pokrycie dziennika: średnie mogą nie reprezentować całego okresu."
+                    intervalApproved.size < count -> "Niepełne pokrycie dziennika: ostrożnie interpretuj średnie."
+                    else -> "Wszystkie dni okresu mają zatwierdzony zapis; wartości mogą być szacunkowe."
+                })
                 .put("srednie_kcal", numeric(intervalApproved.takeIf { it.isNotEmpty() }?.map { it.calories.toDouble() }?.average()))
                 .put("srednie_bialko_g", numeric(intervalApproved.takeIf { it.isNotEmpty() }?.map { it.protein.toDouble() }?.average()))
                 .put("uwaga", "Najważniejszy okres to dni pomiędzy kolejnymi pomiarami. Brakujące dni nie są zerami; zmiana masy nie dowodzi zmiany tkanki tłuszczowej.")
@@ -133,6 +142,21 @@ object ProgressEvidence {
             (kcal?.let { "Średnio ${it.roundToInt()} kcal i ${protein?.roundToInt()} g białka z tych ${approved.size} dni. " } ?: "Brak danych do pełnej średniej jedzenia. ") +
             (if (estimated > 0) "Wartości odżywcze są przybliżone dla $estimated zatwierdzonych dni. " else "") + "Bilans z Health Connect: ${pairs.size} wspólnych dni. $observation"
         val dietarySummary = buildString {
+            append("\\n\\nAnaliza między kolejnymi pomiarami — priorytet\\n")
+            if (previousWeighIn != null && currentWeighIn != null && previousWeighIn.date < currentWeighIn.date) {
+                val start = LocalDate.parse(previousWeighIn.date)
+                val end = LocalDate.parse(currentWeighIn.date)
+                val lengthDays = java.time.temporal.ChronoUnit.DAYS.between(start, end).toInt()
+                val confirmed = days.filter { d ->
+                    runCatching { LocalDate.parse(d.date) > start && LocalDate.parse(d.date) <= end }.getOrDefault(false) &&
+                        WeeklyEnergySupport.isFoodConfirmed(d, confirmations.find { it.date == d.date })
+                }.distinctBy { it.date }
+                append("${previousWeighIn.date} – ${currentWeighIn.date}: ${lengthDays} dni, zatwierdzone zapisy ${confirmed.size}/${lengthDays}.\\n")
+                append("Masa: ${previousWeighIn.kg} → ${currentWeighIn.kg} kg (różnica ${"%.2f".format(java.util.Locale.ROOT, currentWeighIn.kg - previousWeighIn.kg)} kg; nie oznacza automatycznie zmiany tkanki tłuszczowej).\\n")
+                if (confirmed.isNotEmpty()) append("Średnie z potwierdzonych dni: ${confirmed.map { it.calories.toDouble() }.average().roundToInt()} kcal i ${confirmed.map { it.protein.toDouble() }.average().roundToInt()} g białka.\\n")
+                else append("Brak zatwierdzonych dni jedzenia do obliczenia średnich.\\n")
+                if (confirmed.size < lengthDays) append("Uwaga: brak zatwierdzenia w części dni ogranicza reprezentatywność średnich; nie traktuj tych dni jako zero.\\n")
+            } else append("Potrzeba co najmniej dwóch pomiarów masy w różnych dniach.\\n")
             append("\n\nOcena jadłospisu — obliczenia lokalne\n")
             append("Pełny zapis potwierdzony przez Ciebie: ${approved.size}/$length dni.\n")
             nutrition.strengths.forEach { append("• $it\n") }
