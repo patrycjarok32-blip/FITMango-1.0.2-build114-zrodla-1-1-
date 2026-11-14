@@ -265,12 +265,13 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                         Text("• " + (if (plan.rest) "Regeneracja" else plan.title) +
                                             (if (plan.rest) "" else " · " + plan.category) +
                                             (plan.targetDistanceKm?.let { " · ${it} km" } ?: "") +
-                                            (plan.targetMinutes?.let { " · ${it} min" } ?: ""),
+                                            (plan.targetMinutes?.let { " · ${it} min" } ?: "") +
+                                            "  " + MangoWorkoutInsights.plannedStatus(plan, data, workouts),
                                             color = Color(0xFF43235E))
                                     }
                                 }
                                 Text((if (recordedActivities.isNotEmpty()) {
-                                    "✓ Zarejestrowano: ${recordedActivities.size} • Powiązano z planem: $confirmed"
+                                    "✓ Zarejestrowano: ${recordedActivities.size} • Wykonano z planu: $confirmed"
                                 } else status) + if (completedVideo > 0) " • 🎬 Wideo: $completedVideo" else "",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFF625573))
@@ -902,6 +903,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         }
                         val linkedId = data.linkedActivities[plan.sessionId]
                         val linkedRecord = PlannedActivityMatching.match(plan, data)
+                        Text(MangoWorkoutInsights.plannedStatus(plan, data, workouts),
+                            color = LeafGreen, style = MaterialTheme.typography.labelMedium)
                         if (linkedRecord != null) {
                             Text("✓ Wykonano: ${linkedRecord.title} · zapis z dziennika / Health Connect",
                                 color = LeafGreen, style = MaterialTheme.typography.bodyMedium)
