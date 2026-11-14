@@ -286,6 +286,7 @@ fun MainNavigation(viewModel: DietaViewModel) {
                     onNavigateToRecipes = { navController.navigate(Screen.Recipes.route) },
                     onNavigateToRecipeImport = { navController.navigate("recipe_import") },
                     onNavigateToMealPlan = { navController.navigate(Screen.MealPlan.route) },
+                    onNavigateToNutritionFix = { navController.navigate("nutrition_fix") },
                     onNavigateToBarcodeScanner = { navController.navigate("barcode_scanner") },
                     onNavigateToProductPhoto = { navController.navigate("product_photo") },
                     onNavigateToMeasurements = { navController.navigate("measurements") },
@@ -293,6 +294,9 @@ fun MainNavigation(viewModel: DietaViewModel) {
                     onNavigateToSport = { navController.navigate("sport") },
                     onNavigateToEffects = { navController.navigate("effects") }
                 )
+            }
+            composable("nutrition_fix") {
+                NutritionFixScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
             }
             composable(Screen.MealPlan.route) {
                 MealPlanScreen(viewModel = viewModel)
