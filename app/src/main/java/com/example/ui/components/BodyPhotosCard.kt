@@ -66,7 +66,6 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
     var aiResult by remember { mutableStateOf<String?>(null) }
     var aiBusy by remember { mutableStateOf(false) }
     val aiScope = rememberCoroutineScope()
-    var compareAngle by rememberSaveable { mutableStateOf(BodyPhotoAngle.FRONT.name) }
     val ordered = remember(photos) { photos.sortedByDescending { it.id } }
     val pair = selected.mapNotNull { id -> photos.find { it.id == id } }.sortedBy { it.id }
     LaunchedEffect(Unit) { onSecureLegacy() }
@@ -164,7 +163,7 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
             Text("Pokaż starsze (${photos.size - visible})")
         }
         if (photos.size >= 2) Button(enabled = pair.size == 2 && !busy, onClick = { comparing = true }, modifier = Modifier.testTag("body_photos_compare")) {
-            Text("Porównaj wybrane (${pair.size}/2)")
+            Text("Porównaj sylwetkę: przód, bok i tył (${pair.size}/2)")
         }
         if (pair.size == 2) {
             OutlinedButton(enabled = !aiBusy, onClick = { aiExplicitApproval = false; aiConsent = true },
@@ -179,19 +178,36 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
         Text("Jeśli stare zdjęcie jest niedostępne, wskaż je ponownie przy właściwym widoku — data i pozostałe zdjęcia zestawu zostaną zachowane.", style = MaterialTheme.typography.bodySmall)
     }
     if (comparing && pair.size == 2) {
-        BodyPhotoViewer("Porównanie sylwetki", onClose = { comparing = false }) {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                BodyPhotoAngle.entries.forEach { angle -> FilterChip(compareAngle == angle.name, { compareAngle = angle.name }, label = { Text(angle.label) }) }
-            }
+        BodyPhotoViewer("Porównanie zmian sylwetki", onClose = { comparing = false }) {
+            Text("Zdjęcia z dwóch dat są ustawione obok siebie, osobno dla każdego widoku. Porównanie odbywa się lokalnie, bez wysyłania do AI.",
+                style = MaterialTheme.typography.bodySmall)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                pair.forEach { row -> Column(Modifier.weight(1f)) {
-                    Text(row.date, style = MaterialTheme.typography.labelLarge)
-                    val angle = BodyPhotoAngle.valueOf(compareAngle)
-                    BodyPhotoTile(row.photo(angle), "${angle.label} • ${row.date}", Modifier.fillMaxWidth().height(380.dp), fit = true) {
-                        if (row.photo(angle).isNotBlank()) preview = row.photo(angle) to "${angle.label} • ${row.date}"
-                    }
-                } }
+                pair.forEach { row ->
+                    Text(row.date, modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.titleSmall)
+                }
             }
+            BodyPhotoAngle.entries.forEach { angle ->
+                Text(angle.label, style = MaterialTheme.typography.titleMedium)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    pair.forEach { row ->
+                        Column(Modifier.weight(1f)) {
+                            BodyPhotoTile(
+                                row.photo(angle), "${angle.label} • ${row.date}",
+                                Modifier.fillMaxWidth().aspectRatio(.72f), fit = true
+                            ) {
+                                if (row.photo(angle).isNotBlank()) {
+                                    preview = row.photo(angle) to "${angle.label} • ${row.date}"
+                                }
+                            }
+                            Text(row.date, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+                HorizontalDivider()
+            }
+            Text("Dotknij zdjęcia, aby obejrzeć je w powiększeniu. Zmiany pozy i odległości od aparatu mogą wpływać na porównanie.",
+                style = MaterialTheme.typography.bodySmall)
         }
     }
     if (aiConsent && pair.size == 2) AlertDialog(
