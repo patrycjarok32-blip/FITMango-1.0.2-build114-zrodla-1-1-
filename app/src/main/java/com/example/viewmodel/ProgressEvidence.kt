@@ -100,6 +100,35 @@ object ProgressEvidence {
                 }
             }
         facts.put("porownania_wskaznikow_wagi_tylko_to_samo_zrodlo", comparisons)
+        // Primary evaluation uses the latest two consecutive weigh-in dates.
+        // The wider report remains secondary context, not a substitute for this interval.
+        val weighIns = report.points.filter { point ->
+            runCatching { LocalDate.parse(point.date) <= cutoff }.getOrDefault(false) &&
+                point.kg.isFinite() && point.kg > 0
+        }.distinctBy { it.date }.sortedBy { it.date }
+        val previousWeighIn = weighIns.getOrNull(weighIns.size - 2)
+        val currentWeighIn = weighIns.lastOrNull()
+        val interval = if (previousWeighIn != null && currentWeighIn != null &&
+            previousWeighIn.date < currentWeighIn.date) {
+            val start = LocalDate.parse(previousWeighIn.date)
+            val end = LocalDate.parse(currentWeighIn.date)
+            val count = java.time.temporal.ChronoUnit.DAYS.between(start, end).toInt()
+            // Meals from the day AFTER the first weigh-in through the second weigh-in.
+            val intervalApproved = days.filter { d ->
+                runCatching { LocalDate.parse(d.date) > start && LocalDate.parse(d.date) <= end }
+                    .getOrDefault(false) &&
+                    WeeklyEnergySupport.isFoodConfirmed(d, confirmations.find { it.date == d.date })
+            }.distinctBy { it.date }
+            JSONObject().put("pomiar_od", previousWeighIn.date).put("pomiar_do", currentWeighIn.date)
+                .put("liczba_dni", count).put("waga_od_kg", previousWeighIn.kg)
+                .put("waga_do_kg", currentWeighIn.kg)
+                .put("zmiana_kg_nie_zmiana_tluszczu", currentWeighIn.kg - previousWeighIn.kg)
+                .put("dni_jedzenia_zatwierdzone", intervalApproved.size)
+                .put("srednie_kcal", numeric(intervalApproved.takeIf { it.isNotEmpty() }?.map { it.calories.toDouble() }?.average()))
+                .put("srednie_bialko_g", numeric(intervalApproved.takeIf { it.isNotEmpty() }?.map { it.protein.toDouble() }?.average()))
+                .put("uwaga", "Najważniejszy okres to dni pomiędzy kolejnymi pomiarami. Brakujące dni nie są zerami; zmiana masy nie dowodzi zmiany tkanki tłuszczowej.")
+        } else JSONObject().put("uwaga", "Do analizy od pomiaru do pomiaru potrzeba dwóch dat ważenia.")
+        facts.put("analiza_pomiedzy_kolejnymi_pomiarami_PRIORYTET", interval)
         val summary = "Dane raportu: ${approved.size}/$length zatwierdzonych dni jedzenia; pomiary wagi z ${weights.size} dat. " +
             (kcal?.let { "Średnio ${it.roundToInt()} kcal i ${protein?.roundToInt()} g białka z tych ${approved.size} dni. " } ?: "Brak danych do pełnej średniej jedzenia. ") +
             (if (estimated > 0) "Wartości odżywcze są przybliżone dla $estimated zatwierdzonych dni. " else "") + "Bilans z Health Connect: ${pairs.size} wspólnych dni. $observation"
