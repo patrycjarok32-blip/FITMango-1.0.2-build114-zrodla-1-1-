@@ -2,6 +2,18 @@ package com.example.ui.components
 
 import android.app.DatePickerDialog
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color as AndroidColor
+import android.graphics.Paint
+import android.net.Uri
+import android.util.Base64
+import com.example.ai.callGemini
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -49,6 +61,10 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
     var delete by remember { mutableStateOf<BodyPhotoEntity?>(null) }
     var selected by rememberSaveable { mutableStateOf(emptyList<Long>()) }
     var comparing by rememberSaveable { mutableStateOf(false) }
+    var aiConsent by remember { mutableStateOf(false) }
+    var aiResult by remember { mutableStateOf<String?>(null) }
+    var aiBusy by remember { mutableStateOf(false) }
+    val aiScope = rememberCoroutineScope()
     var compareAngle by rememberSaveable { mutableStateOf(BodyPhotoAngle.FRONT.name) }
     val ordered = remember(photos) { photos.sortedByDescending { it.id } }
     val pair = selected.mapNotNull { id -> photos.find { it.id == id } }.sortedBy { it.id }
@@ -149,6 +165,14 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
         if (photos.size >= 2) Button(enabled = pair.size == 2 && !busy, onClick = { comparing = true }, modifier = Modifier.testTag("body_photos_compare")) {
             Text("Porównaj wybrane (${pair.size}/2)")
         }
+        if (pair.size == 2) {
+            OutlinedButton(enabled = !aiBusy, onClick = { aiConsent = true },
+                modifier = Modifier.fillMaxWidth().testTag("body_photos_ai_compare")) {
+                Text("✨ Analizuj zmiany na zdjęciach przez AI")
+            }
+            aiResult?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            if (aiBusy) LinearProgressIndicator(Modifier.fillMaxWidth())
+        }
         if (!newFirst) composer()
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         Text("Jeśli stare zdjęcie jest niedostępne, wskaż je ponownie przy właściwym widoku — data i pozostałe zdjęcia zestawu zostaną zachowane.", style = MaterialTheme.typography.bodySmall)
@@ -169,6 +193,32 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
             }
         }
     }
+    if (aiConsent && pair.size == 2) AlertDialog(
+        onDismissRequest = { if (!aiBusy) aiConsent = false },
+        title = { Text("Zgoda na analizę zdjęć przez Gemini") },
+        text = { Text("Po potwierdzeniu wybrane zdjęcia przód/bok/tył zostaną przesłane do Gemini w celu porównania. To wrażliwe zdjęcia sylwetki. Analiza jest opcjonalna, nie określa procentu tkanki tłuszczowej ani diagnozy. Bez zgody nic nie jest wysyłane.") },
+        confirmButton = { TextButton(enabled = !aiBusy, onClick = {
+            aiConsent = false; aiBusy = true; aiResult = null
+            val selectedPair = pair.toList()
+            aiScope.launch {
+                val result = runCatching {
+                    val image = withContext(Dispatchers.IO) {
+                        bodyPhotoComparisonJpeg(context, selectedPair)
+                    }
+                    callGemini(
+                        prompt = "Porównaj dwa zestawy zdjęć sylwetki: lewa kolumna to ${selectedPair[0].date}, prawa to ${selectedPair[1].date}. Wiersze od góry: przód, bok, tył. Opisz tylko widoczne różnice w ułożeniu i konturach, wpływ oświetlenia, kadru i pozy. Nie szacuj tkanki tłuszczowej, masy ciała, stanu zdrowia ani atrakcyjności. Gdy widoki są nieporównywalne, powiedz to. Maksymalnie 5 krótkich zdań.",
+                        systemPrompt = "Analizuj obrazy neutralnie i ostrożnie. Nie diagnozuj i nie przypisuj cech zdrowotnych ani wagi na podstawie wyglądu.",
+                        imageJpegBase64 = image
+                    )
+                }
+                aiResult = result.fold(
+                    onSuccess = { it.toString() },
+                    onFailure = { "Analiza nie powiodła się: ${it.message ?: "sprawdź ustawienia Gemini"}" })
+                aiBusy = false
+            }
+        }) { Text("Wyślij wybrane zdjęcia") } },
+        dismissButton = { TextButton(onClick = { aiConsent = false }) { Text("Anuluj") } }
+    )
     preview?.let { (uri, title) ->
         BodyPhotoViewer(title, onClose = { preview = null }) {
             BodyPhotoTile(uri, title, Modifier.fillMaxWidth().height(480.dp), fit = true) {}
@@ -207,4 +257,34 @@ private fun BodyPhotoTile(uri: String, label: String, modifier: Modifier, enable
         if (uri.isBlank() || failed) Text(if (failed) "Zdjęcie niedostępne" else "Brak zdjęcia", Modifier.padding(6.dp), style = MaterialTheme.typography.labelSmall)
         if (loading) CircularProgressIndicator(Modifier.size(24.dp))
     }
+}
+
+/** Builds one bounded JPEG only after explicit user consent; never saves or uploads by itself. */
+private fun bodyPhotoComparisonJpeg(context: android.content.Context, pair: List<BodyPhotoEntity>): String {
+    require(pair.size == 2)
+    val width = 900
+    val height = 1350
+    val output = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+    val canvas = Canvas(output)
+    canvas.drawColor(AndroidColor.WHITE)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    BodyPhotoAngle.entries.forEachIndexed { row, angle ->
+        pair.forEachIndexed { col, set ->
+            val uri = set.photo(angle)
+            if (uri.isNotBlank()) {
+                val bitmap = context.contentResolver.openInputStream(Uri.parse(uri))?.use { input ->
+                    BitmapFactory.decodeStream(input)
+                }
+                if (bitmap != null) {
+                    val cell = android.graphics.Rect(col * 450, row * 450, (col + 1) * 450, (row + 1) * 450)
+                    canvas.drawBitmap(bitmap, null, cell, paint)
+                    bitmap.recycle()
+                }
+            }
+        }
+    }
+    val bytes = ByteArrayOutputStream()
+    output.compress(Bitmap.CompressFormat.JPEG, 75, bytes)
+    output.recycle()
+    return Base64.encodeToString(bytes.toByteArray(), Base64.NO_WRAP)
 }
