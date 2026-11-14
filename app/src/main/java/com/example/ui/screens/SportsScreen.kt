@@ -157,37 +157,10 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         fontWeight = FontWeight.Bold, color = Color(0xFF43235E))
                     Text("Podsumowanie do " + today.toString(), color = Color(0xFF625573))
                     Text("🏋️ Sesje siłowe: " + monthSessions.size, color = Color(0xFF43235E))
-                    Text("🎬 Ukończone treningi wideo: " + completedVideo,
-                        color = Color(0xFF43235E))
                     Text("📅 Dni z treningiem siłowym: " +
                         monthSessions.map { it.date }.distinct().size, color = Color(0xFF43235E))
                     Text("Raport pokazuje zapisane ukończone sesje; nie szacuje brakujących danych.",
                         style = MaterialTheme.typography.bodySmall, color = Color(0xFF625573))
-                }
-            }
-        }
-        if (activitySection == "training" && trainingPage == "plan") item {
-            val availableVideos = videoChallenges.flatMap { challenge ->
-                challenge.workouts.map { challenge.title to it }
-            }.filter { it.second.url.isNotBlank() }
-            var selectedVideoId by rememberSaveable { mutableStateOf("") }
-            if (availableVideos.isNotEmpty()) {
-                Card(shape = RoundedCornerShape(20.dp)) {
-                    Column(Modifier.fillMaxWidth().padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("🎬 Trening wideo w FITMango",
-                            style = MaterialTheme.typography.titleMedium)
-                        availableVideos.take(30).forEach { (program, video) ->
-                            TextButton(onClick = {
-                                selectedVideoId = if (selectedVideoId == video.id) "" else video.id
-                            }) { Text(program + " • " + video.title) }
-                            if (selectedVideoId == video.id) {
-                                MangoInAppVideoPlayer(video.url)
-                                Text("Odtworzenie filmu nie oznacza ukończenia treningu. Zapisz wykonanie w planie.",
-                                    style = MaterialTheme.typography.bodySmall)
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -234,7 +207,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                 }
                                 Text((if (recordedActivities.isNotEmpty()) {
                                     "✓ Zarejestrowano: ${recordedActivities.size} • Wykonano z planu: $confirmed"
-                                } else status) + if (completedVideo > 0) " • 🎬 Wideo: $completedVideo" else "",
+                                } else status) ,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFF625573))
                             }
@@ -519,7 +492,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             SportTodayDashboard(today, data, workouts, videoChallenges,
                 onStart = { activitySection = "training"; trainingPage = "session" },
                 onPlan = { activitySection = "training"; trainingPage = "plan" },
-                onChallenges = { activitySection = "training"; trainingPage = "plan" },
+                onChallenges = { activitySection = "training"; trainingPage = "session" },
                 onRecovery = { activitySection = "recovery" })
         }
         if (activitySection == "training") item {
