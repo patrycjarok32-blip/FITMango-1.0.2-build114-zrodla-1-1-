@@ -213,7 +213,7 @@ fun BodyPhotosCard(photos: List<BodyPhotoEntity>,
                         bodyPhotoComparisonJpeg(context, selectedPair)
                     }
                     callGemini(
-                        prompt = "Porównaj dwa zestawy zdjęć sylwetki: lewa kolumna to ${selectedPair[0].date}, prawa to ${selectedPair[1].date}. Wiersze od góry: przód, bok, tył. Opisz tylko widoczne różnice w ułożeniu i konturach, wpływ oświetlenia, kadru i pozy. Nie szacuj tkanki tłuszczowej, masy ciała, stanu zdrowia ani atrakcyjności. Gdy widoki są nieporównywalne, powiedz to. Maksymalnie 5 krótkich zdań.",
+                        prompt = "Cel: porównaj ZMIANY W SYLWETCE pomiędzy ${selectedPair[0].date} (lewa kolumna) a ${selectedPair[1].date} (prawa kolumna). Wiersze od góry: przód, bok, tył. To zdjęcia tej samej osoby w różnych terminach. Opisz przede wszystkim dostrzegalne zmiany kształtu i obrysu sylwetki w okolicy talii, brzucha, bioder, pleców, ramion i nóg, ale tylko tam, gdzie są rzeczywiście widoczne. Podziel wynik na: 1. Co się zmieniło, 2. Co wygląda podobnie, 3. Co trudno ocenić. Nie oceniaj jakości fotografii; różnice oświetlenia, pozy lub kadru wspomnij tylko wtedy, gdy utrudniają wiarygodne porównanie. Nie wyciągaj wniosków o zdrowiu, masie, procentowej zawartości tłuszczu ani przyroście mięśni na podstawie samego wyglądu. Nie dopowiadaj zmian, jeśli ich nie widać. Pisz po polsku, rzeczowo i życzliwie.",
                         systemPrompt = "Analizuj obrazy neutralnie i ostrożnie. Nie diagnozuj i nie przypisuj cech zdrowotnych ani wagi na podstawie wyglądu.",
                         imageJpegBase64 = image
                     )
