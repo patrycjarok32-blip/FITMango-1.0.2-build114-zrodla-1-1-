@@ -39,7 +39,7 @@ object ProgressAiContext {
      * Consultation-style structure is intentionally strict: facts are computed locally,
      * while Gemini only interprets them. Do not infer nutrients or outcomes from titles.
      */
-    const val CONSULTATION_GUIDANCE = """
+    val CONSULTATION_GUIDANCE = """
 Przygotuj zwięzły raport przypominający przebieg konsultacji dietetycznej, bez sugerowania, że jesteś dyplomowanym dietetykiem.
 Zacznij od 3 najważniejszych wniosków, opartych na konkretnych liczbach z kontroli_danych_obliczenia_lokalne. Unikaj powtarzania tych samych liczb w wielu sekcjach.
 Użyj dokładnie siedmiu sekcji Markdown, z nagłówkami:
