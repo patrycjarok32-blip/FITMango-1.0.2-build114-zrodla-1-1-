@@ -689,10 +689,16 @@ fun ProfileScreen(
                             Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                             Text("Analiza dietetyczna AI", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp)
                         }
-                        Text("Analiza w stylu konsultacji dietetycznej: AI łączy zapisane jedzenie i makroskładniki z celem, trendem masy ciała, obwodami, aktywnością, snem i samopoczuciem. Sprawdza ostatnie 7 zakończonych dni i porównuje jedzenie z poprzednim tygodniem. Wskazuje mocne strony, powtarzające się wzorce i maksymalnie 3 konkretne priorytety na kolejny tydzień. Dzisiejszy dzień nie wchodzi do raportu. Zatwierdzone dni pozostają pełnym, potwierdzonym zapisem; szacunkowe wartości odżywcze są osobno oznaczane.", fontSize = 13.sp)
-                        Text("Po naciśnięciu przycisku te dane zostaną wysłane do Gemini. Używane są ostatnio zsynchronizowane dane aktywności; odśwież je w sekcji Sport lub Health Connect. Tryb lokalny blokuje wysyłanie.", fontSize = 12.sp)
-                        Text("Raport pokazuje lokalne obliczenia i ograniczenia danych przed interpretacją AI. AI nie dopowiada niezmierzonych składników ani nie zmienia samodzielnie Twojego celu. To narzędzie wspierające, nie diagnoza ani zamiennik indywidualnej konsultacji z dietetykiem. Po zmianie posiłków, pomiarów lub synchronizacji wygeneruj raport ponownie.", fontSize = 12.sp)
-                        Text(weeklyAnalysis, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f))
+                        var showAnalysisInfo by rememberSaveable { mutableStateOf(false) }
+                        Text("Najważniejsze wnioski, ocena nawyków i trzy priorytety na kolejny tydzień.", fontSize = 13.sp)
+                        TextButton(onClick = { showAnalysisInfo = !showAnalysisInfo }) {
+                            Text(if (showAnalysisInfo) "Ukryj informacje o analizie" else "Jak działa analiza i prywatność?")
+                        }
+                        if (showAnalysisInfo) {
+                            Text("Raport obejmuje 7 zakończonych dni. Zatwierdzenie dnia nie oznacza, że wszystkie wartości odżywcze są dokładne. Aktywność i sen pochodzą z ostatniej synchronizacji Health Connect.", fontSize = 12.sp)
+                            Text("Po uruchomieniu analizy dane zostaną wysłane do Gemini, chyba że tryb lokalny blokuje wysyłanie. AI nie diagnozuje, nie zmienia celów i nie zastępuje konsultacji dietetycznej. Po zmianie danych wygeneruj raport ponownie.", fontSize = 12.sp)
+                        }
+                        com.example.ui.components.DietitianReportContent(weeklyAnalysis)
 
                         Button(
                             onClick = { viewModel.runWeeklyAiAnalysis() },
