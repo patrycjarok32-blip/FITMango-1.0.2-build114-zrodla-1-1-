@@ -67,6 +67,13 @@ fun WeeklySummaryCard(viewModel: DietaViewModel) {
         }
         val fmt = DateTimeFormatter.ofPattern("dd.MM.yyyy")
         Text("${start.format(fmt)} – ${end.format(fmt)}", style = MaterialTheme.typography.titleMedium)
+        Text("Wybierz wskaźnik poniżej, aby porównać dni tygodnia. Brak wpisu nie oznacza zera.",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.testTag("weekly_report_data_guidance"))
+        if (!profileEnergy) {
+            Text("Wydatkowanie energii pochodzi z Health Connect i zależy od dostępnych pomiarów.",
+                style = MaterialTheme.typography.bodySmall)
+        }
         listOf(listOf(WeeklyMetric.ENERGY, WeeklyMetric.PROTEIN), listOf(WeeklyMetric.WATER, WeeklyMetric.PRODUCE)).forEach { row ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 row.forEach { m -> FilterChip(selected = metric == m, onClick = { metric = m },
