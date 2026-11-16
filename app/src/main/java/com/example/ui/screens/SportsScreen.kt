@@ -692,10 +692,10 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 }
             }
         }
-        if (showExtras) {
+        if (activitySection == "progress" && showExtras) {
             item { TextButton(onClick = { showExtras = false }) { Text("← Postępy") } }
             item { PersonalProgressCards(viewModel, data, today) }
-        } else if (showReport) {
+        } else if (activitySection == "progress" && showReport) {
             item { TextButton(onClick = { showReport = false }) { Text("← Postępy") } }
             item { NutritionWeekCard(viewModel) }
             item { reportNumbers?.let { numbers -> SportsWeeklyReport(numbers, profile, aiReport, aiBusy) { viewModel.runWeeklyAiAnalysis() } }
@@ -1154,7 +1154,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     HealthPermission.getReadPermission(SleepSessionRecord::class))) }.onFailure { permissionError = "Otwórz uprawnienia Health Connect w Profilu." } },
                 onRefresh = { permissionError = null; sports.refresh { viewModel.usability.changed() } })
         } }
-        if (activitySection == "today" || activitySection == "history") item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
+        if (activitySection == "history") item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
         if (activitySection == "history") item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("📒  Twój dziennik treningów", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = LeafGreen)
@@ -1174,7 +1174,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
         }
 
-        if (activitySection == "today" || activitySection == "history") item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (activitySection == "history") item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("Twój tydzień • $start – ${start.plusDays(6)}", style = MaterialTheme.typography.labelLarge, color = GoldAccent)
             SportGoalProgress(data, week, completed, previous, today == start)
             TextButton(onClick = { editGoal = !editGoal }) { Text(if (editGoal) "Zwiń ustawienia celu −" else "Zmień cel tygodniowy +") }
