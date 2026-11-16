@@ -636,6 +636,11 @@ fun DashboardScreen(
                             color = MaterialTheme.colorScheme.primary)
                         Text(mangoMood, color = MaterialTheme.colorScheme.onPrimaryContainer,
                             style = MaterialTheme.typography.bodyMedium)
+                        if (weeklyActiveDays >= 3) {
+                            Text("✨ Aktywne dni w tym tygodniu: $weeklyActiveDays",
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                style = MaterialTheme.typography.labelSmall)
+                        }
                     }
                 }
             }
