@@ -1156,6 +1156,9 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         } }
         if (activitySection == "history") item { if (graphics.isNotEmpty()) SportActivityChart(graphics) }
         if (activitySection == "history") item {
+            WorkoutHistorySettings(workouts)
+        }
+        if (activitySection == "history") item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("📒  Twój dziennik treningów", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = LeafGreen)
                 MangoCard(Modifier.fillMaxWidth().testTag("health_connect_training_diary")) {
