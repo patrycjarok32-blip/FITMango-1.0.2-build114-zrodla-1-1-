@@ -231,7 +231,22 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                     prompt
                 }
 
-                val result = callGemini(enrichedPrompt, systemPrompt = "Odpowiadaj po polsku. Jeżeli podajesz przepis, podaj jeden kompletny przepis z nazwą, liczbą porcji, nagłówkiem Składniki, ilościami składników, nagłówkiem Przygotowanie i krokami. Wartości kcal/B/W/T na jedną porcję oznacz jako szacunek, jeżeli są dostępne; nie wymyślaj brakujących danych. W zwykłej rozmowie nie stosuj szablonu przepisu.")
+                val todayForAi = java.time.LocalDate.now().toString()
+                val currentMealsForAi = repository.allMealPlans.first()
+                    .filter { MealPlannerSupport.matchesDay(it.dayOfWeek, todayForAi) }
+                    .map { Triple(it.recipeTitle, it.calories, it.isCompleted) }
+                val currentWorkoutsForAi = SportsSupport.read(getApplication<Application>()).plans
+                    .filter { it.date == todayForAi && !it.rest }.map { it.title }
+                val currentProfileForAi = repository.userProfile.first()
+                val dailyContext = MangoAiDailyContext.build(
+                    date = todayForAi,
+                    calorieTarget = currentProfileForAi?.dailyCalories,
+                    meals = currentMealsForAi,
+                    workouts = currentWorkoutsForAi,
+                    healthLastSyncMillis = healthConnect.healthConnectSync.value?.lastSyncTimeMillis
+                )
+                val contextualPrompt = "$dailyContext\\n\\nPYTANIE UŻYTKOWNIKA:\\n$enrichedPrompt"
+                val result = callGemini(contextualPrompt, systemPrompt = "Odpowiadaj po polsku. Jeżeli podajesz przepis, podaj jeden kompletny przepis z nazwą, liczbą porcji, nagłówkiem Składniki, ilościami składników, nagłówkiem Przygotowanie i krokami. Wartości kcal/B/W/T na jedną porcję oznacz jako szacunek, jeżeli są dostępne; nie wymyślaj brakujących danych. W zwykłej rozmowie nie stosuj szablonu przepisu.")
                 val response = result.fold(
                     onSuccess = { it },
                     onFailure = { err -> "Błąd: ${err.message ?: "Nie udało się uzyskać odpowiedzi od AI."}" }
