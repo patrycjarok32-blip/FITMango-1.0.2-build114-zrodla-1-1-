@@ -55,7 +55,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
     var activitySection by rememberSaveable { mutableStateOf("today") }
     var trainingPage by rememberSaveable { mutableStateOf("session") }
-    var showWeeklyTrainingCalendar by rememberSaveable { mutableStateOf(false) }
+    var showWeeklyTrainingCalendar by rememberSaveable { mutableStateOf(true) }
     var workoutDate by rememberSaveable { mutableStateOf(today.toString()) }
     var showAddActivity by rememberSaveable(workoutDate) { mutableStateOf(false) }
     var showTrainingProfile by rememberSaveable { mutableStateOf(false) }
@@ -514,6 +514,15 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             Text("Historia aktywności", style = MaterialTheme.typography.titleLarge)
             Text("Zapisane treningi i synchronizacja z Health Connect.",
                 style = MaterialTheme.typography.bodySmall)
+        }
+        if (activitySection == "progress") item {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { activitySection = "recovery" }) { Text("🌿 Regeneracja") }
+                OutlinedButton(onClick = { activitySection = "achievements" }) { Text("🏆 Odznaki") }
+            }
+        }
+        if (activitySection == "recovery" || activitySection == "achievements") item {
+            TextButton(onClick = { activitySection = "progress" }) { Text("← Wróć do postępów") }
         }
         if (activitySection == "progress") item {
             FreshMangoSportSection("📈", "Twoje postępy",
