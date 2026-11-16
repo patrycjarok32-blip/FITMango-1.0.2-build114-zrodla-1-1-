@@ -90,6 +90,14 @@ fun ReminderSettingsCard() {
         time("Cisza od", quietStart) { quietStart = it }
         time("Cisza do", quietEnd) { quietEnd = it }
         Text("Takie same godziny początku i końca wyłączają ciszę. Przypomnienia przypadające w ciszy są pomijane.")
+        val enabledReminders = listOf(water, creatine, day, weight, activity, weekly).count { it }
+        Text("Aktywne rodzaje przypomnień: $enabledReminders z 6",
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.testTag("reminder_enabled_summary"))
+        if (enabledReminders == 0) {
+            Text("Wszystkie przypomnienia są wyłączone. Możesz włączyć tylko te, których potrzebujesz.",
+                style = MaterialTheme.typography.bodySmall)
+        }
         Text(if (allowed) "Telefon zezwala na powiadomienia." else "Telefon nie zezwala na powiadomienia.")
         if (!allowed) OutlinedButton(onClick = {
             if (Build.VERSION.SDK_INT >= 33) permission.launch(Manifest.permission.POST_NOTIFICATIONS)
