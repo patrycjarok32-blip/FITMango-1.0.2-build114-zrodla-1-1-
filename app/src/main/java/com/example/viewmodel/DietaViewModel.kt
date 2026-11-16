@@ -245,8 +245,32 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                     workouts = currentWorkoutsForAi,
                     healthLastSyncMillis = healthConnect.healthConnectSync.value?.lastSyncTimeMillis
                 )
-                val contextualPrompt = "$dailyContext\n\nPYTANIE UŻYTKOWNIKA:\n$enrichedPrompt"
-                val result = callGemini(contextualPrompt, systemPrompt = "Odpowiadaj po polsku. Jeżeli podajesz przepis, podaj jeden kompletny przepis z nazwą, liczbą porcji, nagłówkiem Składniki, ilościami składników, nagłówkiem Przygotowanie i krokami. Wartości kcal/B/W/T na jedną porcję oznacz jako szacunek, jeżeli są dostępne; nie wymyślaj brakujących danych. W zwykłej rozmowie nie stosuj szablonu przepisu.")
+                val fullAnalysisRequested = prompt.startsWith("FITMANGO_FULL_ANALYSIS:")
+                val analysisContext = if (fullAnalysisRequested) {
+                    val profileSnapshot = repository.userProfile.first()
+                    val weightSnapshot = repository.allWeightLogs.first()
+                    val measurementSnapshot = repository.allBodyMeasurements.first()
+                    val daysSnapshot = habits.days.value.toList()
+                    val confirmationSnapshot = healthConnect.weeklyEnergy.confirmations.value.toList()
+                    val energySnapshot = healthConnect.weeklyEnergy.energy.value.toList()
+                    val syncSnapshot = healthConnect.healthConnectSync.value
+                    val sportsSnapshot = SportsSupport.read(getApplication<Application>())
+                    val scaleSnapshot = ScaleMeasurementsSupport.read(getApplication<Application>())
+                    val todaySnapshot = java.time.LocalDate.now()
+                    val reportSnapshot = EffectsSupport.analyze(
+                        ScaleMeasurementsSupport.withScaleWeights(weightSnapshot, scaleSnapshot),
+                        measurementSnapshot, daysSnapshot, confirmationSnapshot, profileSnapshot,
+                        sportsSnapshot, EffectsSupport.read(getApplication<Application>()),
+                        todaySnapshot, 7, EnergyCalculatorSupport.read(getApplication<Application>())
+                    )
+                    ProgressAiContext.build(profileSnapshot, daysSnapshot, confirmationSnapshot,
+                        sportsSnapshot, energySnapshot, syncSnapshot, reportSnapshot,
+                        todaySnapshot, 7, scaleSnapshot)
+                } else null
+                val contextualPrompt = if (analysisContext != null) analysisContext +
+                    "\\n\\nPYTANIE UŻYTKOWNIKA:\\n" + prompt.removePrefix("FITMANGO_FULL_ANALYSIS:")
+                    else "$dailyContext\\n\\nPYTANIE UŻYTKOWNIKA:\\n$enrichedPrompt"
+                val result = callGemini(contextualPrompt, systemPrompt = if (fullAnalysisRequested) ProgressAiContext.SYSTEM else "Odpowiadaj po polsku. Jeżeli podajesz przepis, podaj jeden kompletny przepis z nazwą, liczbą porcji, nagłówkiem Składniki, ilościami składników, nagłówkiem Przygotowanie i krokami. Wartości kcal/B/W/T na jedną porcję oznacz jako szacunek, jeżeli są dostępne; nie wymyślaj brakujących danych. W zwykłej rozmowie nie stosuj szablonu przepisu.")
                 val response = result.fold(
                     onSuccess = { it },
                     onFailure = { err -> "Błąd: ${err.message ?: "Nie udało się uzyskać odpowiedzi od AI."}" }
