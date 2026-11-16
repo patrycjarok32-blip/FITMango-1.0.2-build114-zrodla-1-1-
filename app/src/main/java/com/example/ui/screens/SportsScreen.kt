@@ -1117,7 +1117,15 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             TextButton(onClick = { showWeeklyReview = !showWeeklyReview }) {
                 Text(if (showWeeklyReview) "Zwiń podsumowanie tygodnia" else "📊 Pokaż podsumowanie tygodnia")
             }
-            if (showWeeklyReview) StrengthWeeklyReview(data, today)
+            if (showWeeklyReview) {
+                Text("Wszystkie aktywności z Health Connect i dziennika: ${week.sessions} sesji, " +
+                    "${week.activeDays} aktywnych dni, ${week.minutes} min w tym tygodniu.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.testTag("weekly_all_activities"))
+                Text("Poniższe serie i objętość dotyczą wyłącznie treningów siłowych zapisanych w FITMango.",
+                    style = MaterialTheme.typography.bodySmall)
+                StrengthWeeklyReview(data, today)
+            }
         }
         if (activitySection == "today") item {
             val check = data.recovery.firstOrNull { it.date == today.toString() }
