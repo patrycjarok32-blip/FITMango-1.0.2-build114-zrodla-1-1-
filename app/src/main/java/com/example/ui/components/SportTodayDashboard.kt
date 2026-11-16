@@ -77,7 +77,8 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
             }
             Text(when {
                 active != null -> "▶ Trening w toku: ${active.title}"
-                plan?.rest == true && recordedToday.isNotEmpty() -> "🌿 Dzień regeneracji w planie • aktywność wykonana"\n                plan?.rest == true -> "🌿 Dzień regeneracji"
+                plan?.rest == true && recordedToday.isNotEmpty() -> "🌿 Dzień regeneracji w planie • aktywność wykonana"
+                plan?.rest == true -> "🌿 Dzień regeneracji"
                 plan != null -> "🏋️ ${plan.title}"
                 else -> "Brak zaplanowanej sesji"
             }, style = MaterialTheme.typography.titleMedium)
