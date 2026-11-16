@@ -240,7 +240,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                 val currentProfileForAi = repository.userProfile.first()
                 val dailyContext = MangoAiDailyContext.build(
                     date = todayForAi,
-                    calorieTarget = currentProfileForAi?.dailyCalories,
+                    calorieTarget = currentProfileForAi?.targetCalories,
                     meals = currentMealsForAi,
                     workouts = currentWorkoutsForAi,
                     healthLastSyncMillis = healthConnect.healthConnectSync.value?.lastSyncTimeMillis
