@@ -89,6 +89,14 @@ fun CookingDialog(recipe: RecipeEntity,
                 if (steps.isEmpty()) Text("Ten przepis nie ma zapisanych kroków. Uzupełnij instrukcję w szczegółach przepisu.")
                 else {
                     Text("Krok ${step + 1} z ${steps.size}", color = MangoYellow)
+                    val remainingSteps = steps.size - step - 1
+                    Text(if (remainingSteps == 0) "Ostatni krok — po zakończeniu wybierz Gotowe"
+                        else "Pozostało kroków: $remainingSteps",
+                        style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = { showAll = !showAll },
+                        modifier = Modifier.testTag("cooking_ingredients_quick_toggle")) {
+                        Text(if (showAll) "Ukryj pełną listę składników" else "🧺 Wszystkie składniki")
+                    }
                     MangoProgressBar((step + 1f) / steps.size, color = ActivityAccent, modifier = Modifier.testTag("cooking_step_progress"))
                     val duration = if (LocalReducedMangoMotion.current) 0 else 200
                     AnimatedContent(targetState = step, modifier = Modifier.weight(1f), label = "cooking_step_transition",
