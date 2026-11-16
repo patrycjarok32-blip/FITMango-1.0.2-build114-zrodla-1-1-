@@ -77,7 +77,7 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
                 Text("${plan.exercises.size} ćwiczeń • ${plan.exercises.sumOf { it.sets }} serii")
             }
             Button(onClick = onStart, modifier = Modifier.fillMaxWidth().testTag("sport5_start")) {
-                Text(if (active != null) "Wróć do treningu" else "▶ Otwórz trening")
+                Text(if (active != null) "Wróć do treningu" else "▶ Rozpocznij trening")
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = onPlan, modifier = Modifier.weight(1f)) { Text("Edytuj plan") }
