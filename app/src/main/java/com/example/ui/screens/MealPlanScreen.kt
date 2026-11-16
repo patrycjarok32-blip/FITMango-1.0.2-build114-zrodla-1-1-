@@ -700,6 +700,23 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
             originalForSwap?.let { com.example.viewmodel.MangoDailyTools.mealAlternatives(it, recipes) }
                 .orEmpty()
         }
+        var suggestedSwap by remember(editingMeal?.id) { mutableStateOf<com.example.data.RecipeEntity?>(null) }
+        if (editingMeal != null && suggestedSwap != null) {
+            val replacement = suggestedSwap!!
+            AlertDialog(
+                onDismissRequest = { suggestedSwap = null },
+                title = { Text("Zastosować zamiennik?") },
+                text = { Text("Zamienić „${editingMeal.recipeTitle}” na „${replacement.title}”? " +
+                    "Zachowamy dzień, rodzaj posiłku i liczbę porcji. Zmianę można cofnąć w historii.") },
+                confirmButton = { Button(onClick = {
+                    viewModel.changeMealPlanRecipe(editingMeal, replacement)
+                    suggestedSwap = null
+                    mealToChangeRecipe = null
+                    slotToAddRecipe = null
+                }, modifier = Modifier.testTag("confirm_smart_meal_swap")) { Text("Zamień posiłek") } },
+                dismissButton = { TextButton(onClick = { suggestedSwap = null }) { Text("Anuluj") } }
+            )
+        }
         val targetSlot = slotToAddRecipe
         var pickerCategory by remember(editingMeal?.id, targetSlot?.canonicalName) { mutableStateOf("Wszystkie") }
         var pickerPreparation by remember(editingMeal?.id, targetSlot?.canonicalName) { mutableStateOf("Wszystkie czasy") }
@@ -754,8 +771,9 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                         androidx.compose.foundation.lazy.LazyRow(
                             horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             items(smartAlternatives, key = { it.id }) { alternative ->
-                                AssistChip(onClick = { recipePickerSearch = alternative.title },
-                                    label = { Text(alternative.title + " • " + alternative.calories + " kcal") })
+                                AssistChip(onClick = { suggestedSwap = alternative },
+                                    modifier = Modifier.testTag("smart_swap_${alternative.id}"),
+                                    label = { Text("Zamień: " + alternative.title + " • " + alternative.calories + " kcal") })
                             }
                         }
                     }
