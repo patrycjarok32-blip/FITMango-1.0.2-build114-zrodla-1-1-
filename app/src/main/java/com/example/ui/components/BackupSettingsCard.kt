@@ -43,6 +43,20 @@ fun BackupSettingsCard(viewModel: DietaViewModel) {
                 Icon(Icons.Default.Backup, null)
                 Text("Kopia zapasowa", style = MaterialTheme.typography.titleMedium)
             }
+            val hasAutomaticBackup = backupStatus.lastAutomatic > 0
+            Surface(color = if (hasAutomaticBackup) MaterialTheme.colorScheme.secondaryContainer
+                else MaterialTheme.colorScheme.errorContainer,
+                shape = MaterialTheme.shapes.medium) {
+                Column(Modifier.fillMaxWidth().padding(12.dp)) {
+                    Text(if (hasAutomaticBackup) "✓ Kopia lokalna została wcześniej utworzona"
+                        else "Brak zapisanej kopii automatycznej",
+                        style = MaterialTheme.typography.titleSmall)
+                    Text(if (hasAutomaticBackup)
+                        "Ostatnia: ${backup.status.date(backupStatus.lastAutomatic)}. Aby zabezpieczyć dane przed utratą telefonu, wyeksportuj kopię do innego miejsca."
+                        else "Utwórz kopię teraz i zapisz jej eksport poza telefonem.",
+                        style = MaterialTheme.typography.bodySmall)
+                }
+            }
             Text("Ostatnia kopia do pliku: ${backup.status.date(backupStatus.lastExport)}")
             Text("Kopia automatyczna na telefonie: ${backup.status.date(backupStatus.lastAutomatic)}")
             Row { Switch(backupStatus.automatic, { backup.status.automatic(it) }); Text("Automatyczna kopia lokalna") }
