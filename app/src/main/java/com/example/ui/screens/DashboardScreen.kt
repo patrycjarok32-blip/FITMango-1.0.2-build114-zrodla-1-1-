@@ -267,17 +267,31 @@ fun DashboardScreen(
                     Text("🥗 Posiłki • ${consumedCalories} / ${targetCalories} kcal",
                         style = MaterialTheme.typography.bodyMedium)
                     Text("💧 Woda • ${waterTotal} ml", style = MaterialTheme.typography.bodyMedium)
-                    val todayTraining = sportsData.plans.firstOrNull {
-                        it.date == today.toString() && !it.rest && it.exercises.isNotEmpty()
+                    val todayTrainings = sportsData.plans.filter {
+                        it.date == today.toString() && !it.rest
                     }
-                    Text(if (todayTraining != null) "🏋️ Trening • ${todayTraining.title}"
-                        else "🏋️ Trening • brak zaplanowanej sesji",
+                    Text("🏋️ Treningi • ${todayTrainings.size} zaplanowanych sesji",
                         style = MaterialTheme.typography.bodyMedium)
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        TextButton(onClick = onNavigateToMealPlan) { Text("Posiłki") }
-                        TextButton(onClick = onNavigateToSport) { Text("Trening") }
-                        TextButton(onClick = onNavigateToMeasurements) { Text("Pomiary") }
+                    todayTrainings.take(3).forEach { session ->
+                        Text("• ${session.title}", style = MaterialTheme.typography.bodySmall)
                     }
+                    if (todayTrainings.size > 3) {
+                        Text("Pozostałe sesje: ${todayTrainings.size - 3}",
+                            style = MaterialTheme.typography.bodySmall)
+                    }
+                    Button(onClick = onNavigateToMealPlan, modifier = Modifier.fillMaxWidth()
+                        .testTag("dashboard_quick_add_meal")) {
+                        Text("＋ Dodaj posiłek")
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = onNavigateToSport, modifier = Modifier.weight(1f)) {
+                            Text("Trening")
+                        }
+                        OutlinedButton(onClick = onNavigateToAiCoach, modifier = Modifier.weight(1f)) {
+                            Text("Mango AI")
+                        }
+                    }
+                    TextButton(onClick = onNavigateToMeasurements) { Text("Pomiary i postępy") }
                 }
             }
             val mangoTreeStage = remember(habitDays) {
