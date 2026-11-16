@@ -1174,7 +1174,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
         }
 
-        if (activitySection == "history") item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (activitySection == "progress" && !showReport && !showExtras) item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("Twój tydzień • $start – ${start.plusDays(6)}", style = MaterialTheme.typography.labelLarge, color = GoldAccent)
             SportGoalProgress(data, week, completed, previous, today == start)
             TextButton(onClick = { editGoal = !editGoal }) { Text(if (editGoal) "Zwiń ustawienia celu −" else "Zmień cel tygodniowy +") }
@@ -1219,7 +1219,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 }
             }
         }
-        if (showSportNutrition && activitySection == "history") item { NutritionWeekCard(viewModel) }
+        if (showSportNutrition && activitySection == "history") item { Text("Raport żywieniowy znajdziesz w Postępy → Raport tygodnia.", style = MaterialTheme.typography.bodySmall) }
 
         if (activitySection == "history") item {
             val sessionsToday = ActivityRecoverySupport.daySessions(data, today)
