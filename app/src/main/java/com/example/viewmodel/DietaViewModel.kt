@@ -245,7 +245,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                     workouts = currentWorkoutsForAi,
                     healthLastSyncMillis = healthConnect.healthConnectSync.value?.lastSyncTimeMillis
                 )
-                val contextualPrompt = "$dailyContext\\n\\nPYTANIE UŻYTKOWNIKA:\\n$enrichedPrompt"
+                val contextualPrompt = "$dailyContext\n\nPYTANIE UŻYTKOWNIKA:\n$enrichedPrompt"
                 val result = callGemini(contextualPrompt, systemPrompt = "Odpowiadaj po polsku. Jeżeli podajesz przepis, podaj jeden kompletny przepis z nazwą, liczbą porcji, nagłówkiem Składniki, ilościami składników, nagłówkiem Przygotowanie i krokami. Wartości kcal/B/W/T na jedną porcję oznacz jako szacunek, jeżeli są dostępne; nie wymyślaj brakujących danych. W zwykłej rozmowie nie stosuj szablonu przepisu.")
                 val response = result.fold(
                     onSuccess = { it },
