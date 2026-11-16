@@ -15,7 +15,7 @@ import java.util.Locale
 @Composable
 fun SportTodayDashboard(today: LocalDate, data: SportsData,
     workouts: List<WorkoutSession>,
-    onStart: () -> Unit, onPlan: () -> Unit, onRecovery: () -> Unit) {
+    onStart: () -> Unit, onPlan: () -> Unit, onRecovery: () -> Unit, onHistory: () -> Unit) {
     val plans = data.plans.filter { it.date == today.toString() }
     val plan = plans.firstOrNull { !it.rest } ?: plans.firstOrNull()
     val finishedPlans = plans.count { MangoWorkoutInsights.plannedStatus(it, data, workouts) == "✓ Wykonany" }
@@ -23,11 +23,14 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
     val recordedMinutes = ActivityRecoverySupport.dayMinutes(data, today)
     val active = workouts.firstOrNull { it.ended == 0L }
     val completed = workouts.count { it.ended > 0L }
+    val todaySteps = data.daily.firstOrNull { it.date == today.toString() }?.steps
     MangoCard(Modifier.fillMaxWidth().testTag("sport5_today_dashboard")) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Twój dzisiejszy plan", style = MaterialTheme.typography.titleLarge)
+            Text("Trening • Dzisiaj", style = MaterialTheme.typography.titleLarge)
             Text(today.format(DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("pl"))))
-            Text("Wykonane sesje z planu: $finishedPlans / ${plans.count { !it.rest }}",
+            Text("Kroki: ${todaySteps?.toString() ?: "brak odczytu"} • Ruch: $recordedMinutes min",
+                style = MaterialTheme.typography.titleMedium)
+            Text("Sesje z planu: $finishedPlans / ${plans.count { !it.rest }}",
                 style = MaterialTheme.typography.bodySmall)
             if (recordedToday.isNotEmpty()) {
                 Card(modifier = Modifier.fillMaxWidth().testTag("sport_recorded_today"),
@@ -49,7 +52,8 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
                     }
                 }
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            /* The full weekly calendar lives in Plan; keep the Today view compact. */
+            /* Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 (0L..6L).forEach { offset ->
                     val day = today.minusDays((today.dayOfWeek.value - 1).toLong()).plusDays(offset)
                     val scheduled = data.plans.count { it.date == day.toString() && !it.rest }
@@ -61,7 +65,8 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
                     }
                 }
             }
-            plans.filterNot { it.rest }.forEach { session ->
+            */
+            plans.filterNot { it.rest }.take(3).forEach { session ->
                 val status = MangoWorkoutInsights.plannedStatus(session, data, workouts)
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                     Column(Modifier.fillMaxWidth().padding(10.dp)) {
@@ -90,8 +95,9 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = onPlan, modifier = Modifier.weight(1f)) { Text("Edytuj plan") }
-                OutlinedButton(onClick = onRecovery, modifier = Modifier.weight(1f)) { Text("Regeneracja") }
+                OutlinedButton(onClick = onHistory, modifier = Modifier.weight(1f)) { Text("Historia") }
             }
+            TextButton(onClick = onRecovery) { Text("🌿 Samopoczucie i regeneracja") }
             Text("Wykonane sesje siłowe: $completed • Zapisane serie: ${data.sets.size}",
                 style = MaterialTheme.typography.bodySmall)
         }
