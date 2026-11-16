@@ -54,7 +54,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     val confirmations by viewModel.healthConnect.weeklyEnergy.confirmations.collectAsStateWithLifecycle()
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
     var activitySection by rememberSaveable { mutableStateOf("today") }
-    var trainingPage by rememberSaveable { mutableStateOf("session") }
+    var trainingPage by rememberSaveable { mutableStateOf("plan") }
     var showWeeklyTrainingCalendar by rememberSaveable { mutableStateOf(true) }
     var workoutDate by rememberSaveable { mutableStateOf(today.toString()) }
     var showAddActivity by rememberSaveable(workoutDate) { mutableStateOf(false) }
@@ -472,14 +472,14 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 contentPadding = PaddingValues(vertical = 4.dp)) {
                 listOf(
                     Triple("today", "🏠", "Dzisiaj"),
-                    Triple("training", "🗓️", "Kalendarz"),
-                    Triple("history", "📒", "Historia"),
+                    Triple("training", "🗓️", "Plan"),
+                    Triple("session", "▶", "Trening"),
                     Triple("progress", "📈", "Postępy")
                 ).forEach { (key, emoji, label) ->
                     item {
                         FilterChip(
-                            selected = activitySection == key,
-                            onClick = { activitySection = key; if (key == "training") trainingPage = "plan"; showExtras = false; showReport = false },
+                            selected = activitySection == (if (key == "session") "training" else key) && (key != "session" || trainingPage == "session") && (key != "training" || trainingPage == "plan"),
+                            onClick = { activitySection = if (key == "session") "training" else key; if (key == "training" || key == "session") trainingPage = if (key == "session") "session" else "plan"; showExtras = false; showReport = false },
                             label = { Text("$emoji  $label") },
                             modifier = Modifier.testTag("sport_${key}_tab")
                         )
@@ -491,7 +491,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             SportTodayDashboard(today, data, workouts,
                 onStart = { activitySection = "training"; trainingPage = "session" },
                 onPlan = { activitySection = "training"; trainingPage = "plan" },
-                onRecovery = { activitySection = "recovery" })
+                onRecovery = { activitySection = "recovery" },
+                onHistory = { activitySection = "history" })
         }
         if (activitySection == "training") item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -517,11 +518,12 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         }
         if (activitySection == "progress") item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { activitySection = "history" }) { Text("📒 Historia") }
                 OutlinedButton(onClick = { activitySection = "recovery" }) { Text("🌿 Regeneracja") }
                 OutlinedButton(onClick = { activitySection = "achievements" }) { Text("🏆 Odznaki") }
             }
         }
-        if (activitySection == "recovery" || activitySection == "achievements") item {
+        if (activitySection == "recovery" || activitySection == "achievements" || activitySection == "history") item {
             TextButton(onClick = { activitySection = "progress" }) { Text("← Wróć do postępów") }
         }
         if (activitySection == "progress") item {
@@ -1154,7 +1156,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         }
         if (activitySection == "today") item { StrengthRecoverySuggestion(data, today, onShift = { sports.shiftUpcomingWorkouts(today.toString(), 1) { saved() } }, busy = busy) }
         if (activitySection == "today") item { ActivityTodayCard(data, today, current) }
-        if (activitySection == "today" || activitySection == "history") item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (activitySection == "history") item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SportsHistoryControls(busy,
                 onPermissions = { permissionError = null; runCatching { launcher.launch(setOf(
                     HealthPermission.getReadPermission(ExerciseSessionRecord::class), HealthPermission.getReadPermission(DistanceRecord::class),
