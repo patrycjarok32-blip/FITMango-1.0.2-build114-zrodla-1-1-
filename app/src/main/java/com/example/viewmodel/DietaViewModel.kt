@@ -195,7 +195,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
     fun sendChatMessage(prompt: String) {
         if (prompt.isBlank() || _isLoadingAi.value) return
         val currentList = _chatMessages.value.toMutableList()
-        currentList.add(ChatMessage("user", prompt))
+        currentList.add(ChatMessage("user", prompt.removePrefix("FITMANGO_FULL_ANALYSIS:").trim()))
         _chatMessages.value = currentList
         _isLoadingAi.value = true
 
