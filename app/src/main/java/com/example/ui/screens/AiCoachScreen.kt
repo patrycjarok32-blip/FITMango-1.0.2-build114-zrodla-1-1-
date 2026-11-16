@@ -119,6 +119,16 @@ fun AiCoachScreen(viewModel: DietaViewModel, onEffects: () -> Unit = {}) {
                     }, label = { Text("📸 Skan posiłku 2.0") })
                 }
                 item {
+                    AssistChip(enabled = !isLoading && mangoOnline, onClick = {
+                        viewModel.sendChatMessage("Pomóż wybrać zamiennik posiłku o zbliżonej kaloryczności i większej ilości białka. Zapytaj o obecny posiłek, porcję i ograniczenia. Nie zmieniaj jadłospisu bez mojego potwierdzenia.")
+                    }, label = { Text("🔁 Zamienniki posiłków") })
+                }
+                item {
+                    AssistChip(enabled = !isLoading && mangoOnline, onClick = {
+                        viewModel.sendChatMessage("Pomóż zinterpretować mój tydzień: jedzenie, trening, sen i regeneracja. Oddziel dostępne fakty od brakujących danych. Nie zakładaj, że masz dostęp do pomiarów, których nie otrzymałeś. Zapytaj o brakujące wartości.")
+                    }, label = { Text("📈 Wspólna analiza") })
+                }
+                item {
                     AssistChip(enabled = !isLoading && mangoOnline, onClick = onEffects,
                         label = { Text("📊 Analiza tygodnia") })
                 }
