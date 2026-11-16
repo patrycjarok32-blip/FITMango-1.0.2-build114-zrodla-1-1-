@@ -47,8 +47,8 @@ fun AiCoachScreen(viewModel: DietaViewModel, onEffects: () -> Unit = {}) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Icon(Icons.Default.SmartToy, contentDescription = null, tint = MangoYellow, modifier = Modifier.size(24.dp))
                         Column {
-                            Text("AI Dietetyk Mango", fontWeight = FontWeight.Black, fontSize = 16.sp, color = Cream)
-                            Text("Twój osobisty przewodnik zdrowia ✦", fontSize = 10.sp, color = GoldAccent)
+                            Text("Centrum Mango AI", fontWeight = FontWeight.Black, fontSize = 16.sp, color = Cream)
+                            Text("Żywienie • trening • regeneracja ✦", fontSize = 10.sp, color = GoldAccent)
                         }
                     }
                 },
@@ -80,10 +80,9 @@ fun AiCoachScreen(viewModel: DietaViewModel, onEffects: () -> Unit = {}) {
                 Text("📴 Offline: rozmowa z Gemini jest wstrzymana. Twoje zapisane dane pozostają dostępne.",
                     color = GoldAccent, style = MaterialTheme.typography.bodyMedium)
             }
-            Text("📴 Tryb bez internetu: zapisane przepisy, jadłospis i lokalne dane możesz przeglądać bez AI. " +
-                "Rozmowa Mango AI oraz analiza zdjęć wymagają połączenia i dostępu do Gemini.",
-                color = GoldAccent, style = MaterialTheme.typography.bodySmall)
-
+            Text("W jednym miejscu możesz zapytać o posiłki, trening, regenerację i postępy. " +
+                "Wskazówki nie zmieniają automatycznie Twoich zapisanych danych.",
+                color = Cream, style = MaterialTheme.typography.bodySmall)
             Text("Szybkie funkcje Mango AI", color = GoldAccent,
                 style = MaterialTheme.typography.labelMedium)
             androidx.compose.foundation.lazy.LazyRow(
