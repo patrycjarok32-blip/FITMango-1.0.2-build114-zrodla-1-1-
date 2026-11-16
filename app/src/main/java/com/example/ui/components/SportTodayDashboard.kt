@@ -52,20 +52,6 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
                     }
                 }
             }
-            /* The full weekly calendar lives in Plan; keep the Today view compact. */
-            /* Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                (0L..6L).forEach { offset ->
-                    val day = today.minusDays((today.dayOfWeek.value - 1).toLong()).plusDays(offset)
-                    val scheduled = data.plans.count { it.date == day.toString() && !it.rest }
-                    Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                        Text(day.dayOfMonth.toString(), style = MaterialTheme.typography.bodySmall)
-                        Text(if (scheduled > 0) "●" else "·",
-                            color = if (day == today) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            }
-            */
             plans.filterNot { it.rest }.take(3).forEach { session ->
                 val status = MangoWorkoutInsights.plannedStatus(session, data, workouts)
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
