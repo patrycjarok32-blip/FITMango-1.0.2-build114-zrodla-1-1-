@@ -19,14 +19,36 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
     val plans = data.plans.filter { it.date == today.toString() }
     val plan = plans.firstOrNull { !it.rest } ?: plans.firstOrNull()
     val finishedPlans = plans.count { MangoWorkoutInsights.plannedStatus(it, data, workouts) == "✓ Wykonany" }
+    val recordedToday = ActivityRecoverySupport.daySessions(data, today)
+    val recordedMinutes = ActivityRecoverySupport.dayMinutes(data, today)
     val active = workouts.firstOrNull { it.ended == 0L }
     val completed = workouts.count { it.ended > 0L }
     MangoCard(Modifier.fillMaxWidth().testTag("sport5_today_dashboard")) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Twój dzisiejszy plan", style = MaterialTheme.typography.titleLarge)
             Text(today.format(DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("pl"))))
-            Text("Wykonane sesje: $finishedPlans / ${plans.count { !it.rest }}",
+            Text("Wykonane sesje z planu: $finishedPlans / ${plans.count { !it.rest }}",
                 style = MaterialTheme.typography.bodySmall)
+            if (recordedToday.isNotEmpty()) {
+                Card(modifier = Modifier.fillMaxWidth().testTag("sport_recorded_today"),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Text("✓ Wykonane aktywności z zegarka / dziennika",
+                            style = MaterialTheme.typography.titleSmall)
+                        Text("${recordedToday.size} aktywności • $recordedMinutes min",
+                            style = MaterialTheme.typography.bodyMedium)
+                        recordedToday.take(4).forEach { session ->
+                            val minutes = java.time.Duration.between(
+                                java.time.Instant.parse(session.start),
+                                java.time.Instant.parse(session.end)).toMinutes()
+                            Text("• ${session.title} — $minutes min",
+                                style = MaterialTheme.typography.bodySmall)
+                        }
+                        Text("Aktywność zaliczona do ruchu, ale nie oznacza automatycznie wykonania innego treningu z planu.",
+                            style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 (0L..6L).forEach { offset ->
                     val day = today.minusDays((today.dayOfWeek.value - 1).toLong()).plusDays(offset)
@@ -55,7 +77,7 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
             }
             Text(when {
                 active != null -> "▶ Trening w toku: ${active.title}"
-                plan?.rest == true -> "🌿 Dzień regeneracji"
+                plan?.rest == true && recordedToday.isNotEmpty() -> "🌿 Dzień regeneracji w planie • aktywność wykonana"\n                plan?.rest == true -> "🌿 Dzień regeneracji"
                 plan != null -> "🏋️ ${plan.title}"
                 else -> "Brak zaplanowanej sesji"
             }, style = MaterialTheme.typography.titleMedium)
