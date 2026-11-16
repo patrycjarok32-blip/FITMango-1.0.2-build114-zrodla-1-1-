@@ -268,8 +268,8 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                         todaySnapshot, 7, scaleSnapshot)
                 } else null
                 val contextualPrompt = if (analysisContext != null) analysisContext +
-                    "\\n\\nPYTANIE UŻYTKOWNIKA:\\n" + prompt.removePrefix("FITMANGO_FULL_ANALYSIS:")
-                    else "$dailyContext\\n\\nPYTANIE UŻYTKOWNIKA:\\n$enrichedPrompt"
+                    "\n\nPYTANIE UŻYTKOWNIKA:\n" + prompt.removePrefix("FITMANGO_FULL_ANALYSIS:")
+                    else "$dailyContext\n\nPYTANIE UŻYTKOWNIKA:\n$enrichedPrompt"
                 val result = callGemini(contextualPrompt, systemPrompt = if (fullAnalysisRequested) ProgressAiContext.SYSTEM else "Odpowiadaj po polsku. Jeżeli podajesz przepis, podaj jeden kompletny przepis z nazwą, liczbą porcji, nagłówkiem Składniki, ilościami składników, nagłówkiem Przygotowanie i krokami. Wartości kcal/B/W/T na jedną porcję oznacz jako szacunek, jeżeli są dostępne; nie wymyślaj brakujących danych. W zwykłej rozmowie nie stosuj szablonu przepisu.")
                 val response = result.fold(
                     onSuccess = { it },
