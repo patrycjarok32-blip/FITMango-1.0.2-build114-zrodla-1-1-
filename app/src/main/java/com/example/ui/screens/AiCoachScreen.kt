@@ -125,7 +125,7 @@ fun AiCoachScreen(viewModel: DietaViewModel, onEffects: () -> Unit = {}) {
                 }
                 item {
                     AssistChip(enabled = !isLoading && mangoOnline, onClick = {
-                        viewModel.sendChatMessage("Pomóż zinterpretować mój tydzień: jedzenie, trening, sen i regeneracja. Oddziel dostępne fakty od brakujących danych. Nie zakładaj, że masz dostęp do pomiarów, których nie otrzymałeś. Zapytaj o brakujące wartości.")
+                        viewModel.sendChatMessage("FITMANGO_FULL_ANALYSIS: Pomóż zinterpretować mój tydzień: jedzenie, trening, sen i regeneracja. Oddziel dostępne fakty od brakujących danych. Nie zakładaj, że masz dostęp do pomiarów, których nie otrzymałeś. Zapytaj o brakujące wartości.")
                     }, label = { Text("📈 Wspólna analiza") })
                 }
                 item {
