@@ -35,6 +35,26 @@ class SportsControlsUiTest {
         compose.onNodeWithText("Odczyt…").assertExists()
     }
 
+    @Test fun sportSixTodayKeepsWatchActivitySeparateFromPlannedWorkouts() {
+        val today = java.time.LocalDate.of(2026, 11, 16)
+        val start = today.atTime(18, 0).atZone(java.time.ZoneId.systemDefault()).toInstant()
+        val session = com.example.viewmodel.SportSession(
+            "health-connect-test", "Cardio", start.toString(),
+            start.plusSeconds(48 * 60L).toString(), "Health Connect"
+        )
+        val data = com.example.viewmodel.SportsData(history = listOf(session))
+        compose.setContent {
+            MojaDietaAiTheme {
+                com.example.ui.components.SportTodayDashboard(
+                    today, data, emptyList(), {}, {}, {}, {}
+                )
+            }
+        }
+        compose.onNodeWithTag("sport_recorded_today").assertExists()
+        compose.onNodeWithText("1 aktywności • 48 min").assertExists()
+        compose.onNodeWithText("Sesje z planu: 0 / 0").assertExists()
+    }
+
     @get:Rule val compose = createComposeRule()
     @Test fun activityGoalAndTimerActionsRemainVisibleWithoutAnimationLoops() {
         ApplicationProvider.getApplicationContext<Context>().getSharedPreferences("FITMangoRestTimer", 0).edit().clear().commit()
