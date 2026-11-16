@@ -64,6 +64,15 @@ fun WorkoutModeCard(
                     Text("🥭 Teraz trenujesz", style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold)
                     Text("$completedCount / $totalCount ukończonych serii")
+                    val nextSet = active.entries.firstOrNull { !it.done }
+                    if (nextSet != null) {
+                        Text("Następna: ${nextSet.exercise} • seria ${nextSet.number}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold)
+                    } else if (totalCount > 0) {
+                        Text("Wszystkie serie ukończone — możesz zakończyć trening.",
+                            style = MaterialTheme.typography.bodyMedium)
+                    }
                     val elapsedMinutes = WorkoutSessionStore.activeDurationMillis(active, clockNow) / 60000L
                     Text("Czas aktywny (bez pauz): ${elapsedMinutes} min",
                         style = MaterialTheme.typography.bodySmall)
