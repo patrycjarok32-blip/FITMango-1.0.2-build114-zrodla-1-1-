@@ -209,6 +209,34 @@ fun DashboardScreen(
                 .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            var home3Classic by rememberSaveable { mutableStateOf(false) }
+            var home3Settings by rememberSaveable { mutableStateOf(false) }
+            if (!home3Classic) {
+                Home3Dashboard(
+                    calories = consumedCalories, calorieGoal = targetCalories,
+                    protein = consumedProtein, proteinGoal = targetProtein,
+                    fat = consumedFat, fatGoal = targetFat,
+                    carbs = consumedCarbs, carbsGoal = targetCarbs,
+                    nutritionPartial = incompleteNutrition,
+                    water = waterTotal, steps = activity.steps,
+                    trainingMinutes = com.example.viewmodel.ActivityRecoverySupport.dayMinutes(sportsData, today),
+                    plannedSessions = sportsData.plans.count { it.date == currentDate && !it.rest },
+                    today = today.toString(),
+                    onMeal = onNavigateToMealPlan, onSport = onNavigateToSport,
+                    onAi = onNavigateToAiCoach, onProgress = onNavigateToEffects,
+                    onRecipes = onNavigateToRecipes, onMeasurements = onNavigateToMeasurements,
+                    onScan = onNavigateToBarcodeScanner,
+                    onAddWater = { viewModel.addBeverage(250) },
+                    onClassic = { home3Classic = true },
+                    onSettings = { home3Settings = !home3Settings },
+                    settingsExpanded = home3Settings,
+                    onNutritionFix = onNavigateToNutritionFix
+                )
+            } else {
+                TextButton(onClick = { home3Classic = false },
+                    modifier = Modifier.testTag("home3_back_to_new")) {
+                    Text("← Wróć do nowego pulpitu")
+                }
             MangoAnimatedLogo()
             if (!mangoOnline) {
                 Surface(color = MaterialTheme.colorScheme.secondaryContainer,
@@ -1058,6 +1086,7 @@ fun DashboardScreen(
                 }
             }
             DashboardCustomization(viewModel)
+            }
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = OrangeInk)
