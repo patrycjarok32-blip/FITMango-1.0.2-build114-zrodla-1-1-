@@ -341,6 +341,8 @@ class HealthConnectVerificationTest {
         }
         Shadows.shadowOf(Looper.getMainLooper()).idle()
 
+        composeTestRule.onNodeWithTag("home3_customize").performScrollTo().performClick()
+        composeTestRule.onNodeWithText("Otwórz pełny pulpit i ustawienia").performScrollTo().performClick()
         composeTestRule.onNodeWithTag("compact_start_health").performScrollTo().performClick()
         composeTestRule.onNodeWithTag("dashboard_health_connect_card").performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithTag("dashboard_steps_text").performScrollTo().assertIsDisplayed()
