@@ -242,6 +242,73 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                     Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Czy mój deficyt działa? • 28 dni", style = MaterialTheme.typography.titleMedium)
                         Text(check.status, style = MaterialTheme.typography.titleLarge)
+                        Text("Wspólny wykres: waga • kroki • oznaczenia", style = MaterialTheme.typography.titleSmall)
+                        val chartStart = today.minusDays(28)
+                        val chartWeights = r.points.mapNotNull { point ->
+                            val day = runCatching { LocalDate.parse(point.date) }.getOrNull()
+                            if (day != null && day in chartStart..today.minusDays(1) && point.kg.isFinite() && point.kg > 0)
+                                day to point.kg else null
+                        }.distinctBy { it.first }.sortedBy { it.first }
+                        val chartSteps = sports.daily.mapNotNull { entry ->
+                            val day = runCatching { LocalDate.parse(entry.date) }.getOrNull()
+                            val count = entry.steps
+                            if (day != null && day in chartStart..today.minusDays(1) && count != null && count >= 0)
+                                day to count.toDouble() else null
+                        }.distinctBy { it.first }
+                        val chartMarks = contextEntries.keys.mapNotNull { key ->
+                            runCatching { LocalDate.parse(key) }.getOrNull()?.takeIf { it in chartStart..today.minusDays(1) }
+                        }
+                        val weightColor = MaterialTheme.colorScheme.primary
+                        val stepsColor = MaterialTheme.colorScheme.tertiary
+                        val markColor = MaterialTheme.colorScheme.error
+                        val gridColor = MaterialTheme.colorScheme.outlineVariant
+                        val minKg = chartWeights.minOfOrNull { it.second } ?: 0.0
+                        val kgRange = ((chartWeights.maxOfOrNull { it.second } ?: minKg) - minKg).coerceAtLeast(0.5)
+                        val maxSteps = (chartSteps.maxOfOrNull { it.second } ?: 1.0).coerceAtLeast(1.0)
+                        var chartDay by rememberSaveable { mutableIntStateOf(27) }
+                        if (chartWeights.isEmpty() && chartSteps.isEmpty() && chartMarks.isEmpty()) {
+                            Text("Brak danych do wykresu. Dodaj ważenia, aktywność lub oznaczenia.")
+                        } else {
+                            Canvas(Modifier.fillMaxWidth().height(210.dp).testTag("deficit_combined_chart")
+                                .semantics { contentDescription = "Wykres z 28 dni: linia wagi, słupki kroków i punkty oznaczeń. Osobne skale." }
+                                .pointerInput(today) { detectTapGestures { tap ->
+                                    chartDay = ((tap.x / size.width.coerceAtLeast(1)) * 27f).toInt().coerceIn(0, 27)
+                                } }) {
+                                fun xpos(day: LocalDate) = java.time.temporal.ChronoUnit.DAYS.between(chartStart, day).toFloat() / 27f * size.width
+                                drawLine(gridColor, Offset(0f, size.height * .60f), Offset(size.width, size.height * .60f), 1.dp.toPx())
+                                val locations = chartWeights.map { (day, kg) ->
+                                    Offset(xpos(day), (size.height * (.55 - .48 * ((kg - minKg) / kgRange))).toFloat())
+                                }
+                                locations.zipWithNext().forEach { (a, b) -> drawLine(weightColor, a, b, 2.dp.toPx()) }
+                                locations.forEach { drawCircle(weightColor, 3.dp.toPx(), it) }
+                                chartSteps.forEach { (day, steps) ->
+                                    val x = xpos(day)
+                                    drawLine(stepsColor, Offset(x, size.height * .90f),
+                                        Offset(x, size.height * (.90f - .25f * (steps / maxSteps).toFloat())),
+                                        (size.width / 45f).coerceAtLeast(2f))
+                                }
+                                chartMarks.forEach { day -> drawCircle(markColor, 3.5.dp.toPx(), Offset(xpos(day), size.height * .97f)) }
+                                val cursor = xpos(chartStart.plusDays(chartDay.toLong()))
+                                drawLine(gridColor, Offset(cursor, 0f), Offset(cursor, size.height), 1.dp.toPx())
+                            }
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(chartStart.toString(), style = MaterialTheme.typography.labelSmall)
+                                Text(today.minusDays(1).toString(), style = MaterialTheme.typography.labelSmall)
+                            }
+                            val selectedDay = chartStart.plusDays(chartDay.toLong())
+                            val selectedWeight = chartWeights.find { it.first == selectedDay }?.second
+                            val selectedSteps = chartSteps.find { it.first == selectedDay }?.second
+                            Text("Dzień: " + selectedDay + " • waga: " +
+                                (selectedWeight?.let { String.format(java.util.Locale.getDefault(), "%.2f kg", it) } ?: "brak") +
+                                " • kroki: " + (selectedSteps?.toLong()?.toString() ?: "brak"),
+                                style = MaterialTheme.typography.bodySmall)
+                            val selectedMarks = contextEntries[selectedDay.toString()].orEmpty()
+                            if (selectedMarks.isNotEmpty()) Text("Oznaczenia: " +
+                                selectedMarks.mapNotNull { DeficitContextStore.options()[it] }.joinToString(", "),
+                                style = MaterialTheme.typography.bodySmall)
+                            Text("Linia: kg • słupki: kroki • punkty: oznaczenia. Dotknij wykresu, aby wybrać dzień. Skale niezależne; brak dowodu przyczynowości.",
+                                style = MaterialTheme.typography.bodySmall)
+                        }
                         Text(check.explanation, style = MaterialTheme.typography.bodySmall)
                         Text("Zatwierdzone dni: ${check.approvedDays}/${check.periodDays} • ważenia: ${check.weightReadings}")
                         check.averageCalories?.let {
