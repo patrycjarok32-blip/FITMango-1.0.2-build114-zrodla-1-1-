@@ -1237,3 +1237,146 @@ private fun MangoHalfGauge(
             textAlign = TextAlign.Center, lineHeight = 12.sp)
     }
 }
+
+/** Home 3.0 is a presentation-only layer; all writes still use the existing ViewModel. */
+@Composable
+private fun Home3Dashboard(
+    calories: Int, calorieGoal: Int, protein: Int, proteinGoal: Int,
+    fat: Int, fatGoal: Int, carbs: Int, carbsGoal: Int,
+    nutritionPartial: Boolean, water: Int, steps: Long?, trainingMinutes: Int,
+    plannedSessions: Int, today: String,
+    onMeal: () -> Unit, onSport: () -> Unit, onAi: () -> Unit,
+    onProgress: () -> Unit, onRecipes: () -> Unit, onMeasurements: () -> Unit,
+    onScan: () -> Unit, onAddWater: () -> Unit, onClassic: () -> Unit,
+    onSettings: () -> Unit, settingsExpanded: Boolean, onNutritionFix: () -> Unit
+) {
+    var showWater by rememberSaveable { mutableStateOf(true) }
+    var showActivity by rememberSaveable { mutableStateOf(true) }
+    var showMacros by rememberSaveable { mutableStateOf(true) }
+    var showAi by rememberSaveable { mutableStateOf(true) }
+    var showMascot by rememberSaveable { mutableStateOf(true) }
+    var showNextMeal by rememberSaveable { mutableStateOf(true) }
+    var showProgress by rememberSaveable { mutableStateOf(false) }
+    var showCreatine by rememberSaveable { mutableStateOf(false) }
+    var showMore by rememberSaveable { mutableStateOf(false) }
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text("Mój dzień", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Text(today, style = MaterialTheme.typography.bodySmall)
+        }
+        TextButton(onClick = onSettings, modifier = Modifier.testTag("home3_customize")) {
+            Text("⚙ Dostosuj")
+        }
+    }
+    if (settingsExpanded) {
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Widoczne na pulpicie", style = MaterialTheme.typography.titleMedium)
+                @Composable fun option(label: String, checked: Boolean, change: (Boolean) -> Unit) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        androidx.compose.material3.Checkbox(checked = checked, onCheckedChange = change)
+                        Text(label)
+                    }
+                }
+                option("Makroskładniki", showMacros) { showMacros = it }
+                option("Woda", showWater) { showWater = it }
+                option("Aktywność", showActivity) { showActivity = it }
+                option("Następny posiłek", showNextMeal) { showNextMeal = it }
+                option("Mango AI", showAi) { showAi = it }
+                option("Postępy", showProgress) { showProgress = it }
+                option("Maskotka", showMascot) { showMascot = it }
+                option("Kreatyna — szczegóły", showCreatine) { showCreatine = it }
+                TextButton(onClick = onClassic) { Text("Otwórz pełny pulpit i ustawienia") }
+            }
+        }
+    }
+    Card(Modifier.fillMaxWidth().testTag("home3_calorie_summary"),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("Dzisiejszy bilans", style = MaterialTheme.typography.titleMedium)
+            Text("${(calorieGoal - calories).coerceAtLeast(0)} kcal pozostało",
+                style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            androidx.compose.material3.LinearProgressIndicator(
+                progress = { (calories.toFloat() / calorieGoal.coerceAtLeast(1)).coerceIn(0f, 1f) },
+                modifier = Modifier.fillMaxWidth())
+            Text("$calories / $calorieGoal kcal", style = MaterialTheme.typography.bodySmall)
+            if (nutritionPartial) {
+                TextButton(onClick = onNutritionFix) {
+                    Text("Niepełne dane odżywcze — sprawdź posiłki")
+                }
+            }
+            if (showMacros) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("B: $protein/$proteinGoal g", style = MaterialTheme.typography.labelSmall)
+                    Text("T: $fat/$fatGoal g", style = MaterialTheme.typography.labelSmall)
+                    Text("W: $carbs/$carbsGoal g", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            Button(onClick = onMeal, modifier = Modifier.fillMaxWidth().testTag("home3_add_meal")) {
+                Text("＋ Dodaj posiłek")
+            }
+        }
+    }
+    if (showWater || showActivity) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (showWater) Card(Modifier.weight(1f)) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("💧 Woda", fontWeight = FontWeight.Bold)
+                    Text("$water ml")
+                    Text("Cel: 2500 ml", style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = onAddWater, modifier = Modifier.testTag("home3_add_water")) {
+                        Text("＋250 ml")
+                    }
+                }
+            }
+            if (showActivity) Card(Modifier.weight(1f)) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("🏃 Aktywność", fontWeight = FontWeight.Bold)
+                    Text("${steps?.toString() ?: "Brak"} kroków", style = MaterialTheme.typography.bodyMedium)
+                    Text("$trainingMinutes min sesji", style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = onSport) { Text("Trening →") }
+                }
+            }
+        }
+    }
+    if (showNextMeal) Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("Twój następny krok", style = MaterialTheme.typography.titleMedium)
+            Text(if (plannedSessions > 0) "Zaplanowane sesje: $plannedSessions. Sprawdź plan treningowy."
+                else "Sprawdź kolejny posiłek w jadłospisie.", style = MaterialTheme.typography.bodySmall)
+            TextButton(onClick = if (plannedSessions > 0) onSport else onMeal) {
+                Text(if (plannedSessions > 0) "Otwórz trening" else "Otwórz jadłospis")
+            }
+        }
+    }
+    if (showAi) Card(Modifier.fillMaxWidth()) {
+        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("🥭 Mango AI", fontWeight = FontWeight.Bold)
+                Text("Posiłki, trening i regeneracja w jednym miejscu",
+                    style = MaterialTheme.typography.bodySmall)
+            }
+            TextButton(onClick = onAi) { Text("Zapytaj →") }
+        }
+    }
+    if (showProgress) OutlinedButton(onClick = onProgress, modifier = Modifier.fillMaxWidth()) {
+        Text("📈 Waga i postępy")
+    }
+    if (showMascot) Text("🥭 Małe kroki każdego dnia się liczą.",
+        style = MaterialTheme.typography.bodySmall)
+    if (showCreatine) TextButton(onClick = onClassic) {
+        Text("Kreatyna i szczegółowy dziennik →")
+    }
+    TextButton(onClick = { showMore = !showMore }, modifier = Modifier.fillMaxWidth()
+        .testTag("home3_more_actions")) {
+        Text(if (showMore) "Ukryj dodatkowe funkcje ▲" else "Więcej funkcji ▼")
+    }
+    if (showMore) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = onRecipes) { Text("Przepisy") }
+            TextButton(onClick = onScan) { Text("Skaner") }
+            TextButton(onClick = onMeasurements) { Text("Pomiary") }
+        }
+        TextButton(onClick = onClassic) { Text("Pełny pulpit • kopie, ustawienia i historia") }
+    }
+}
