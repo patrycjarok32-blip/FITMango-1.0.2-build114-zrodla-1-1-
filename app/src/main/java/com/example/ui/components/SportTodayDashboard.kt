@@ -14,7 +14,7 @@ import java.util.Locale
 /** Navigation-only dashboard; all existing sports and challenge stores remain untouched. */
 @Composable
 fun SportTodayDashboard(today: LocalDate, data: SportsData,
-    workouts: List<WorkoutSession>,
+    workouts: List<WorkoutSession>, resolvedSteps: Long?,
     onStart: () -> Unit, onPlan: () -> Unit, onRecovery: () -> Unit, onHistory: () -> Unit) {
     val plans = data.plans.filter { it.date == today.toString() }
     val plan = plans.firstOrNull { !it.rest } ?: plans.firstOrNull()
@@ -23,12 +23,11 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
     val recordedMinutes = ActivityRecoverySupport.dayMinutes(data, today)
     val active = workouts.firstOrNull { it.ended == 0L }
     val completed = workouts.count { it.ended > 0L }
-    val todaySteps = data.daily.firstOrNull { it.date == today.toString() }?.steps
     MangoCard(Modifier.fillMaxWidth().testTag("sport5_today_dashboard")) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Trening • Dzisiaj", style = MaterialTheme.typography.titleLarge)
             Text(today.format(DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("pl"))))
-            Text("Kroki: ${todaySteps?.toString() ?: "brak odczytu"} • Ruch: $recordedMinutes min",
+            Text("Kroki: ${resolvedSteps?.toString() ?: "brak odczytu"} • Sesje: $recordedMinutes min",
                 style = MaterialTheme.typography.titleMedium)
             Text("Sesje z planu: $finishedPlans / ${plans.count { !it.rest }}",
                 style = MaterialTheme.typography.bodySmall)
