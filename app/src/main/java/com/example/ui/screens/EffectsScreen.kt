@@ -228,6 +228,51 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
         }
         val r = report
         if (r != null) {
+            item {
+                val check = remember(days, confirmations, r.points, today) {
+                    DeficitMonitorSupport.evaluate(days, confirmations, r.points, today)
+                }
+                var expanded by rememberSaveable { mutableStateOf(false) }
+                Card(modifier = Modifier.fillMaxWidth().testTag("deficit_monitor"),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                    Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Czy mój deficyt działa? • 28 dni", style = MaterialTheme.typography.titleMedium)
+                        Text(check.status, style = MaterialTheme.typography.titleLarge)
+                        Text(check.explanation, style = MaterialTheme.typography.bodySmall)
+                        Text("Zatwierdzone dni: ${check.approvedDays}/${check.periodDays} • ważenia: ${check.weightReadings}")
+                        check.averageCalories?.let {
+                            Text("Średnie spożycie: " + String.format(java.util.Locale.getDefault(), "%.0f kcal/dzień", it))
+                        }
+                        check.averageGoalDifference?.let {
+                            Text("Średnia różnica od zapisanych celów: " +
+                                String.format(java.util.Locale.getDefault(), "%+.0f kcal/dzień", it))
+                        }
+                        check.weightChange?.let {
+                            Text("Zmiana średniej z pierwszego i ostatniego tygodnia: " +
+                                String.format(java.util.Locale.getDefault(), "%+.2f kg", it))
+                        }
+                        TextButton(onClick = { expanded = !expanded },
+                            modifier = Modifier.testTag("deficit_monitor_details")) {
+                            Text(if (expanded) "Ukryj szczegóły" else "Dlaczego? Co sprawdzić?")
+                        }
+                        if (expanded) {
+                            if (check.weekdayCalories != null && check.weekendCalories != null) {
+                                Text("Dni robocze: " + String.format(java.util.Locale.getDefault(), "%.0f", check.weekdayCalories) +
+                                    " kcal • weekendy: " + String.format(java.util.Locale.getDefault(), "%.0f", check.weekendCalories) + " kcal")
+                                Text("Średnie wyłącznie z zatwierdzonych dni; liczba dni może się różnić.",
+                                    style = MaterialTheme.typography.bodySmall)
+                            }
+                            Text("Możliwe wyjaśnienia i ograniczenia", style = MaterialTheme.typography.titleSmall)
+                            check.observations.forEach { Text("• $it", style = MaterialTheme.typography.bodySmall) }
+                            Text("Na kolejne 7–14 dni", style = MaterialTheme.typography.titleSmall)
+                            check.actions.forEach { Text("• $it", style = MaterialTheme.typography.bodySmall) }
+                            Text("Sen, aktywność, cykl, retencja wody i trening mogą zmieniać wagę. Nie są tu dowodem przyczyny.",
+                                style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
+
             item { MangoCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Bilans wagi • $range dni", style = MaterialTheme.typography.titleMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
