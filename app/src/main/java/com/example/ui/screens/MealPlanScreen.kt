@@ -1136,8 +1136,6 @@ private fun MealCategorySection(
                 }
                 Box(Modifier.width(2.dp).height(12.dp).background(LeafGreen.copy(alpha = .35f)))
             }
-            Text(categorySpec.canonicalName, color = LeafGreen, fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold)
             if (meals.isNotEmpty() && meals.all { MealPlannerSupport.completedInCurrentWeek(it) })
                 Text("Zjedzone", color = LeafGreen, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
@@ -1168,13 +1166,13 @@ private fun MealCategorySection(
 
             if (meals.isNotEmpty()) {
                 TextButton(onClick = { expanded = !expanded }, modifier = Modifier.testTag("meal_slot_expand_" + categorySpec.canonicalName)) {
-                    Text(if (expanded) "▲ Zwiń" else "▼ " + meals.size + " pos.")
+                    Text(if (expanded) "Zwiń" else "Pokaż (" + meals.size + ")")
                 }
             }
             Box {
                 TextButton(onClick = { addMenuOpen = true }, modifier = Modifier.testTag("add_to_slot_${categorySpec.canonicalName}")) {
                     Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Text(if (meals.isEmpty()) "Dodaj" else "+", color = JuicyOrange)
+                    Text("Dodaj", color = JuicyOrange)
                 }
                 DropdownMenu(expanded = addMenuOpen, onDismissRequest = { addMenuOpen = false }) {
                     DropdownMenuItem(text = { Text("Dodaj przepis") }, onClick = { addMenuOpen = false; onAddRecipeToSlot() })
@@ -1442,7 +1440,7 @@ internal fun PlannedMealDetailCard(
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             if (isUpcoming) Surface(color = mealCategoryColor(meal.mealType).copy(alpha = .13f), shape = RoundedCornerShape(10.dp)) {
-                Text("Najbliższy posiłek", Modifier.padding(horizontal = 10.dp, vertical = 6.dp).testTag("upcoming_meal_${meal.id}"),
+                Text("Następny", Modifier.padding(horizontal = 10.dp, vertical = 6.dp).testTag("upcoming_meal_${meal.id}"),
                     color = mealCategoryColor(meal.mealType), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
             }
             // Top status row
