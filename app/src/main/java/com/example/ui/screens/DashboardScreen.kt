@@ -218,7 +218,9 @@ fun DashboardScreen(
                     fat = consumedFat, fatGoal = targetFat,
                     carbs = consumedCarbs, carbsGoal = targetCarbs,
                     nutritionPartial = incompleteNutrition,
-                    water = waterTotal, steps = activity.steps,
+                    water = waterTotal,
+                    waterGoal = habitDays.find { it.date == currentDate }?.waterGoal ?: 2500,
+                    steps = activity.steps,
                     trainingMinutes = com.example.viewmodel.ActivityRecoverySupport.dayMinutes(sportsData, today),
                     plannedSessions = sportsData.plans.count { it.date == currentDate && !it.rest },
                     today = today.toString(),
@@ -1243,7 +1245,7 @@ private fun MangoHalfGauge(
 private fun Home3Dashboard(
     calories: Int, calorieGoal: Int, protein: Int, proteinGoal: Int,
     fat: Int, fatGoal: Int, carbs: Int, carbsGoal: Int,
-    nutritionPartial: Boolean, water: Int, steps: Long?, trainingMinutes: Long,
+    nutritionPartial: Boolean, water: Int, waterGoal: Int, steps: Long?, trainingMinutes: Long,
     plannedSessions: Int, today: String,
     onMeal: () -> Unit, onSport: () -> Unit, onAi: () -> Unit,
     onProgress: () -> Unit, onRecipes: () -> Unit, onMeasurements: () -> Unit,
@@ -1323,9 +1325,9 @@ private fun Home3Dashboard(
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("💧 Woda", fontWeight = FontWeight.Bold)
                     Text("$water ml")
-                    Text("Cel: 2000 ml", style = MaterialTheme.typography.bodySmall)
+                    Text("Cel: $waterGoal ml", style = MaterialTheme.typography.bodySmall)
                     androidx.compose.material3.LinearProgressIndicator(
-                        progress = { (water.toFloat() / 2000f).coerceIn(0f, 1f) },
+                        progress = { (water.toFloat() / waterGoal.coerceAtLeast(1)).coerceIn(0f, 1f) },
                         modifier = Modifier.fillMaxWidth())
                     TextButton(onClick = onAddWater, modifier = Modifier.testTag("home3_add_water")) {
                         Text("＋250 ml")
