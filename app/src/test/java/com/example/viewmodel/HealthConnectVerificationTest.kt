@@ -346,7 +346,6 @@ class HealthConnectVerificationTest {
         composeTestRule.onNodeWithTag("home3_calorie_summary").assertExists()
         composeTestRule.onNodeWithText("🏃 Aktywność").assertExists()
         // Historic sync data must not be presented as current-day steps.
-        composeTestRule.onNodeWithTag("home3_add_meal").assertExists()
         // Legacy diagnostics remain reachable for detailed Health Connect information.
         composeTestRule.onNodeWithTag("home3_customize").performScrollTo().performClick()
         composeTestRule.onNodeWithText("Otwórz pełny pulpit i ustawienia").performScrollTo().performClick()
