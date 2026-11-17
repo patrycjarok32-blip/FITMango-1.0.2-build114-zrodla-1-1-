@@ -234,6 +234,8 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                 }
                 var expanded by rememberSaveable { mutableStateOf(false) }
                 var contextRevision by remember { mutableIntStateOf(0) }
+                var contextDayOffset by rememberSaveable { mutableIntStateOf(0) }
+                val contextDay = today.minusDays(contextDayOffset.toLong())
                 val contextEntries = remember(contextRevision) { DeficitContextStore.read(context) }
                 Card(modifier = Modifier.fillMaxWidth().testTag("deficit_monitor"),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
@@ -293,11 +295,21 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                                     style = MaterialTheme.typography.bodySmall)
                             }
                             Text("Czynniki wpływające na wagę • opcjonalne oznaczenia", style = MaterialTheme.typography.titleSmall)
-                            Text("Dzisiaj: " + today + ". Oznaczenia są kontekstem, nie diagnozą.", style = MaterialTheme.typography.bodySmall)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                TextButton(onClick = { contextDayOffset = (contextDayOffset + 1).coerceAtMost(27) }) {
+                                    Text("◀ Poprzedni")
+                                }
+                                Text(contextDay.toString(), style = MaterialTheme.typography.bodySmall)
+                                TextButton(onClick = { contextDayOffset = (contextDayOffset - 1).coerceAtLeast(0) }) {
+                                    Text("Następny ▶")
+                                }
+                            }
+                            Text("Wybierz dzień i zaznacz obserwowane czynniki. To nie diagnoza.",
+                                style = MaterialTheme.typography.bodySmall)
                             DeficitContextStore.options().forEach { (code, label) ->
-                                FilterChip(selected = code in contextEntries[today.toString()].orEmpty(),
+                                FilterChip(selected = code in contextEntries[contextDay.toString()].orEmpty(),
                                     onClick = {
-                                        if (DeficitContextStore.toggle(context, today, code)) contextRevision++
+                                        if (DeficitContextStore.toggle(context, contextDay, code)) contextRevision++
                                     }, label = { Text(label) })
                             }
                             contextEntries.toSortedMap().filterKeys { date ->
