@@ -1323,7 +1323,10 @@ private fun Home3Dashboard(
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("💧 Woda", fontWeight = FontWeight.Bold)
                     Text("$water ml")
-                    Text("Cel: 2500 ml", style = MaterialTheme.typography.bodySmall)
+                    Text("Cel: 2000 ml", style = MaterialTheme.typography.bodySmall)
+                    androidx.compose.material3.LinearProgressIndicator(
+                        progress = { (water.toFloat() / 2000f).coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth())
                     TextButton(onClick = onAddWater, modifier = Modifier.testTag("home3_add_water")) {
                         Text("＋250 ml")
                     }
@@ -1332,7 +1335,8 @@ private fun Home3Dashboard(
             if (showActivity) Card(Modifier.weight(1f)) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("🏃 Aktywność", fontWeight = FontWeight.Bold)
-                    Text("${steps?.toString() ?: "Brak"} kroków", style = MaterialTheme.typography.bodyMedium)
+                    Text(if (steps == null) "Brak aktualnych danych kroków" else "$steps kroków dziś",
+                        style = MaterialTheme.typography.bodyMedium)
                     Text("$trainingMinutes min sesji", style = MaterialTheme.typography.bodySmall)
                     TextButton(onClick = onSport) { Text("Trening →") }
                 }
@@ -1341,7 +1345,8 @@ private fun Home3Dashboard(
     }
     if (showNextMeal) Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Twój następny krok", style = MaterialTheme.typography.titleMedium)
+            Text(if (plannedSessions > 0) "Dzisiejszy trening" else "Kolejny posiłek",
+                style = MaterialTheme.typography.titleMedium)
             Text(if (plannedSessions > 0) "Zaplanowane sesje: $plannedSessions. Sprawdź plan treningowy."
                 else "Sprawdź kolejny posiłek w jadłospisie.", style = MaterialTheme.typography.bodySmall)
             TextButton(onClick = if (plannedSessions > 0) onSport else onMeal) {
