@@ -370,7 +370,13 @@ fun DashboardScreen(
                 }
             }
             if (smartSuggestions.isNotEmpty()) {
-                Card(
+                var showSmartSuggestions by rememberSaveable { mutableStateOf(false) }
+                TextButton(onClick = { showSmartSuggestions = !showSmartSuggestions },
+                    modifier = Modifier.fillMaxWidth().testTag("dashboard_suggestions_toggle")) {
+                    Text(if (showSmartSuggestions) "Ukryj dodatkowe wskazówki Mango ▲"
+                        else "Więcej wskazówek Mango ▼")
+                }
+                if (showSmartSuggestions) Card(
                     modifier = Modifier.fillMaxWidth().testTag("smart_daily_recommendations"),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
                 ) {
@@ -544,7 +550,8 @@ fun DashboardScreen(
                     }
                 }
             }
-            Row(
+            var showDashboardExtras by rememberSaveable { mutableStateOf(false) }
+            if (showDashboardExtras) Row(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_quick_navigation"),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
@@ -555,7 +562,6 @@ fun DashboardScreen(
                 FreshMangoDestinationCard("Postępy", "Wyniki", Icons.Default.TrendingUp,
                     Modifier.weight(1f), onNavigateToEffects)
             }
-            var showDashboardExtras by rememberSaveable { mutableStateOf(false) }
             TextButton(onClick = { showDashboardExtras = !showDashboardExtras },
                 modifier = Modifier.fillMaxWidth().testTag("dashboard_more_toggle")) {
                 Text(if (showDashboardExtras) "▲ Ukryj dodatkowe skróty" else "▼ Więcej skrótów i import przepisów")
@@ -582,7 +588,7 @@ fun DashboardScreen(
                 }
             }
             }
-            Card(
+            if (showDashboardExtras) Card(
                 modifier = Modifier.fillMaxWidth().testTag("fresh_mango_meal_preview")
                     .clickable(onClick = onNavigateToMealPlan),
                 shape = RoundedCornerShape(24.dp),
@@ -905,7 +911,12 @@ fun DashboardScreen(
                                     color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.testTag("dashboard_sleep_text")
                                 )
-                                if (sleepReadMessage.isNotBlank() && activity.sleepLabel == "Sen (ostatni odczyt)") Text(sleepReadMessage, style = MaterialTheme.typography.bodySmall)
+                                if (activity.sleepLabel == "Sen (ostatni odczyt)") {
+                                    Text("Ostatni dostępny odczyt — może być z wcześniejszego dnia",
+                                        style = MaterialTheme.typography.labelSmall)
+                                    if (sleepReadMessage.isNotBlank())
+                                        Text(sleepReadMessage, style = MaterialTheme.typography.bodySmall)
+                                }
                             }
                         }
                     }
