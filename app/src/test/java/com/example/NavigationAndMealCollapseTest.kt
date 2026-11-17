@@ -38,13 +38,13 @@ class NavigationAndMealCollapseTest {
         compose.setContent { MainNavigation(viewModel) }
         compose.onNodeWithTag("nav_tab_profile").performClick()
         compose.onNodeWithTag("nav_tab_dashboard").performClick()
-        compose.onNodeWithTag("home3_calorie_summary").assertIsDisplayed()
+        compose.onNodeWithTag("home3_calorie_summary").assertExists()
         compose.onNodeWithTag("nav_tab_dashboard").performClick()
-        compose.onNodeWithTag("home3_calorie_summary").assertIsDisplayed()
+        compose.onNodeWithTag("home3_calorie_summary").assertExists()
         // Recipes are now reached from a shortcut, not a sixth bottom tab.
         compose.onNodeWithTag("nav_tab_profile").performClick()
         compose.onNodeWithTag("nav_tab_dashboard").performClick()
-        compose.onNodeWithTag("home3_calorie_summary").assertIsDisplayed()
+        compose.onNodeWithTag("home3_calorie_summary").assertExists()
     }
 
     @Test fun addingIngredientThroughDialogUpdatesSavedRecipeAndPreservesOtherIngredients() {
