@@ -488,7 +488,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             }
         }
         if (activitySection == "today") item {
-            SportTodayDashboard(today, data, workouts,
+            SportTodayDashboard(today, data, workouts, current.steps,
                 onStart = { activitySection = "training"; trainingPage = "session" },
                 onPlan = { activitySection = "training"; trainingPage = "plan" },
                 onRecovery = { activitySection = "recovery" },
