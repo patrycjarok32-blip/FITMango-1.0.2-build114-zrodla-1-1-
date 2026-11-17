@@ -60,6 +60,37 @@ object ProgressEvidence {
             .put("daty_wagi_poczatek", JSONArray(first.map { it.date })).put("daty_wagi_koniec", JSONArray(last.map { it.date }))
             .put("zmiana_miedzy_srednimi_kg_nie_tluszcz", numeric(change)).put("obserwacja", observation)
             .put("ograniczenia", JSONArray(reasons))
+        // Goal barriers are evidence-backed hypotheses, never medical diagnoses or proof of causality.
+        val daysWithGoal = approved.filter { it.targetCalories > 0 }
+        val aboveGoal = daysWithGoal.count { it.calories > it.targetCalories }
+        val averageGoalDifference = daysWithGoal.takeIf { it.isNotEmpty() }
+            ?.map { (it.calories - it.targetCalories).toDouble() }?.average()
+        val goalBarriers = mutableListOf<String>()
+        if (approved.size < length)
+            goalBarriers += "Niepełny zakres obserwacji: ${approved.size}/$length dni ma zatwierdzony dziennik. Pozostałych dni nie traktuj jako dni bez jedzenia."
+        if (aboveGoal > 0)
+            goalBarriers += "W $aboveGoal z ${daysWithGoal.size} dni z zapisanym celem spożycie przekroczyło cel kalorii. To możliwy czynnik, nie dowód przyczyny zmiany masy."
+        if (estimated > 0)
+            goalBarriers += "W $estimated zatwierdzonych dniach wartości odżywcze są szacunkowe, co ogranicza dokładność porównania."
+        if (!comparable)
+            goalBarriers += "Brak wystarczająco porównywalnych pomiarów masy na początku i końcu okresu; nie można potwierdzić zastoju."
+        if (goalBarriers.isEmpty())
+            goalBarriers += "W dostępnych danych nie wykryto jednoznacznego wyjaśnienia. Sam zapis kalorii nie dowodzi przyczyny wyniku."
+        val nextChecks = mutableListOf<String>()
+        if (approved.size < length) nextChecks += "Przez kolejne 7 dni potwierdzaj pełny dziennik każdego zakończonego dnia."
+        if (aboveGoal > 0) nextChecks += "Przez 7 dni sprawdzaj odchylenia od celu zapisanego dla każdego dnia, bez automatycznej zmiany kaloryczności."
+        if (!comparable) nextChecks += "Zapisuj wagę w porównywalnych warunkach i porównuj średnie, nie pojedyncze odczyty."
+        if (nextChecks.isEmpty()) nextChecks += "Kontynuuj obserwację przez 7–14 dni; porównaj zatwierdzone zapisy i średnie pomiary."
+        facts.put("dlaczego_cel_nieosiagniety", JSONObject()
+            .put("charakter", "Hipotezy na podstawie zapisów, nie potwierdzone przyczyny")
+            .put("zatwierdzone_dni", approved.size).put("dni_okresu", length)
+            .put("dni_z_celem_kcal", daysWithGoal.size)
+            .put("dni_ponad_zapisanym_celem_kcal", aboveGoal)
+            .put("srednie_odchylenie_od_zapisanego_celu_kcal", numeric(averageGoalDifference))
+            .put("porownywalny_trend_wagi", comparable)
+            .put("mozliwe_przeszkody", JSONArray(goalBarriers))
+            .put("co_sprawdzic_w_7_14_dni", JSONArray(nextChecks.take(3)))
+            .put("zastrzezenie", "Brak zapisu nie oznacza zera. Nie stawiaj diagnozy, nie przypisuj związku przyczynowego i nie zmieniaj automatycznie celu kalorii."))
         val nutrition = NutritionWeekSupport.review(profile, days, confirmations, from, cutoff, today)
         facts.put("kompletnosc_zapisu", JSONObject()
             .put("pelne_potwierdzone_dni", approved.size)
@@ -189,6 +220,11 @@ object ProgressEvidence {
                 else append("Brak zatwierdzonych dni jedzenia do obliczenia średnich.\n")
                 if (confirmed.size < lengthDays) append("Uwaga: brak zatwierdzenia w części dni ogranicza reprezentatywność średnich; nie traktuj tych dni jako zero.\n")
             } else append("Potrzeba co najmniej dwóch pomiarów masy w różnych dniach.\n")
+            append("\n\nDlaczego nie osiągam celu? — możliwe wyjaśnienia\n")
+            goalBarriers.forEach { append("• $it\n") }
+            append("Co sprawdzić w kolejnych 7–14 dniach:\n")
+            nextChecks.take(3).forEach { append("• $it\n") }
+            append("To obserwacje, nie pewna przyczyna braku postępów.\n")
             append("\n\nOcena jadłospisu — obliczenia lokalne\n")
             append("Pełny zapis potwierdzony przez Ciebie: ${approved.size}/$length dni.\n")
             nutrition.strengths.forEach { append("• $it\n") }
