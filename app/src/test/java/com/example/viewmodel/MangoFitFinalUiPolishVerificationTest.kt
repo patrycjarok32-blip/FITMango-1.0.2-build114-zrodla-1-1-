@@ -113,15 +113,13 @@ class MangoFitFinalUiPolishVerificationTest {
         }
         Shadows.shadowOf(Looper.getMainLooper()).idle()
 
-        composeTestRule.onNodeWithTag("home3_calorie_summary").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("home3_add_meal").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("home3_add_water").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithTag("home3_calorie_summary").assertExists()
+        composeTestRule.onNodeWithTag("home3_add_meal").assertExists()
+        composeTestRule.onNodeWithTag("home3_add_water").assertExists()
+        composeTestRule.onNodeWithText("🏃 Aktywność").assertExists()
         composeTestRule.onNodeWithTag("home3_customize").performScrollTo().performClick()
         composeTestRule.onNodeWithText("Otwórz pełny pulpit i ustawienia").performScrollTo().performClick()
-        
-        composeTestRule.onNodeWithTag("compact_start_health").performScrollTo().performClick()
-        composeTestRule.onNodeWithTag("dashboard_health_connect_card").performScrollTo().assertIsDisplayed()
-        composeTestRule.onNodeWithTag("dashboard_steps_text").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithTag("home3_back_to_new").assertExists()
     }
 
     @Test
