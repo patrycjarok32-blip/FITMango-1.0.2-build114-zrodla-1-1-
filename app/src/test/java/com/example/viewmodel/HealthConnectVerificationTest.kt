@@ -341,13 +341,13 @@ class HealthConnectVerificationTest {
         }
         Shadows.shadowOf(Looper.getMainLooper()).idle()
 
+        // Home 3.0 shows live steps and workout activity without opening legacy cards.
+        composeTestRule.onNodeWithTag("home3_calorie_summary").assertExists()
+        composeTestRule.onNodeWithText("🏃 Aktywność").assertExists()
+        composeTestRule.onNodeWithText("8450 kroków").assertExists()
+        // Legacy diagnostics remain reachable for detailed Health Connect information.
         composeTestRule.onNodeWithTag("home3_customize").performScrollTo().performClick()
         composeTestRule.onNodeWithText("Otwórz pełny pulpit i ustawienia").performScrollTo().performClick()
-        composeTestRule.onNodeWithTag("compact_start_health").performScrollTo().performClick()
-        composeTestRule.onNodeWithTag("dashboard_health_connect_card").performScrollTo().assertIsDisplayed()
-        composeTestRule.onNodeWithTag("dashboard_steps_text").performScrollTo().assertIsDisplayed()
-        composeTestRule.onNodeWithTag("dashboard_calories_burned_text").performScrollTo().assertIsDisplayed()
-        composeTestRule.onNodeWithTag("dashboard_weight_text").performScrollTo().assertIsDisplayed()
-        composeTestRule.onNodeWithTag("dashboard_sleep_text").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithTag("home3_back_to_new").assertExists()
     }
 }
