@@ -113,8 +113,11 @@ class MangoFitFinalUiPolishVerificationTest {
         }
         Shadows.shadowOf(Looper.getMainLooper()).idle()
 
-        composeTestRule.onNodeWithTag("animated_fitmango_logo").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("animated_fitmango_logo").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("home3_calorie_summary").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("home3_add_meal").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("home3_add_water").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("home3_customize").performScrollTo().performClick()
+        composeTestRule.onNodeWithText("Otwórz pełny pulpit i ustawienia").performScrollTo().performClick()
         
         composeTestRule.onNodeWithTag("compact_start_health").performScrollTo().performClick()
         composeTestRule.onNodeWithTag("dashboard_health_connect_card").performScrollTo().assertIsDisplayed()
