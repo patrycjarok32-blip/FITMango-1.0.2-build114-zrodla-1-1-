@@ -233,6 +233,8 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                     DeficitMonitorSupport.evaluate(days, confirmations, r.points, today)
                 }
                 var expanded by rememberSaveable { mutableStateOf(false) }
+                var contextRevision by remember { mutableIntStateOf(0) }
+                val contextEntries = remember(contextRevision) { DeficitContextStore.read(context) }
                 Card(modifier = Modifier.fillMaxWidth().testTag("deficit_monitor"),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                     Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -266,7 +268,45 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                             check.observations.forEach { Text("• $it", style = MaterialTheme.typography.bodySmall) }
                             Text("Na kolejne 7–14 dni", style = MaterialTheme.typography.titleSmall)
                             check.actions.forEach { Text("• $it", style = MaterialTheme.typography.bodySmall) }
-                            Text("Sen, aktywność, cykl, retencja wody i trening mogą zmieniać wagę. Nie są tu dowodem przyczyny.",
+                            val startDate = today.minusDays(28)
+                            val activityDays = sports.daily.filter { entry ->
+                                runCatching { LocalDate.parse(entry.date) in startDate..today.minusDays(1) }.getOrDefault(false)
+                            }
+                            val steps = activityDays.mapNotNull { it.steps?.takeIf { value -> value >= 0 } }
+                            val sleeps = activityDays.mapNotNull { it.sleepMinutes?.takeIf { value -> value > 0 } }
+                            Text("Aktywność i sen • kontekst", style = MaterialTheme.typography.titleSmall)
+                            Text(steps.takeIf { it.isNotEmpty() }?.let {
+                                "Kroki: średnio " + String.format(java.util.Locale.getDefault(), "%.0f", it.average()) + " z " + it.size + " dni"
+                            } ?: "Kroki: brak danych", style = MaterialTheme.typography.bodySmall)
+                            Text(sleeps.takeIf { it.isNotEmpty() }?.let {
+                                "Sen: średnio " + String.format(java.util.Locale.getDefault(), "%.1f h", it.average() / 60.0) + " z " + it.size + " dni"
+                            } ?: "Sen: brak danych", style = MaterialTheme.typography.bodySmall)
+                            Text("Średnie wagi w kolejnych tygodniach", style = MaterialTheme.typography.titleSmall)
+                            (3 downTo 0).forEach { offset ->
+                                val end = today.minusDays(1 + offset * 7L)
+                                val begin = end.minusDays(6)
+                                val weightsInWeek = r.points.filter { point ->
+                                    runCatching { LocalDate.parse(point.date) in begin..end }.getOrDefault(false)
+                                }
+                                if (weightsInWeek.size >= 2) Text(
+                                    begin.toString() + " – " + end.toString() + ": " + String.format(java.util.Locale.getDefault(), "%.2f kg", weightsInWeek.map { it.kg }.average()),
+                                    style = MaterialTheme.typography.bodySmall)
+                            }
+                            Text("Czynniki wpływające na wagę • opcjonalne oznaczenia", style = MaterialTheme.typography.titleSmall)
+                            Text("Dzisiaj: " + today + ". Oznaczenia są kontekstem, nie diagnozą.", style = MaterialTheme.typography.bodySmall)
+                            DeficitContextStore.options().forEach { (code, label) ->
+                                FilterChip(selected = code in contextEntries[today.toString()].orEmpty(),
+                                    onClick = {
+                                        if (DeficitContextStore.toggle(context, today, code)) contextRevision++
+                                    }, label = { Text(label) })
+                            }
+                            contextEntries.toSortedMap().filterKeys { date ->
+                                runCatching { LocalDate.parse(date) in startDate..today }.getOrDefault(false)
+                            }.forEach { (day, codes) ->
+                                Text(day + ": " + codes.mapNotNull { DeficitContextStore.options()[it] }.joinToString(", "),
+                                    style = MaterialTheme.typography.bodySmall)
+                            }
+                            Text("Odczyty i oznaczenia nie dowodzą przyczynowości; nie zmieniają automatycznie celu kalorii.",
                                 style = MaterialTheme.typography.bodySmall)
                         }
                     }
