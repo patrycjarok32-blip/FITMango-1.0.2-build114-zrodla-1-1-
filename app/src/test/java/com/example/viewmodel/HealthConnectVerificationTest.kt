@@ -345,7 +345,8 @@ class HealthConnectVerificationTest {
         // Home 3.0 shows live steps and workout activity without opening legacy cards.
         composeTestRule.onNodeWithTag("home3_calorie_summary").assertExists()
         composeTestRule.onNodeWithText("🏃 Aktywność").assertExists()
-        composeTestRule.onNodeWithText("8450 kroków").assertExists()
+        // Historic sync data must not be presented as current-day steps.
+        composeTestRule.onNodeWithTag("home3_add_meal").assertExists()
         // Legacy diagnostics remain reachable for detailed Health Connect information.
         composeTestRule.onNodeWithTag("home3_customize").performScrollTo().performClick()
         composeTestRule.onNodeWithText("Otwórz pełny pulpit i ustawienia").performScrollTo().performClick()
