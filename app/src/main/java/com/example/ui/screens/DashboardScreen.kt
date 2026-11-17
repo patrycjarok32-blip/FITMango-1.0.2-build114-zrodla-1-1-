@@ -912,7 +912,7 @@ fun DashboardScreen(
                                     modifier = Modifier.testTag("dashboard_sleep_text")
                                 )
                                 if (activity.sleepLabel == "Sen (ostatni odczyt)") {
-                                    Text("Ostatni dostępny odczyt — może być z wcześniejszego dnia",
+                                    Text(sleepReadMessage.takeIf { it.startsWith("Sen z ") }?.substringBefore(" •") ?: "Data pomiaru snu niedostępna",
                                         style = MaterialTheme.typography.labelSmall)
                                     if (sleepReadMessage.isNotBlank())
                                         Text(sleepReadMessage, style = MaterialTheme.typography.bodySmall)
