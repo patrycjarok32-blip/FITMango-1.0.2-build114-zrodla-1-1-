@@ -1243,7 +1243,7 @@ private fun MangoHalfGauge(
 private fun Home3Dashboard(
     calories: Int, calorieGoal: Int, protein: Int, proteinGoal: Int,
     fat: Int, fatGoal: Int, carbs: Int, carbsGoal: Int,
-    nutritionPartial: Boolean, water: Int, steps: Long?, trainingMinutes: Int,
+    nutritionPartial: Boolean, water: Int, steps: Long?, trainingMinutes: Long,
     plannedSessions: Int, today: String,
     onMeal: () -> Unit, onSport: () -> Unit, onAi: () -> Unit,
     onProgress: () -> Unit, onRecipes: () -> Unit, onMeasurements: () -> Unit,
