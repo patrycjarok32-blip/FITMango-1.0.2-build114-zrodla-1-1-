@@ -2,7 +2,6 @@ package com.example.viewmodel
 
 import java.time.LocalDate
 import java.time.DayOfWeek
-import java.util.Locale
 
 /** Observational deficit check. Never estimates lost fat or changes calorie targets. */
 data class DeficitCheck(
@@ -48,8 +47,8 @@ object DeficitMonitorSupport {
         val sufficientFood = approved.size >= (window * 0.8).toInt()
         val status = when {
             !comparable || !sufficientFood -> "Za mało danych"
-            delta!! < -0.2 -> "Trend zgodny z deficytem"
-            delta > 0.2 -> "Trend masy rosnący"
+            delta != null && delta < -0.2 -> "Trend zgodny z deficytem"
+            delta != null && delta > 0.2 -> "Trend masy rosnący"
             else -> "Trend masy stabilny"
         }
         val observations = mutableListOf<String>()
