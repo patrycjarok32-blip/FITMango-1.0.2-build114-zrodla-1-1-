@@ -73,11 +73,11 @@ fun StudioHydrationCards(viewModel: DietaViewModel, details: @Composable () -> U
                         MangoSectionArt(com.example.R.drawable.fit_icon_creatine, MangoYellow, size = 30.dp)
                         Text("Kreatyna", color = MangoYellow, style = MaterialTheme.typography.titleMedium)
                     }
-                    Text(if (taken) "Przyjęto 5 g ✓" else "Dzisiaj: 0 / 5 g", style = MaterialTheme.typography.bodyMedium)
+                    Text(if (taken) "Dzisiaj: 5 / 5 g ✓" else "Dzisiaj: 0 / 5 g", style = MaterialTheme.typography.bodyMedium)
                     Text(if (taken) "Zapisano dzisiaj" else "Twój dzienny wpis", style = MaterialTheme.typography.bodySmall, color = GoldAccent)
                     TextButton(onClick = { viewModel.markCreatineTaken { error = it } }, enabled = !taken,
                         modifier = Modifier.testTag("studio_creatine_quick"), contentPadding = PaddingValues(0.dp)) {
-                        Text(if (taken) "Zaliczona ✓" else "Przyjęto 5 g")
+                        Text(if (taken) "Zapisano ✓" else "Oznacz jako przyjęte")
                     }
                 }
             }
