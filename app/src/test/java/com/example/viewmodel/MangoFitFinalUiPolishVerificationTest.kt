@@ -115,7 +115,7 @@ class MangoFitFinalUiPolishVerificationTest {
 
         composeTestRule.onNodeWithTag("home3_calorie_summary").assertIsDisplayed()
         composeTestRule.onNodeWithTag("home3_add_meal").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("home3_add_water").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("home3_add_water").performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithTag("home3_customize").performScrollTo().performClick()
         composeTestRule.onNodeWithText("Otwórz pełny pulpit i ustawienia").performScrollTo().performClick()
         
