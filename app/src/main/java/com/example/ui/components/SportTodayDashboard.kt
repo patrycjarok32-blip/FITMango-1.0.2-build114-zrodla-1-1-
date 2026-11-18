@@ -43,7 +43,11 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
                             val minutes = java.time.Duration.between(
                                 java.time.Instant.parse(session.start),
                                 java.time.Instant.parse(session.end)).toMinutes()
-                            Text("• ${session.title} — $minutes min",
+                            val kcal = session.activeKcal?.takeIf { it.isFinite() && it >= 0 }
+                            val activityLabel = SportSessionPresentation.label(session)
+                            Text("• $activityLabel — $minutes min • " +
+                                (kcal?.let { String.format(Locale.getDefault(), "%.0f kcal aktywnych", it) }
+                                    ?: "kcal: brak odczytu"),
                                 style = MaterialTheme.typography.bodySmall)
                         }
                         Text("Aktywność zaliczona do ruchu, ale nie oznacza automatycznie wykonania innego treningu z planu.",
