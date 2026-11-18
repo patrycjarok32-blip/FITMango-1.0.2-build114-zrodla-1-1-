@@ -46,7 +46,7 @@ class SportsControlsUiTest {
         compose.setContent {
             MojaDietaAiTheme {
                 com.example.ui.components.SportTodayDashboard(
-                    today, data, emptyList(), {}, {}, {}, {}
+                    today, data, emptyList(), null, {}, {}, {}, {}
                 )
             }
         }
