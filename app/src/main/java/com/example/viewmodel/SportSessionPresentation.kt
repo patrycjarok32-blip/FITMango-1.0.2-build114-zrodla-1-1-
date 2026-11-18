@@ -15,11 +15,6 @@ object SportSessionPresentation {
             ExerciseSessionRecord.EXERCISE_TYPE_BIKING -> "Rower"
             ExerciseSessionRecord.EXERCISE_TYPE_STRENGTH_TRAINING -> "Trening siłowy"
             ExerciseSessionRecord.EXERCISE_TYPE_YOGA -> "Joga"
-            ExerciseSessionRecord.EXERCISE_TYPE_SWIMMING_OPEN_WATER,
-            ExerciseSessionRecord.EXERCISE_TYPE_SWIMMING_POOL -> "Pływanie"
-            ExerciseSessionRecord.EXERCISE_TYPE_HIKING -> "Wędrówka"
-            ExerciseSessionRecord.EXERCISE_TYPE_ELLIPTICAL -> "Orbitrek"
-            ExerciseSessionRecord.EXERCISE_TYPE_PILATES -> "Pilates"
             else -> "Trening (typ nieznany)"
         }
     }
