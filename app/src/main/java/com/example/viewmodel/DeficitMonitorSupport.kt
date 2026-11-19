@@ -6,6 +6,9 @@ import java.time.DayOfWeek
 /** Observational deficit check. Never estimates lost fat or changes calorie targets. */
 data class DeficitCheck(
     val status: String,
+    val weightStatus: String,
+    val foodStatus: String,
+    val confidence: String,
     val explanation: String,
     val approvedDays: Int,
     val periodDays: Int,
@@ -17,13 +20,16 @@ data class DeficitCheck(
     val weightEndAverage: Double?,
     val weightChange: Double?,
     val weightReadings: Int,
+    val averageWatchActiveKcal: Double?,
+    val watchSessions: Int,
     val observations: List<String>,
     val actions: List<String>
 )
 
 object DeficitMonitorSupport {
     fun evaluate(days: List<HabitDay>, confirmations: List<EnergyConfirmation>,
-        points: List<WeightPoint>, today: LocalDate, window: Int = 28): DeficitCheck {
+        points: List<WeightPoint>, today: LocalDate, window: Int = 28,
+        sessions: List<SportSession> = emptyList()): DeficitCheck {
         require(window in 14..90)
         val end = today.minusDays(1)
         val start = end.minusDays(window.toLong() - 1)
@@ -45,11 +51,21 @@ object DeficitMonitorSupport {
         val b = last.takeIf { comparable }?.map { it.kg }?.average()
         val delta = if (a != null && b != null) b - a else null
         val sufficientFood = approved.size >= (window * 0.8).toInt()
+        val weightStatus = when {
+            delta == null -> "Trend wagi: niewystarczające dane"
+            delta < -0.2 -> "Trend wagi: spadkowy"
+            delta > 0.2 -> "Trend wagi: wzrostowy"
+            else -> "Trend wagi: stabilny"
+        }
+        val foodStatus = if (sufficientFood) "Dziennik: wystarczająco kompletny"
+            else "Dziennik: niepełny (" + approved.size + "/" + window + " dni)"
+        val confidence = if (comparable && sufficientFood) "Wyższa"
+            else if (comparable || sufficientFood) "Ograniczona" else "Niska"
         val status = when {
-            !comparable || !sufficientFood -> "Za mało danych"
-            delta != null && delta < -0.2 -> "Trend zgodny z deficytem"
-            delta != null && delta > 0.2 -> "Trend masy rosnący"
-            else -> "Trend masy stabilny"
+            delta == null -> "Za mało danych do oceny trendu wagi"
+            delta < -0.2 -> "Waga spada • bilans wymaga weryfikacji"
+            delta > 0.2 -> "Waga rośnie • sprawdź trend i zapisy"
+            else -> "Waga stabilna • sprawdź trend i zapisy"
         }
         val observations = mutableListOf<String>()
         if (!sufficientFood) observations += "Zatwierdzono ${approved.size}/$window dni; brakujących dni nie uznajemy za zero kcal."
@@ -69,10 +85,16 @@ object DeficitMonitorSupport {
         fun mean(items: List<HabitDay>) = items.takeIf { it.isNotEmpty() }?.map { it.calories.toDouble() }?.average()
         val weekend = approved.filter { LocalDate.parse(it.date).dayOfWeek in setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY) }
         val weekday = approved - weekend.toSet()
-        return DeficitCheck(status,
+        val watch = ActivityRecoverySupport.unique(sessions).filter { session ->
+            runCatching { java.time.Instant.parse(session.start).atZone(java.time.ZoneId.systemDefault())
+                .toLocalDate() in start..end }.getOrDefault(false)
+        }
+        val kcal = watch.mapNotNull { it.activeKcal?.takeIf { value -> value.isFinite() && value >= 0 } }
+        return DeficitCheck(status, weightStatus, foodStatus, confidence,
             "To ocena trendu, a nie pomiar rzeczywistego wydatku energetycznego. Kalorie zegarka nie są dodawane do limitu.",
             approved.size, window, mean(approved),
             goals.takeIf { it.isNotEmpty() }?.map { (it.calories - it.targetCalories).toDouble() }?.average(),
-            mean(weekend), mean(weekday), a, b, delta, weights.size, observations, actions.take(3))
+            mean(weekend), mean(weekday), a, b, delta, weights.size,
+            kcal.takeIf { it.isNotEmpty() }?.average(), watch.size, observations, actions.take(3))
     }
 }
