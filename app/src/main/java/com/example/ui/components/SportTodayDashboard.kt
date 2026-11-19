@@ -45,10 +45,12 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
                                 java.time.Instant.parse(session.end)).toMinutes()
                             val kcal = session.activeKcal?.takeIf { it.isFinite() && it >= 0 }
                             val activityLabel = SportSessionPresentation.label(session)
+                            val sourceLabel = if (session.id.startsWith("manual|")) "wpis ręczny" else session.source.ifBlank { "źródło nieznane" }
                             Text("• $activityLabel — $minutes min • " +
                                 (kcal?.let { String.format(Locale.getDefault(), "%.0f kcal aktywnych", it) }
                                     ?: "kcal: brak odczytu"),
                                 style = MaterialTheme.typography.bodySmall)
+                            Text("Źródło: $sourceLabel", style = MaterialTheme.typography.labelSmall)
                         }
                         Text("Aktywność zaliczona do ruchu, ale nie oznacza automatycznie wykonania innego treningu z planu.",
                             style = MaterialTheme.typography.bodySmall)
