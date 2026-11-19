@@ -229,8 +229,8 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
         val r = report
         if (r != null) {
             item {
-                val check = remember(days, confirmations, r.points, today) {
-                    DeficitMonitorSupport.evaluate(days, confirmations, r.points, today)
+                val check = remember(days, confirmations, r.points, today, sports.history) {
+                    DeficitMonitorSupport.evaluate(days, confirmations, r.points, today, sessions = sports.history)
                 }
                 var expanded by rememberSaveable { mutableStateOf(false) }
                 var contextRevision by remember { mutableIntStateOf(0) }
@@ -242,6 +242,15 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                     Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Czy mój deficyt działa? • 28 dni", style = MaterialTheme.typography.titleMedium)
                         Text(check.status, style = MaterialTheme.typography.titleLarge)
+                        Text(check.weightStatus, style = MaterialTheme.typography.bodyMedium)
+                        Text(check.foodStatus, style = MaterialTheme.typography.bodyMedium)
+                        Text("Wiarygodność oceny: " + check.confidence, style = MaterialTheme.typography.bodySmall)
+                        Text("Kalorie aktywne z zegarka: " + (check.averageWatchActiveKcal?.let {
+                            String.format(java.util.Locale.getDefault(), "%.0f kcal na sesję z odczytem", it)
+                        } ?: "brak danych") + " • sesje: " + check.watchSessions,
+                            style = MaterialTheme.typography.bodySmall)
+                        Text("To kontekst aktywności, nie całkowity wydatek energetyczny. Nie dodawaj drugi raz do TDEE.",
+                            style = MaterialTheme.typography.bodySmall)
                         Text("Wspólny wykres: waga • kroki • oznaczenia", style = MaterialTheme.typography.titleSmall)
                         val chartStart = today.minusDays(28)
                         val chartWeights = r.points.mapNotNull { point ->
