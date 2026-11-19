@@ -181,16 +181,9 @@ class HealthConnectManager(private val context: Context) : HealthConnectReader {
                         dataOriginFilter = setOf(record.metadata.dataOrigin)))[DistanceRecord.DISTANCE_TOTAL]?.inKilometers }
                     catch (e: CancellationException) { throw e } catch (_: Exception) { null }
                 }
-                val type = when (record.exerciseType) {
-                    ExerciseSessionRecord.EXERCISE_TYPE_WALKING -> "Spacer"
-                    ExerciseSessionRecord.EXERCISE_TYPE_RUNNING -> "Bieganie"
-                    ExerciseSessionRecord.EXERCISE_TYPE_BIKING -> "Rower"
-                    ExerciseSessionRecord.EXERCISE_TYPE_STRENGTH_TRAINING -> "Trening siłowy"
-                    ExerciseSessionRecord.EXERCISE_TYPE_YOGA -> "Joga"
-                    else -> "Trening"
-                }
+                val type = com.example.viewmodel.SportSessionPresentation.typeLabel(record.exerciseType) ?: "Trening"
                 com.example.viewmodel.SportSession(record.metadata.dataOrigin.packageName + "|" + record.metadata.id.ifBlank { "${record.startTime}|${record.endTime}|${record.exerciseType}" },
-                    record.title?.takeIf { it.isNotBlank() && !it.trim().equals("Trening", ignoreCase = true) && !it.trim().equals("Workout", ignoreCase = true) }?.take(200) ?: type, record.startTime.toString(), record.endTime.toString(),
+                    record.title?.takeIf { !com.example.viewmodel.SportSessionPresentation.isGenericTitle(it) }?.take(200) ?: type, record.startTime.toString(), record.endTime.toString(),
                     record.metadata.dataOrigin.packageName, active()?.takeIf { it.isFinite() && it >= 0 }, distance()?.takeIf { it.isFinite() && it >= 0 }, record.exerciseType)
             }
     }
