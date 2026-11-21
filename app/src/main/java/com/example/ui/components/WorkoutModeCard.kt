@@ -209,7 +209,13 @@ fun WorkoutModeCard(
                 }
 
             } else Text("Wybierz dzień z zaplanowanymi ćwiczeniami, aby rozpocząć trening.")
+            var showLastWorkout by rememberSaveable { mutableStateOf(false) }
             if (last != null) {
+                TextButton(onClick = { showLastWorkout = !showLastWorkout }) {
+                    Text(if (showLastWorkout) "Ukryj ostatni trening" else "Zobacz ostatni trening: ${last.title}")
+                }
+            }
+            if (last != null && showLastWorkout) {
                 val done = last.entries.filter { it.done }
                 val volume = done.sumOf { it.kg * it.reps }
                 Text("🏆 Ostatni trening: ${last.title}", style = MaterialTheme.typography.titleMedium)
