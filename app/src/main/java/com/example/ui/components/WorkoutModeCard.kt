@@ -93,84 +93,6 @@ fun WorkoutModeCard(
             Text("💾 Sesja zapisana automatycznie. Po ponownym uruchomieniu aplikacji możesz ją wznowić.",
                 style = MaterialTheme.typography.bodySmall)
         }
-        val weekly = remember(workouts) {
-            MangoWorkoutInsights.weeklyReport(java.time.LocalDate.now(), workouts)
-        }
-        var showWeekly by rememberSaveable { mutableStateOf(false) }
-        TextButton(onClick = { showWeekly = !showWeekly }) {
-            Text(if (showWeekly) "Ukryj raport tygodniowy" else "📊 Raport tygodniowy Premium")
-        }
-        if (showWeekly) {
-            Card {
-                Column(Modifier.fillMaxWidth().padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Porównanie tygodni • tylko zapisane treningi siłowe", style = MaterialTheme.typography.titleMedium)
-                    Text("Pierwsza liczba: bieżący tydzień (może być niepełny). Druga: poprzedni, zakończony tydzień.", style = MaterialTheme.typography.bodySmall)
-                    Text("Ukończone treningi: ${weekly.sessions} teraz • ${weekly.previousSessions} poprzednio")
-                    Text("Wykonane serie w tym tygodniu: ${weekly.sets}")
-                    Text("Czas siłowy: ${weekly.minutes} min teraz • ${weekly.previousMinutes} min poprzednio")
-                    Text("Rekordy ciężaru: ${weekly.records}")
-                    weekly.averageEffort?.let { Text("Średni wysiłek: ${"%.1f".format(it)}/10") }
-                    Text("Objętość siłowa: ${"%.0f".format(weekly.volumeKg)} kg teraz • ${"%.0f".format(weekly.previousVolumeKg)} kg poprzednio")
-                    val maxVolume = maxOf(weekly.volumeKg, weekly.previousVolumeKg, 1.0)
-                    Text("Bieżący tydzień", style = MaterialTheme.typography.labelSmall)
-                    LinearProgressIndicator(progress = {
-                        (weekly.volumeKg / maxVolume).toFloat().coerceIn(0f, 1f)
-                    }, modifier = Modifier.fillMaxWidth())
-                    Text("Poprzedni tydzień", style = MaterialTheme.typography.labelSmall)
-                    LinearProgressIndicator(progress = {
-                        (weekly.previousVolumeKg / maxVolume).toFloat().coerceIn(0f, 1f)
-                    }, modifier = Modifier.fillMaxWidth())
-                    Text("Różnica dotychczas: ${"%+.0f".format(weekly.volumeKg - weekly.previousVolumeKg)} kg")
-                    Text("Bieganie, spacery i inne aktywności z Health Connect nie są doliczane do objętości ciężarów.", style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
-        val lastCompleted = workouts.filter { it.ended > 0L }.maxByOrNull { it.ended }
-        if (lastCompleted != null) {
-            TextButton(onClick = { recoveryNote = !recoveryNote }) {
-                Text("😴 Mango Trener regeneracji")
-            }
-            if (recoveryNote) {
-                val elapsedHours = ((System.currentTimeMillis() - lastCompleted.ended)
-                    .coerceAtLeast(0L) / 3600000L)
-                val today = java.time.LocalDate.now().toString()
-                val sleep = sports.daily.filter { it.date <= today }.maxByOrNull { it.date }
-                    ?.takeIf { it.date >= java.time.LocalDate.now().minusDays(1).toString() }
-                    ?.sleepMinutes
-                val check = sports.recovery.filter { it.date <= today }.maxByOrNull { it.date }
-                    ?.takeIf { it.date >= java.time.LocalDate.now().minusDays(2).toString() }
-                if (sleep != null) Text("💤 Ostatni sen: ${sleep / 60} h ${sleep % 60} min")
-                if (check != null) Text("Energia: ${check.energy}/5 • zmęczenie: ${check.fatigue}/5")
-                val lowRecovery = (sleep != null && sleep < 360) ||
-                    (check != null && (check.fatigue >= 4 || check.energy <= 2))
-                Text(when {
-                    lowRecovery -> "Regeneracja może być niewystarczająca. Rozważ lżejszy trening."
-                    lastCompleted.effort >= 8 && elapsedHours < 24 ->
-                        "Ostatni trening był intensywny. Rozważ odpoczynek lub mniejsze obciążenie."
-                    elapsedHours < 12 ->
-                        "Od ostatniej sesji minęło mniej niż 12 godzin. Oceń zmęczenie."
-                    else -> "Dostosuj obciążenie do samopoczucia i techniki."
-                }, style = MaterialTheme.typography.bodySmall)
-                if (sleep == null && check == null)
-                    Text("Brak aktualnych danych snu lub samopoczucia. Sprawdź synchronizację Health Connect.",
-                        style = MaterialTheme.typography.bodySmall)
-            }
-        }
-        OutlinedButton(
-            onClick = {
-                val spotify = Intent(Intent.ACTION_VIEW, Uri.parse("https://open.spotify.com/"))
-                    .setPackage("com.spotify.music")
-                val opened = runCatching { context.startActivity(spotify) }.isSuccess
-                if (!opened) runCatching {
-                    context.startActivity(Intent(Intent.ACTION_VIEW,
-                        Uri.parse("https://open.spotify.com/")))
-                }
-            }, modifier = Modifier.fillMaxWidth()
-        ) { Text("🎵 Otwórz Spotify — muzyka podczas treningu") }
-        Text("Uruchom muzykę w Spotify i wróć do FITMango. Licznik i serie działają bez odtwarzania dźwięku. " +
-            "Film YouTube może przejąć dźwięk — zamknij film, by kontynuować Spotify.",
-            style = MaterialTheme.typography.bodySmall)
         val finishedSets = active?.entries?.count { it.done } ?: 0
         MangoGuide(
             message = when {
@@ -182,6 +104,91 @@ fun WorkoutModeCard(
             },
             event = finishedSets, size = 32.dp)
         Text(if (active == null) "🏋️ Wybierz trening" else "🏋️ Trening w toku", style = MaterialTheme.typography.titleLarge)
+        var showExtras by rememberSaveable { mutableStateOf(false) }
+        TextButton(onClick = { showExtras = !showExtras }) {
+            Text(if (showExtras) "Ukryj dodatkowe opcje" else "Więcej: raport, regeneracja i muzyka")
+        }
+        if (showExtras) {
+            val weekly = remember(workouts) {
+                MangoWorkoutInsights.weeklyReport(java.time.LocalDate.now(), workouts)
+            }
+            var showWeekly by rememberSaveable { mutableStateOf(false) }
+            TextButton(onClick = { showWeekly = !showWeekly }) {
+                Text(if (showWeekly) "Ukryj raport tygodniowy" else "📊 Raport tygodniowy Premium")
+            }
+            if (showWeekly) {
+                Card {
+                    Column(Modifier.fillMaxWidth().padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Porównanie tygodni • tylko zapisane treningi siłowe", style = MaterialTheme.typography.titleMedium)
+                        Text("Pierwsza liczba: bieżący tydzień (może być niepełny). Druga: poprzedni, zakończony tydzień.", style = MaterialTheme.typography.bodySmall)
+                        Text("Ukończone treningi: ${weekly.sessions} teraz • ${weekly.previousSessions} poprzednio")
+                        Text("Wykonane serie w tym tygodniu: ${weekly.sets}")
+                        Text("Czas siłowy: ${weekly.minutes} min teraz • ${weekly.previousMinutes} min poprzednio")
+                        Text("Rekordy ciężaru: ${weekly.records}")
+                        weekly.averageEffort?.let { Text("Średni wysiłek: ${"%.1f".format(it)}/10") }
+                        Text("Objętość siłowa: ${"%.0f".format(weekly.volumeKg)} kg teraz • ${"%.0f".format(weekly.previousVolumeKg)} kg poprzednio")
+                        val maxVolume = maxOf(weekly.volumeKg, weekly.previousVolumeKg, 1.0)
+                        Text("Bieżący tydzień", style = MaterialTheme.typography.labelSmall)
+                        LinearProgressIndicator(progress = {
+                            (weekly.volumeKg / maxVolume).toFloat().coerceIn(0f, 1f)
+                        }, modifier = Modifier.fillMaxWidth())
+                        Text("Poprzedni tydzień", style = MaterialTheme.typography.labelSmall)
+                        LinearProgressIndicator(progress = {
+                            (weekly.previousVolumeKg / maxVolume).toFloat().coerceIn(0f, 1f)
+                        }, modifier = Modifier.fillMaxWidth())
+                        Text("Różnica dotychczas: ${"%+.0f".format(weekly.volumeKg - weekly.previousVolumeKg)} kg")
+                        Text("Bieganie, spacery i inne aktywności z Health Connect nie są doliczane do objętości ciężarów.", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+            val lastCompleted = workouts.filter { it.ended > 0L }.maxByOrNull { it.ended }
+            if (lastCompleted != null) {
+                TextButton(onClick = { recoveryNote = !recoveryNote }) {
+                    Text("😴 Mango Trener regeneracji")
+                }
+                if (recoveryNote) {
+                    val elapsedHours = ((System.currentTimeMillis() - lastCompleted.ended)
+                        .coerceAtLeast(0L) / 3600000L)
+                    val today = java.time.LocalDate.now().toString()
+                    val sleep = sports.daily.filter { it.date <= today }.maxByOrNull { it.date }
+                        ?.takeIf { it.date >= java.time.LocalDate.now().minusDays(1).toString() }
+                        ?.sleepMinutes
+                    val check = sports.recovery.filter { it.date <= today }.maxByOrNull { it.date }
+                        ?.takeIf { it.date >= java.time.LocalDate.now().minusDays(2).toString() }
+                    if (sleep != null) Text("💤 Ostatni sen: ${sleep / 60} h ${sleep % 60} min")
+                    if (check != null) Text("Energia: ${check.energy}/5 • zmęczenie: ${check.fatigue}/5")
+                    val lowRecovery = (sleep != null && sleep < 360) ||
+                        (check != null && (check.fatigue >= 4 || check.energy <= 2))
+                    Text(when {
+                        lowRecovery -> "Regeneracja może być niewystarczająca. Rozważ lżejszy trening."
+                        lastCompleted.effort >= 8 && elapsedHours < 24 ->
+                            "Ostatni trening był intensywny. Rozważ odpoczynek lub mniejsze obciążenie."
+                        elapsedHours < 12 ->
+                            "Od ostatniej sesji minęło mniej niż 12 godzin. Oceń zmęczenie."
+                        else -> "Dostosuj obciążenie do samopoczucia i techniki."
+                    }, style = MaterialTheme.typography.bodySmall)
+                    if (sleep == null && check == null)
+                        Text("Brak aktualnych danych snu lub samopoczucia. Sprawdź synchronizację Health Connect.",
+                            style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            OutlinedButton(
+                onClick = {
+                    val spotify = Intent(Intent.ACTION_VIEW, Uri.parse("https://open.spotify.com/"))
+                        .setPackage("com.spotify.music")
+                    val opened = runCatching { context.startActivity(spotify) }.isSuccess
+                    if (!opened) runCatching {
+                        context.startActivity(Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://open.spotify.com/")))
+                    }
+                }, modifier = Modifier.fillMaxWidth()
+            ) { Text("🎵 Otwórz Spotify — muzyka podczas treningu") }
+            Text("Uruchom muzykę w Spotify i wróć do FITMango. Licznik i serie działają bez odtwarzania dźwięku. " +
+                "Film YouTube może przejąć dźwięk — zamknij film, by kontynuować Spotify.",
+                style = MaterialTheme.typography.bodySmall)
+        }
+
         if (active == null) {
             if (plan != null && !plan.rest && plan.exercises.isNotEmpty()) {
                 Text("${plan.title} • ${plan.exercises.size} ćwiczeń • ${plan.exercises.sumOf { it.sets }} serii")
