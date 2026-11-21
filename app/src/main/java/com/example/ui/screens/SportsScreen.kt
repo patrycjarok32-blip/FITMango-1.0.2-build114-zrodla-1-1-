@@ -138,6 +138,26 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             permissionError?.let { Text(it, color = ErrorInk) }
 
         }
+        item {
+            androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(vertical = 4.dp)) {
+                listOf(
+                    Triple("today", "🏠", "Dzisiaj"),
+                    Triple("training", "🗓️", "Plan"),
+                    Triple("session", "▶", "Trening"),
+                    Triple("progress", "📈", "Postępy")
+                ).forEach { (key, emoji, label) ->
+                    item {
+                        FilterChip(
+                            selected = activitySection == (if (key == "session") "training" else key) && (key != "session" || trainingPage == "session") && (key != "training" || trainingPage == "plan"),
+                            onClick = { activitySection = if (key == "session") "training" else key; if (key == "training" || key == "session") trainingPage = if (key == "session") "session" else "plan"; showExtras = false; showReport = false },
+                            label = { Text("$emoji  $label") },
+                            modifier = Modifier.testTag("sport_${key}_tab")
+                        )
+                    }
+                }
+            }
+        }
         if (activitySection == "progress") item {
             val monthStart = today.withDayOfMonth(1)
             val monthSessions = workouts.filter { it.ended > 0L &&
@@ -477,26 +497,6 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         if (activitySection == "today") item { FreshMangoSportHeader() }
         if (activitySection == "today") item {
             FreshMangoSportRings(progress.first, progress.second, week.activeDays, ActivityRecoverySupport.unit(data))
-        }
-        item {
-            androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(vertical = 4.dp)) {
-                listOf(
-                    Triple("today", "🏠", "Dzisiaj"),
-                    Triple("training", "🗓️", "Plan"),
-                    Triple("session", "▶", "Trening"),
-                    Triple("progress", "📈", "Postępy")
-                ).forEach { (key, emoji, label) ->
-                    item {
-                        FilterChip(
-                            selected = activitySection == (if (key == "session") "training" else key) && (key != "session" || trainingPage == "session") && (key != "training" || trainingPage == "plan"),
-                            onClick = { activitySection = if (key == "session") "training" else key; if (key == "training" || key == "session") trainingPage = if (key == "session") "session" else "plan"; showExtras = false; showReport = false },
-                            label = { Text("$emoji  $label") },
-                            modifier = Modifier.testTag("sport_${key}_tab")
-                        )
-                    }
-                }
-            }
         }
         if (activitySection == "today") item {
             SportTodayDashboard(today, data, workouts, current.steps,
@@ -1136,17 +1136,17 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 onRemoveSet = { id -> sports.removeSet(id) { saved() } },
                 onUpdateExercises = { date, exercises -> sports.updatePlannedExercises(date, exercises) { saved() } })
         }
-        if (activitySection == "today") item {
+        if (activitySection == "progress") item {
             var showWeeklyReview by rememberSaveable { mutableStateOf(false) }
             TextButton(onClick = { showWeeklyReview = !showWeeklyReview }) {
                 Text(if (showWeeklyReview) "Zwiń podsumowanie tygodnia" else "📊 Pokaż podsumowanie tygodnia")
             }
             if (showWeeklyReview) {
-                Text("Wszystkie aktywności z Health Connect i dziennika: ${week.sessions} sesji, " +
+                Text("Bieżący tydzień ${start} – ${start.plusDays(6)} • Health Connect i dziennik (bez duplikatów): ${week.sessions} sesji, " +
                     "${week.activeDays} aktywnych dni, ${week.minutes} min w tym tygodniu.",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.testTag("weekly_all_activities"))
-                Text("Poniższe serie i objętość dotyczą wyłącznie treningów siłowych zapisanych w FITMango.",
+                Text("Statystyki aktywności i treningów siłowych są oddzielne. Serie i objętość poniżej dotyczą tylko FITMango.",
                     style = MaterialTheme.typography.bodySmall)
                 StrengthWeeklyReview(data, today)
             }
