@@ -28,7 +28,7 @@ fun ProductShortcuts(recent: List<SubstituteCandidate>, favorites: List<Substitu
         OutlinedTextField(query, { query = it }, singleLine = true, placeholder = { Text("Szukaj produktu...") }, leadingIcon = { Icon(Icons.Outlined.Search, null) }, modifier = Modifier.fillMaxWidth())
         val products = ProductHistorySupport.unique(if (tab) favorites else recent).filter {
             ProduceSupport.normalize(it.name + " " + it.brand).contains(ProduceSupport.normalize(query.trim())) }
-        for (product in products.take(if (expanded) 30 else 3)) {
+        for (product in products.take(if (expanded) products.size else 3)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 OutlinedButton(enabled = enabled, onClick = { onSelect(product) }, modifier = Modifier.weight(1f)) {
                     Column(Modifier.fillMaxWidth()) {
