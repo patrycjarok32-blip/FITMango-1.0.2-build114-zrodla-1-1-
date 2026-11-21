@@ -104,12 +104,14 @@ fun WorkoutModeCard(
             Card {
                 Column(Modifier.fillMaxWidth().padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Ten tydzień / poprzedni", style = MaterialTheme.typography.titleMedium)
-                    Text("Treningi: ${weekly.sessions} / ${weekly.previousSessions} • serie: ${weekly.sets}")
-                    Text("Czas aktywny: ${weekly.minutes} / ${weekly.previousMinutes} min")
+                    Text("Porównanie tygodni • tylko zapisane treningi siłowe", style = MaterialTheme.typography.titleMedium)
+                    Text("Pierwsza liczba: bieżący tydzień (może być niepełny). Druga: poprzedni, zakończony tydzień.", style = MaterialTheme.typography.bodySmall)
+                    Text("Ukończone treningi: ${weekly.sessions} teraz • ${weekly.previousSessions} poprzednio")
+                    Text("Wykonane serie w tym tygodniu: ${weekly.sets}")
+                    Text("Czas siłowy: ${weekly.minutes} min teraz • ${weekly.previousMinutes} min poprzednio")
                     Text("Rekordy ciężaru: ${weekly.records}")
                     weekly.averageEffort?.let { Text("Średni wysiłek: ${"%.1f".format(it)}/10") }
-                    Text("Objętość: ${"%.0f".format(weekly.volumeKg)} / ${"%.0f".format(weekly.previousVolumeKg)} kg")
+                    Text("Objętość siłowa: ${"%.0f".format(weekly.volumeKg)} kg teraz • ${"%.0f".format(weekly.previousVolumeKg)} kg poprzednio")
                     val maxVolume = maxOf(weekly.volumeKg, weekly.previousVolumeKg, 1.0)
                     Text("Bieżący tydzień", style = MaterialTheme.typography.labelSmall)
                     LinearProgressIndicator(progress = {
@@ -119,7 +121,8 @@ fun WorkoutModeCard(
                     LinearProgressIndicator(progress = {
                         (weekly.previousVolumeKg / maxVolume).toFloat().coerceIn(0f, 1f)
                     }, modifier = Modifier.fillMaxWidth())
-                    Text("Zmiana objętości: ${"%+.0f".format(weekly.volumeKg - weekly.previousVolumeKg)} kg")
+                    Text("Różnica dotychczas: ${"%+.0f".format(weekly.volumeKg - weekly.previousVolumeKg)} kg")
+                    Text("Bieganie, spacery i inne aktywności z Health Connect nie są doliczane do objętości ciężarów.", style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
