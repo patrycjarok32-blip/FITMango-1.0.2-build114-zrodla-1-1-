@@ -915,10 +915,9 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                             }
                         }
                         if (chosen && !plan.rest && linkedRecord == null) {
-                            Button(onClick = { trainingPage = "session" }, enabled = !busy,
-                                modifier = Modifier.fillMaxWidth().testTag("sport_selected_session_start")) {
-                                Text(if (plan.category == "Siłowy") "▶ Przejdź do rozpoczęcia treningu" else "▶ Otwórz sesję")
-                            }
+                            Text(if (plan.category == "Siłowy") "Rozpoczęcie i zapis serii znajdziesz w karcie treningu poniżej."
+                                else "Możesz powiązać aktywność z zegarka lub edytować tę sesję.",
+                                style = MaterialTheme.typography.bodySmall)
                         }
                         if (chosen) {
                             Text(buildString {
