@@ -508,13 +508,14 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
         if (activitySection == "training") item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically) {
-                Text("Kalendarz treningów", style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.weight(1f))
-                TextButton(onClick = { trainingPage = "session"; workoutDate = today.toString() }) {
-                    Text("＋ Dodaj")
-                }
+                Text(if (trainingPage == "plan") "Plan tygodnia" else "Trening • ${workoutDate}",
+                    style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                TextButton(onClick = {
+                    trainingPage = "session"; workoutDate = today.toString(); showAddActivity = true
+                }) { Text("＋ Dodaj sesję") }
             }
-            Text("Wybierz dzień i zarządzaj sesjami. Możesz zaplanować kilka treningów jednego dnia.",
+            Text(if (trainingPage == "plan") "Wybierz dzień, aby zobaczyć lub dodać treningi."
+                else "Wybierz sesję, rozpocznij ją albo powiąż z aktywnością z zegarka.",
                 style = MaterialTheme.typography.bodySmall)
             if (trainingPage == "session") {
                 TextButton(onClick = { trainingPage = "plan" }) { Text("← Wróć do kalendarza") }
@@ -843,8 +844,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                     var selectedSessionKey by rememberSaveable(workoutDate) { mutableStateOf("") }
                     val healthDaySessions = ActivityRecoverySupport.daySessions(
                         data, LocalDate.parse(workoutDate))
-                    Text("Zarejestrowane aktywności (${healthDaySessions.size})",
-                        style = MaterialTheme.typography.bodySmall)
+                    Text("Aktywności z zegarka i dziennika (${healthDaySessions.size})",
+                        style = MaterialTheme.typography.titleSmall)
                     healthDaySessions.forEach { recorded ->
                         Text("✓ ${recorded.title} · " +
                             (if (recorded.source.contains("huawei", ignoreCase = true)) "Zegarek Huawei / Health Connect"
@@ -853,8 +854,9 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                              else "Health Connect"),
                             style = MaterialTheme.typography.bodySmall)
                     }
-                    Text("Jednoznacznie dopasowane biegi są oznaczane jako wykonane. " +
-                        "Pozostałe aktywności można powiązać ręcznie.",
+                    if (healthDaySessions.isEmpty()) Text("Brak zapisanych aktywności na ten dzień. Sprawdź synchronizację Health Connect.",
+                        style = MaterialTheme.typography.bodySmall)
+                    else Text("Aby zaliczyć trening z zegarka do planu, wybierz sesję poniżej i wskaż odpowiednią aktywność.",
                         style = MaterialTheme.typography.bodySmall)
                     Text("Twoje zaplanowane sesje (${dayPlans.size})",
                         style = MaterialTheme.typography.titleMedium)
@@ -910,6 +912,12 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                         "${java.time.Duration.between(Instant.parse(recorded.start), Instant.parse(recorded.end)).toMinutes()} min" +
                                         (recorded.distanceKm?.let { " · ${it} km" } ?: ""))
                                 }
+                            }
+                        }
+                        if (chosen && !plan.rest && linkedRecord == null) {
+                            Button(onClick = { trainingPage = "session" }, enabled = !busy,
+                                modifier = Modifier.fillMaxWidth().testTag("sport_selected_session_start")) {
+                                Text(if (plan.category == "Siłowy") "▶ Przejdź do rozpoczęcia treningu" else "▶ Otwórz sesję")
                             }
                         }
                         if (chosen) {
