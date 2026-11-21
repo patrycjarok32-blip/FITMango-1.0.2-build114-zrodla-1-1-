@@ -88,6 +88,22 @@ class WeeklyEnergyDiary(context: Context, scope: CoroutineScope) {
         val r = root(); r.put("confirmations", JSONArray().apply { rows.forEach { put(JSONObject().put("date", it.date).put("foodFingerprint", it.foodFingerprint).put("burnedKcal", it.burnedKcal).put("source", it.source).put("acceptsPartial", it.acceptsPartial)) } })
         prefs.edit().putString("weeklyEnergy", r.toString()).apply(); _confirmations.value = rows
     }
+    /** Food-only approval does not require Health Connect or a calorie-burn estimate. */
+    @Synchronized
+    fun confirmFood(day: HabitDay, today: LocalDate) {
+        require(LocalDate.parse(day.date) < today && day.meals.isNotEmpty())
+        val rows = (readConfirmations().filter { it.date != day.date } +
+            EnergyConfirmation(day.date, WeeklyEnergySupport.fingerprint(day), 0.0, "food", !day.nutritionComplete))
+            .sortedByDescending { it.date }.take(730)
+        val r = root()
+        r.put("confirmations", JSONArray().apply {
+            rows.forEach { put(JSONObject().put("date", it.date).put("foodFingerprint", it.foodFingerprint)
+                .put("burnedKcal", it.burnedKcal).put("source", it.source)
+                .put("acceptsPartial", it.acceptsPartial)) }
+        })
+        prefs.edit().putString("weeklyEnergy", r.toString()).apply()
+        _confirmations.value = rows
+    }
     @Synchronized
     fun reopen(date: String) {
         val r = root(); r.put("confirmations", JSONArray().apply { readConfirmations().filter { it.date != date }.forEach { put(JSONObject().put("date", it.date).put("foodFingerprint", it.foodFingerprint).put("burnedKcal", it.burnedKcal).put("source", it.source).put("acceptsPartial", it.acceptsPartial)) } })
