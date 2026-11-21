@@ -62,6 +62,7 @@ class UsabilityPreferences(context: Context) {
     private fun rawProducts(key: String) = runCatching { adapter.fromJson(prefs.getString(key, "[]")!!) }.getOrNull().orEmpty()
     private fun products(key: String) = ProductHistorySupport.unique(rawProducts(key))
     fun recent() = products("recent")
+    // Favorites are independent of the 30-item recent-history limit.
     fun favorites() = products("favorites")
     private fun key(p: SubstituteCandidate) = ProductHistorySupport.key(p)
     private fun legacyKey(p: SubstituteCandidate) = p.barcode.ifBlank { p.name.trim().lowercase(java.util.Locale.ROOT) + "|" + p.brand.lowercase(java.util.Locale.ROOT) }
@@ -82,7 +83,9 @@ class UsabilityPreferences(context: Context) {
         for (p in recent + favorites) lastPortion(p)?.let { (q, u) ->
             portions.put(key(p), org.json.JSONObject().put("quantity", q).put("unit", u))
         }
-        prefs.edit().putString("recent", adapter.toJson(recent)).putString("favorites", adapter.toJson(favorites))
+        // Repair recent history without rewriting favorites on every app launch.
+        // A transient decode/normalization problem must not erase saved favorites.
+        prefs.edit().putString("recent", adapter.toJson(recent))
             .putString("last_portions", portions.toString()).apply()
     }
     fun rememberProduct(p: SubstituteCandidate, quantity: Float? = null, unit: String? = null) {
