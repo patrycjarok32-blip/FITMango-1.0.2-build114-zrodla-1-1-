@@ -948,6 +948,7 @@ fun DashboardScreen(
                 },
                 "badges" to {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            com.example.ui.components.DayClosureCard(viewModel)
             HabitsChallengesCard(viewModel)
                     }
                 },
