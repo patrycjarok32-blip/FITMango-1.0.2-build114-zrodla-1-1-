@@ -185,6 +185,9 @@ fun WorkoutModeCard(
         if (active == null) {
             if (plan != null && !plan.rest && plan.exercises.isNotEmpty()) {
                 Text("${plan.title} • ${plan.exercises.size} ćwiczeń • ${plan.exercises.sumOf { it.sets }} serii")
+                Button(onClick = { onStart(plan) }, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+                    Text("▶ Rozpocznij trening")
+                }
                 val expressExercises = remember(plan) {
                     MangoDailyTools.quickWorkout(plan.exercises, 20)
                 }
@@ -197,9 +200,7 @@ fun WorkoutModeCard(
                     Text("Skrócona sesja nie zmienia zapisanego planu.",
                         style = MaterialTheme.typography.bodySmall)
                 }
-                Button(onClick = { onStart(plan) }, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
-                    Text("▶ Rozpocznij trening")
-                }
+
             } else Text("Wybierz dzień z zaplanowanymi ćwiczeniami, aby rozpocząć trening.")
             if (last != null) {
                 val done = last.entries.filter { it.done }
