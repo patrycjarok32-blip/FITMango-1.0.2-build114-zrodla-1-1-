@@ -869,20 +869,24 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             FilterChip(selected = chosen, onClick = { selectedSessionKey = key },
                                 label = { Text("${plan.title} • ${plan.category}") })
-                            TextButton(enabled = !busy, onClick = {
-                                transferKey = key; transferDate = workoutDate
-                            }) { Text("Kopiuj / przenieś") }
-                            if (plan.sessionId.isNotBlank()) {
+                        }
+                        if (chosen) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 TextButton(enabled = !busy, onClick = {
-                                    sports.removePlannedActivity(plan.sessionId) { saved(); selectedSessionKey = "" }
-                                }) { Text("Usuń") }
+                                    transferKey = key; transferDate = workoutDate
+                                }) { Text("Kopiuj / przenieś") }
+                                if (plan.sessionId.isNotBlank()) {
+                                    TextButton(enabled = !busy, onClick = {
+                                        sports.removePlannedActivity(plan.sessionId) { saved(); selectedSessionKey = "" }
+                                    }) { Text("Usuń") }
+                                }
                             }
                         }
                         val linkedId = data.linkedActivities[plan.sessionId]
                         val linkedRecord = PlannedActivityMatching.match(plan, data)
-                        Text(MangoWorkoutInsights.plannedStatus(plan, data, workouts),
+                        if (chosen) Text(MangoWorkoutInsights.plannedStatus(plan, data, workouts),
                             color = LeafGreen, style = MaterialTheme.typography.labelMedium)
-                        if (linkedRecord != null) {
+                        if (chosen && linkedRecord != null) {
                             Text("✓ Wykonano: ${linkedRecord.title} · zapis z dziennika / Health Connect",
                                 color = LeafGreen, style = MaterialTheme.typography.bodyMedium)
                             if (linkedId != null) TextButton(enabled = !busy, onClick = {
