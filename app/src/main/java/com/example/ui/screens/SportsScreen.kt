@@ -55,8 +55,9 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
     var activitySection by rememberSaveable { mutableStateOf("today") }
     var trainingPage by rememberSaveable { mutableStateOf("plan") }
-    var showWeeklyTrainingCalendar by rememberSaveable { mutableStateOf(true) }
+    var showWeeklyTrainingCalendar by rememberSaveable { mutableStateOf(false) }
     var workoutDate by rememberSaveable { mutableStateOf(today.toString()) }
+    var selectedCalendarDate by rememberSaveable { mutableStateOf(today.toString()) }
     var showAddActivity by rememberSaveable(workoutDate) { mutableStateOf(false) }
     var showTrainingProfile by rememberSaveable { mutableStateOf(false) }
     var showProgramLibrary by rememberSaveable { mutableStateOf(false) }
@@ -190,8 +191,8 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                             PlannedActivityMatching.match(plan, data) != null
                         }
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Text(day.toString().substring(5), modifier = Modifier.width(58.dp),
-                                color = Color(0xFF43235E))
+                            TextButton(onClick = { selectedCalendarDate = day.toString() }, modifier = Modifier.width(76.dp)) { Text((if (selectedCalendarDate == day.toString()) "● " else "") + day.toString().substring(5)) }
+
                             Column(Modifier.weight(1f)) {
                                 if (plans.isEmpty()) {
                                     Text("Bez zaplanowanego treningu", color = Color(0xFF43235E))
@@ -212,14 +213,24 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                                     color = Color(0xFF625573))
                             }
                         }
-                        TextButton(onClick = {
-                            workoutDate = day.toString()
-                            showAddActivity = true
-                            activitySection = "training"
-                            trainingPage = "session"
-                            showWeeklyTrainingCalendar = false
-                        }, modifier = Modifier.testTag("add_training_day_${day}")) {
-                            Text("＋ Dodaj jednostkę • ${day.toString().substring(5)}")
+                        if (selectedCalendarDate == day.toString()) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                TextButton(onClick = {
+                                    workoutDate = day.toString()
+                                    activitySection = "training"
+                                    trainingPage = "session"
+                                    showWeeklyTrainingCalendar = false
+                                }) { Text("Otwórz dzień") }
+                                TextButton(onClick = {
+                                    workoutDate = day.toString()
+                                    showAddActivity = true
+                                    activitySection = "training"
+                                    trainingPage = "session"
+                                    showWeeklyTrainingCalendar = false
+                                }, modifier = Modifier.testTag("add_training_day_${day}")) {
+                                    Text("＋ Dodaj sesję")
+                                }
+                            }
                         }
                         HorizontalDivider(color = Color(0xFFE8DDEA))
                     }
