@@ -40,7 +40,33 @@ fun EnergyCalculatorPanel(viewModel: DietaViewModel, draft: UserProfileEntity, o
     var review by remember { mutableStateOf<Triple<UserProfileEntity, EnergyProfileSettings, UserProfileEntity?>?>(null) }
     val input = settings.copy(averageSteps = if (steps.isBlank()) null else steps.toIntOrNull() ?: -1, minutes = minutes.toIntOrNull() ?: -1)
     val result = remember(draft, input) { runCatching { EnergyCalculatorSupport.plan(draft, input) } }
+    var aiControls by remember { mutableStateOf(DietitianControlStore.read(context)) }
+    var aiSavedMessage by remember { mutableStateOf<String?>(null) }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("🥭 AI Dietetyk • Twoja decyzja", style = MaterialTheme.typography.titleMedium)
+        Text("AI może analizować wyniki i sugerować korekty, ale nie zmieni kalorii ani makro bez Twojego zatwierdzenia.",
+            style = MaterialTheme.typography.bodySmall)
+        EnergyChoice("Propozycje AI", aiControls.adviceMode, linkedMapOf(
+            "approve" to "Proponuj — zatwierdzam każdą zmianę",
+            "manual" to "Tylko analiza — zmieniam cele ręcznie",
+            "off" to "Bez propozycji zmian kalorii"
+        )) { aiControls = aiControls.copy(adviceMode = it); aiSavedMessage = null }
+        Row {
+            Checkbox(aiControls.includeTraining, { aiControls = aiControls.copy(includeTraining = it); aiSavedMessage = null })
+            Text("Uwzględniaj sport i regenerację w sugestiach AI",
+                Modifier.weight(1f).padding(top = 12.dp))
+        }
+        Button(onClick = {
+            aiSavedMessage = runCatching {
+                DietitianControlStore.save(context, aiControls)
+                "Zapisano preferencje. Twój cel kalorii i makro nie został zmieniony."
+            }.getOrElse { it.message ?: "Nie udało się zapisać." }
+        }, modifier = Modifier.fillMaxWidth().testTag("save_dietitian_controls")) {
+            Text("Zapisz moje zasady AI")
+        }
+        aiSavedMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+        HorizontalDivider()
+
         Row { Checkbox(settings.detailed, { settings = settings.copy(detailed = it) }); Text("Dokładniejszy opis aktywności", Modifier.weight(1f).padding(top = 12.dp)) }
         if (settings.detailed) {
             EnergyChoice("Codzienny ruch / praca", settings.work, EnergyCalculatorSupport.works) { settings = settings.copy(work = it) }
