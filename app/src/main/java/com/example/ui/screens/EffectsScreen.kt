@@ -135,7 +135,7 @@ fun WeightTrendChart(points: List<WeightPoint>) {
 }
 
 @Composable
-fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -> Unit, onSport: () -> Unit = {}, onAi: () -> Unit = {}, onMeasurements: () -> Unit = {}) {
+fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -> Unit, onSport: () -> Unit = {}, onAi: () -> Unit = {}, onMeasurements: () -> Unit = {}, onPhotos: () -> Unit = {}) {
     val context = LocalContext.current
     val motion = progressMotionEnabled()
     val weights by viewModel.weightLogs.collectAsStateWithLifecycle()
@@ -180,6 +180,7 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                     Button(onClick = onMeasurements, modifier = Modifier.fillMaxWidth().testTag("progress_hub_body")) {
                         Text("📏 Sylwetka • pomiary i zdjęcia")
                     }
+                    OutlinedButton(onClick = onPhotos, modifier = Modifier.fillMaxWidth().testTag("progress_hub_photos")) { Text("📷 Zdjęcia przód / bok / tył • porównanie AI") }
                     OutlinedButton(onClick = onSport, modifier = Modifier.fillMaxWidth().testTag("progress_hub_sport")) {
                         Text("🏋️ Trening • postępy i regeneracja")
                     }
