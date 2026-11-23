@@ -2474,6 +2474,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                 val snapshotProfile = repository.userProfile.first()
                 val snapshotWeights = repository.allWeightLogs.first()
                 val snapshotMeasurements = repository.allBodyMeasurements.first()
+                val snapshotPhotos = repository.allBodyPhotos.first()
                 val snapshotDays = habits.days.value.toList()
                 val snapshotConfirmations = healthConnect.weeklyEnergy.confirmations.value.toList()
                 val snapshotEnergy = healthConnect.weeklyEnergy.energy.value.toList()
@@ -2487,14 +2488,39 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                         today, range, EnergyCalculatorSupport.read(getApplication<Application>()))
                     val from = today.minusDays(if (range == 7) 7L else range - 1L)
                     val until = today.minusDays(1)
-                    ProgressAiContext.build(snapshotProfile, snapshotDays, snapshotConfirmations, sports, snapshotEnergy,
-                        snapshotHealth, report, today, range, scale) to
+                    val control = DietitianControlStore.read(getApplication<Application>())
+                    val context = ProgressAiContext.build(snapshotProfile, snapshotDays, snapshotConfirmations, sports, snapshotEnergy,
+                        snapshotHealth, report, today, range, scale)
+                    val photoDates = snapshotPhotos.map { it.date }.filter { runCatching {
+                        java.time.LocalDate.parse(it) in from..today
+                    }.getOrDefault(false) }.distinct().sorted()
+                    val photoMetadata = org.json.JSONObject().put("liczba_sesji_zdjec", photoDates.size)
+                        .put("daty_zdjec", org.json.JSONArray(photoDates))
+                        .put("uwaga", "Same daty zdjęć. AI nie ogląda zdjęć, nie ocenia wizualnie sylwetki ani procentu tkanki tłuszczowej.")
+                    val policy = org.json.JSONObject().put("tryb", control.adviceMode)
+                        .put("uwzgledniaj_trening", control.includeTraining)
+                        .put("zasada", "Żadna sugestia nie może samodzielnie zmienić celów. Zmiana wymaga osobnego zatwierdzenia w aplikacji.")
+                    val combined = org.json.JSONObject().put("raport_lokalny", org.json.JSONObject(context))
+                        .put("sesje_zdjec_sylwetki", photoMetadata).put("kontrola_uzytkownika", policy)
+                    if (!control.includeTraining) {
+                        val local = combined.getJSONObject("raport_lokalny")
+                        listOf("treningi_health_connect", "liczba_treningow_w_odczycie", "aktywnosc_okresu",
+                            "kroki_i_sen_dziennie", "samopoczucie_dziennie", "historia_treningow_odczyt",
+                            "spalanie_ogolem_health_connect", "ostatni_odczyt_zdrowia").forEach { local.remove(it) }
+                    }
+                    combined.toString() to
                         ProgressEvidence.build(snapshotProfile, snapshotDays, snapshotConfirmations, snapshotEnergy, report, scale, from, until, today).summary
                 }
                 val frozenEvidence = if (range == 7) kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
                     runCatching { AiEvidenceSupport.describe(prompt.first) }.getOrDefault("Nie udało się odtworzyć szczegółów danych tego raportu. Pełne uzasadnienie AI pozostaje dostępne.")
                 } else ""
-                val result = callGemini(prompt.first, systemPrompt = ProgressAiContext.SYSTEM)
+                val mode = DietitianControlStore.read(getApplication<Application>()).adviceMode
+                val modeInstructions = when (mode) {
+                    "manual" -> "Przedstaw wyłącznie analizę i możliwe opcje. Nie proponuj konkretnych zmian celów kalorii lub makro; użytkownik sam nimi zarządza."
+                    "off" -> "Nie proponuj zmian kaloryczności ani makroskładników. Podaj tylko ocenę danych, bezpieczeństwo i ewentualne pytania."
+                    else -> "Możesz proponować ostrożne korekty wyłącznie przy wystarczających danych, ale nie stosuj ich; każda wymaga osobnego zatwierdzenia użytkownika."
+                }
+                val result = callGemini(prompt.first, systemPrompt = ProgressAiContext.SYSTEM + "\\n" + modeInstructions)
                 val answer = result.getOrElse { "Nie udało się uzyskać wyjaśnienia AI. Raport lokalny nadal działa. ${it.message.orEmpty()}" }
                 val generated = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))
                 val heading = if (range == 7) "Raport tygodniowy: ${today.minusDays(7)} – ${today.minusDays(1)}" else "Analiza okresu $range dni"
