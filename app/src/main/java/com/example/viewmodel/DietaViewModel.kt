@@ -2500,7 +2500,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                     val policy = org.json.JSONObject().put("tryb", control.adviceMode)
                         .put("uwzgledniaj_trening", control.includeTraining)
                         .put("zasada", "Żadna sugestia nie może samodzielnie zmienić celów. Zmiana wymaga osobnego zatwierdzenia w aplikacji.")
-                    val combined = org.json.JSONObject().put("raport_lokalny", org.json.JSONObject(context))
+                    val combined = org.json.JSONObject().put("raport_lokalny", org.json.JSONObject(context.substringAfter("\n"))
                         .put("sesje_zdjec_sylwetki", photoMetadata).put("kontrola_uzytkownika", policy)
                     if (!control.includeTraining) {
                         val local = combined.getJSONObject("raport_lokalny")
