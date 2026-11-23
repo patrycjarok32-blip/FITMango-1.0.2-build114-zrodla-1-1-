@@ -346,7 +346,7 @@ fun MainNavigation(viewModel: DietaViewModel) {
                 SportsScreen(viewModel, onBack = { navController.popBackStack() })
             }
             composable("effects") {
-                EffectsScreen(viewModel, onBack = { navController.popBackStack() }, onProfile = { navController.navigate(Screen.Profile.route) }, onSport = { navController.navigate(Screen.Sport.route) }, onAi = { navController.navigate(Screen.AiCoach.route) }, onMeasurements = { navController.navigate("measurements") })
+                EffectsScreen(viewModel, onBack = { navController.popBackStack() }, onProfile = { navController.navigate(Screen.Profile.route) }, onSport = { navController.navigate(Screen.Sport.route) }, onAi = { navController.navigate(Screen.AiCoach.route) }, onMeasurements = { navController.navigate("measurements") }, onPhotos = { navController.navigate(Screen.Profile.route) })
             }
             composable("measurements") {
                 MeasurementsScreen(
