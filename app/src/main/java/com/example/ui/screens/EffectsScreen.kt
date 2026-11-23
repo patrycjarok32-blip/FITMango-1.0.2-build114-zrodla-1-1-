@@ -135,7 +135,7 @@ fun WeightTrendChart(points: List<WeightPoint>) {
 }
 
 @Composable
-fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -> Unit) {
+fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -> Unit, onSport: () -> Unit = {}, onAi: () -> Unit = {}, onMeasurements: () -> Unit = {}) {
     val context = LocalContext.current
     val motion = progressMotionEnabled()
     val weights by viewModel.weightLogs.collectAsStateWithLifecycle()
@@ -171,6 +171,26 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
     fun completed(error: String?) { busy = false; message = error; if (error == null) feedback++ }
     fun n(value: Double?, unit: String) = value?.let { String.format(java.util.Locale.getDefault(), "%.2f %s", it, unit) } ?: "brak danych"
     LazyColumn(Modifier.fillMaxSize().background(DarkBackground).padding(horizontal = 16.dp), state = rememberLazyListState(), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("🥭 Centrum Postępów i AI", style = MaterialTheme.typography.titleLarge)
+                    Text("Sylwetka, treningi i rekomendacje w jednym punkcie startowym. Dane pozostają w dotychczasowych modułach.",
+                        style = MaterialTheme.typography.bodySmall)
+                    Button(onClick = onMeasurements, modifier = Modifier.fillMaxWidth().testTag("progress_hub_body")) {
+                        Text("📏 Sylwetka • pomiary i zdjęcia")
+                    }
+                    OutlinedButton(onClick = onSport, modifier = Modifier.fillMaxWidth().testTag("progress_hub_sport")) {
+                        Text("🏋️ Trening • postępy i regeneracja")
+                    }
+                    OutlinedButton(onClick = onAi, modifier = Modifier.fillMaxWidth().testTag("progress_hub_ai")) {
+                        Text("🧠 Sugestie AI • wspólna analiza")
+                    }
+                    Text("Poniżej: trend masy ciała, bilans energii i analiza postępów. Sugestie AI nie zmieniają celów bez zatwierdzenia.",
+                        style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
         item {
             val sorted = measurements.filter { it.weightKg.isFinite() && it.weightKg > 0f }
                 .sortedBy { it.date }
