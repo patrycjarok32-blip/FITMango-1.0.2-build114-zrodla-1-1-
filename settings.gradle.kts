@@ -21,7 +21,8 @@ pluginManagement {
   }
 }
 
-plugins { id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" }
+// GitHub Actions provisions JDK 21 via setup-java. The optional Foojay resolver
+// is not needed for CI and can block configuration when its plugin portal is unavailable.
 
 dependencyResolutionManagement {
   repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
