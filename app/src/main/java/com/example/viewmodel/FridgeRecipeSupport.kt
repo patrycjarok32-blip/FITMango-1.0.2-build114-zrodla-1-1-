@@ -17,7 +17,8 @@ object FridgeRecipeSupport {
             .replace(Regex("\\s+"), " ").trim()
     }
     private val aliases = listOf(
-        listOf("jajko", "jajka", "jajek", "egg", "eggs"),
+        listOf("jajko", "jajka", "jajek", "jajkiem", "egg", "eggs"),
+        listOf("serek wiejski", "serka wiejskiego", "cottage cheese"),
         listOf("ryz", "ryzu", "rice"), listOf("kurczak", "kurczaka", "chicken"),
         listOf("mleko", "mleka", "milk"), listOf("pomidor", "pomidory", "pomidorow", "tomato", "tomatoes"),
         listOf("ogorek", "ogorki", "ogorka", "cucumber"), listOf("ziemniak", "ziemniaki", "ziemniakow", "potato", "potatoes"),
@@ -26,7 +27,8 @@ object FridgeRecipeSupport {
         listOf("jogurt", "jogurtu", "yogurt"), listOf("szpinak", "szpinaku", "spinach")
     )
     private fun canonicalWord(word: String) = aliases.firstOrNull { word in it }?.first() ?: word
-    private fun tokens(text: String) = text.split(' ').filter { it.isNotBlank() }.map(::canonicalWord)
+    private fun canonicalPhrase(value: String): String = aliases.firstOrNull { value in it }?.first() ?: value
+    private fun tokens(text: String) = canonicalPhrase(text).split(' ').filter { it.isNotBlank() }.map(::canonicalWord)
 
     fun matches(ingredient: String, stored: String): Boolean {
         val required = tokens(key(ingredient)); val have = tokens(key(stored))
@@ -55,8 +57,15 @@ object FridgeRecipeSupport {
         return (existing + suggestion).joinToString(", ") + ", "
     }
 
+    fun enteredProducts(contents: String): List<String> =
+        contents.split(',', ';', '\n').map { it.trim() }.filter { it.isNotBlank() }
+            .distinctBy { key(it) }
+
+    fun removeProduct(contents: String, product: String): String =
+        enteredProducts(contents).filterNot { key(it) == key(product) }.joinToString(", ")
+
     fun find(recipes: List<RecipeEntity>, contents: String): List<FridgeRecipeMatch> {
-        val stored = contents.split(',', ';', '\n').map { it.trim() }.filter { it.isNotBlank() }
+        val stored = enteredProducts(contents)
         if (stored.isEmpty()) return emptyList()
         return recipes.mapNotNull { recipe ->
             val names = MealPlannerSupport.parseRecipeIngredients(recipe.ingredients).map { it.name }.filter { it.isNotBlank() }.distinct()
