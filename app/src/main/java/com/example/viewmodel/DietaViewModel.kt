@@ -2491,8 +2491,10 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                     val control = DietitianControlStore.read(getApplication<Application>())
                     val context = ProgressAiContext.build(snapshotProfile, snapshotDays, snapshotConfirmations, sports, snapshotEnergy,
                         snapshotHealth, report, today, range, scale)
-                    val photoDates = snapshotPhotos.map { it.date }.filter { runCatching {
-                        runCatching { java.time.LocalDate.parse(it) }.getOrElse { java.time.LocalDate.parse(it, java.time.format.DateTimeFormatter.ofPattern("dd.MM.uuuu")) } in from..today
+                    val photoDates = snapshotPhotos.map { it.date }.filter { photoDate -> runCatching {
+                        val parsed = runCatching { java.time.LocalDate.parse(photoDate) }
+                            .getOrElse { java.time.LocalDate.parse(photoDate, java.time.format.DateTimeFormatter.ofPattern("dd.MM.uuuu")) }
+                        parsed in from..today
                     }.getOrDefault(false) }.distinct().sorted()
                     val photoMetadata = org.json.JSONObject().put("liczba_sesji_zdjec", photoDates.size)
                         .put("daty_zdjec", org.json.JSONArray(photoDates))
