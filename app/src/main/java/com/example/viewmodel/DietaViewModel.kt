@@ -2514,13 +2514,14 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                 val frozenEvidence = if (range == 7) kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
                     runCatching { AiEvidenceSupport.describe(prompt.first) }.getOrDefault("Nie udało się odtworzyć szczegółów danych tego raportu. Pełne uzasadnienie AI pozostaje dostępne.")
                 } else ""
-                val mode = DietitianControlStore.read(getApplication<Application>()).adviceMode
+                val currentControl = DietitianControlStore.read(getApplication<Application>())
+                val mode = currentControl.adviceMode
                 val modeInstructions = when (mode) {
                     "manual" -> "Przedstaw wyłącznie analizę i możliwe opcje. Nie proponuj konkretnych zmian celów kalorii lub makro; użytkownik sam nimi zarządza."
                     "off" -> "Nie proponuj zmian kaloryczności ani makroskładników. Podaj tylko ocenę danych, bezpieczeństwo i ewentualne pytania."
                     else -> "Możesz proponować ostrożne korekty wyłącznie przy wystarczających danych, ale nie stosuj ich; każda wymaga osobnego zatwierdzenia użytkownika."
                 }
-                val result = callGemini(prompt.first, systemPrompt = ProgressAiContext.SYSTEM + "\\n" + modeInstructions)
+                val result = callGemini(prompt.first, systemPrompt = ProgressAiContext.SYSTEM + "\n" + modeInstructions + if (currentControl.includeTraining) "" else "\nUżytkownik wyłączył uwzględnianie sportu: nie wyciągaj wniosków ani zaleceń z aktywności, treningów, snu i regeneracji.")
                 val answer = result.getOrElse { "Nie udało się uzyskać wyjaśnienia AI. Raport lokalny nadal działa. ${it.message.orEmpty()}" }
                 val generated = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))
                 val heading = if (range == 7) "Raport tygodniowy: ${today.minusDays(7)} – ${today.minusDays(1)}" else "Analiza okresu $range dni"
