@@ -191,6 +191,18 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                 }
             }
         }
+        item { CollapsibleMangoCard("Wspólny raport AI • sylwetka, dieta i sport", "effects_ai") {
+            Text("Jeden raport obejmuje pomiary sylwetki, daty zdjęć, dietę, treningi i dostępne dane Health Connect. Zdjęcia nie są wysyłane do AI ani oceniane wizualnie. Raport lokalny działa bez AI. Po nowych wpisach wygeneruj analizę ponownie.")
+            TextButton(onClick = onProfile) { Text("Ustawienia AI w Profilu") }
+            val aiPulse by animateFloatAsState(if (aiBusy && motion) 0.72f else 1f, animationSpec = tween(if (motion) 450 else 0), label = "ai_busy_pulse")
+            Button(enabled = !aiBusy && report != null, onClick = { viewModel.runEffectsAiAnalysis(range) }) {
+                Icon(Icons.Outlined.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp).graphicsLayer { alpha = aiPulse })
+                Spacer(Modifier.width(8.dp))
+                Text(if (aiBusy) "Przygotowywanie…" else "Wyjaśnij moje efekty")
+            }
+            if (aiBusy) LinearProgressIndicator(Modifier.fillMaxWidth())
+            AnimatedVisibility(visible = aiText.isNotBlank(), enter = if (motion) fadeIn(tween(280)) else fadeIn(tween(0)), exit = fadeOut(tween(0))) { Text(aiText) }
+        } }
         item {
             val sorted = measurements.filter { it.weightKg.isFinite() && it.weightKg > 0f }
                 .sortedBy { it.date }
@@ -511,18 +523,7 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                 busy = true; viewModel.saveEffectsSettings(settings.copy(low = l, high = h), ::completed)
             }) { Text("Zapisz przedział") }
         } }
-        item { CollapsibleMangoCard("Opcjonalne wyjaśnienie AI", "effects_ai") {
-            Text("Wyślesz do Gemini podsumowanie trendu, jedzenia, treningów i samopoczucia. Raport lokalny działa bez AI. Wyjaśnienie opisuje dane z chwili uruchomienia; po nowych wpisach wygeneruj je ponownie.")
-            TextButton(onClick = onProfile) { Text("Ustawienia AI w Profilu") }
-            val aiPulse by animateFloatAsState(if (aiBusy && motion) 0.72f else 1f, animationSpec = tween(if (motion) 450 else 0), label = "ai_busy_pulse")
-            Button(enabled = !aiBusy && report != null, onClick = { viewModel.runEffectsAiAnalysis(range) }) {
-                Icon(Icons.Outlined.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp).graphicsLayer { alpha = aiPulse })
-                Spacer(Modifier.width(8.dp))
-                Text(if (aiBusy) "Przygotowywanie…" else "Wyjaśnij moje efekty")
-            }
-            if (aiBusy) LinearProgressIndicator(Modifier.fillMaxWidth())
-            AnimatedVisibility(visible = aiText.isNotBlank(), enter = if (motion) fadeIn(tween(280)) else fadeIn(tween(0)), exit = fadeOut(tween(0))) { Text(aiText) }
-        } }
+
     }
     adjustment?.let { (target, delta) -> AlertDialog(onDismissRequest = { if (!busy) adjustment = null }, title = { Text("Zatwierdzić korektę?") },
         text = { Text("Cel: $target → ${target + delta} kcal. Białko i tłuszcze zachowujemy; węglowodany dopasujemy do nowego celu. Kolejna propozycja pojawi się najwcześniej po 21 dniach nowych obserwacji.") },
