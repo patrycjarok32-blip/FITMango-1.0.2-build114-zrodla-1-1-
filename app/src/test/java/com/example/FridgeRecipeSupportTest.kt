@@ -41,6 +41,16 @@ class FridgeRecipeSupportTest {
         assertEquals(listOf("Mleko kokosowe"), FridgeRecipeSupport.find(recipes, completed).single().available)
     }
 
+    @Test fun fridgeInputFromPhoneSupportsMultipleProductsAndRemoval() {
+        val entered = FridgeRecipeSupport.enteredProducts("serek wiejski,jajko,ryż,mleko,")
+        assertEquals(listOf("serek wiejski", "jajko", "ryż", "mleko"), entered)
+        assertEquals("serek wiejski, jajko, mleko",
+            FridgeRecipeSupport.removeProduct("serek wiejski,jajko,ryż,mleko,", "ryż"))
+        assertTrue(FridgeRecipeSupport.matches("Serek wiejski", "cottage cheese"))
+        assertTrue(FridgeRecipeSupport.matches("Jajka", "jajko"))
+        assertFalse(FridgeRecipeSupport.matches("Mleko kokosowe", "mleko"))
+    }
+
     @Test fun completedProductsAreNotSuggestedAgain() {
         val recipes = listOf(recipe(1, "Jajecznica", "Jajka — 2 szt.\nPomidor — 100 g"))
         assertTrue(FridgeRecipeSupport.suggestions(recipes, "jajko, jaj").isEmpty())
