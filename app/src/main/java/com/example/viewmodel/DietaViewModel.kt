@@ -2492,7 +2492,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                     val context = ProgressAiContext.build(snapshotProfile, snapshotDays, snapshotConfirmations, sports, snapshotEnergy,
                         snapshotHealth, report, today, range, scale)
                     val photoDates = snapshotPhotos.map { it.date }.filter { runCatching {
-                        java.time.LocalDate.parse(it) in from..today
+                        runCatching { java.time.LocalDate.parse(it) }.getOrElse { java.time.LocalDate.parse(it, java.time.format.DateTimeFormatter.ofPattern("dd.MM.uuuu")) } in from..today
                     }.getOrDefault(false) }.distinct().sorted()
                     val photoMetadata = org.json.JSONObject().put("liczba_sesji_zdjec", photoDates.size)
                         .put("daty_zdjec", org.json.JSONArray(photoDates))
@@ -2500,7 +2500,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                     val policy = org.json.JSONObject().put("tryb", control.adviceMode)
                         .put("uwzgledniaj_trening", control.includeTraining)
                         .put("zasada", "Żadna sugestia nie może samodzielnie zmienić celów. Zmiana wymaga osobnego zatwierdzenia w aplikacji.")
-                    val combined = org.json.JSONObject().put("raport_lokalny", org.json.JSONObject(context.substringAfter("\n"))
+                    val combined = org.json.JSONObject().put("raport_lokalny", org.json.JSONObject(context.substringAfter("\n")))
                         .put("sesje_zdjec_sylwetki", photoMetadata).put("kontrola_uzytkownika", policy)
                     if (!control.includeTraining) {
                         val local = combined.getJSONObject("raport_lokalny")
