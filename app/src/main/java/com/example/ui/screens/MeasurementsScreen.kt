@@ -106,88 +106,9 @@ fun MeasurementsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Trend / Summary stats card
-            item { com.example.ui.components.ChangeHistoryCard(viewModel) }
             item {
-                MangoCard {
-                    Column(Modifier.fillMaxWidth().padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("📈 Historia pomiarów", fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary)
-                        val recent = bodyMeasurements.take(8).reversed()
-                        if (recent.size < 2) {
-                            Text("Dodaj co najmniej dwa pomiary, aby zobaczyć trend.")
-                        } else {
-                            val values = recent.map { it.weightKg.toFloat() }
-                            val minValue = values.minOrNull() ?: 0f
-                            val maxValue = values.maxOrNull() ?: 0f
-                            val range = (maxValue - minValue).coerceAtLeast(0.1f)
-                            androidx.compose.foundation.Canvas(
-                                modifier = Modifier.fillMaxWidth().height(100.dp)) {
-                                val widthStep = size.width / (values.size - 1).coerceAtLeast(1)
-                                val path = androidx.compose.ui.graphics.Path()
-                                values.forEachIndexed { index, value ->
-                                    val x = index * widthStep
-                                    val y = size.height - ((value - minValue) / range) * size.height
-                                    if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
-                                }
-                                drawPath(path, color = androidx.compose.ui.graphics.Color(0xFF9B54C8),
-                                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 5.dp.toPx()))
-                            }
-                            Text("Ostatnie ${recent.size} pomiarów • ${minValue}–${maxValue} kg",
-                                style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                }
-            }
-
-            item {
-                MangoCard {
-                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text(
-                            text = "Twoje postępy",
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontSize = 16.sp
-                        )
-
-                        if (latestMeasurement != null) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text("Ostatnia waga", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-                                    Text("${latestMeasurement.weightKg} kg", fontSize = 24.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
-                                }
-                                if (weightChange != null) {
-                                    Column(horizontalAlignment = Alignment.End) {
-                                        Text("Zmiana", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-                                        val changeText = if (weightChange > 0) "+${String.format("%.1f", weightChange)} kg 📈" else "${String.format("%.1f", weightChange)} kg 📉"
-                                        val changeColor = if (weightChange > 0) JuicyOrange else LeafGreen
-                                        Text(changeText, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = changeColor)
-                                    }
-                                }
-                            }
-                        } else {
-                            Text("Brak wprowadzonych pomiarów. Dodaj swój pierwszy pomiar poniżej!", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), fontSize = 13.sp)
-                        }
-
-                        val firstWeight = bodyMeasurements.lastOrNull()?.weightKg
-                        if (latestMeasurement != null && firstWeight != null && bodyMeasurements.size > 1) {
-                            val change = latestMeasurement.weightKg - firstWeight
-                            Text("Od pierwszego pomiaru: ${if (change > 0) "+" else ""}${String.format("%.1f", change)} kg • ${bodyMeasurements.size} zapisów",
-                                color = GoldAccent, style = MaterialTheme.typography.bodySmall)
-                        }
-
-
-                        // Custom canvas-drawn weight trend chart
-                        val weightValues = bodyMeasurements.take(7).map { it.weightKg }.reversed()
-                        val dateValues = bodyMeasurements.take(7).map { it.date }.reversed()
-                        WeightTrendChart(weights = weightValues, dates = dateValues)
-                    }
-                }
+                Text("Szczegółowe wykresy i analiza sylwetki są dostępne w Centrum Postępów i AI. Tutaj dodajesz i przeglądasz pomiary.",
+                    style = MaterialTheme.typography.bodySmall)
             }
 
             // Input Form Card
