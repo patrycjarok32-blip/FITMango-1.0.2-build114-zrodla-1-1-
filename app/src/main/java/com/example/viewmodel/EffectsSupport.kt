@@ -14,7 +14,7 @@ data class WeightPoint(val date: String, val kg: Double)
 data class EffectsReport(val points: List<WeightPoint>, val trendKgWeek: Double?, val completeDays: Int, val confirmedDays: Int,
     val partialDays: Int, val loggedDays: Int, val periodDays: Int, val meanCalories: Double?, val meanProtein: Double?,
     val maintenance: Double?, val referenceIntake: Double?, val waistChange: Double?, val proposedDelta: Int?, val summary: String,
-    val reasons: String, val weeklyText: String, val strengthText: String, val wellbeingText: String)
+    val reasons: String, val weeklyText: String, val strengthText: String, val wellbeingText: String, val calibratedTdee: Double? = null, val calibrationDays: Int = 0)
 
 object EffectsSupport {
     const val KEY = "effects_v1"
@@ -55,6 +55,15 @@ object EffectsSupport {
         val xm = x.average(); val ym = points.map { it.kg }.average()
         val denominator = x.sumOf { (it - xm) * (it - xm) }
         return if (denominator <= 0) null else x.indices.sumOf { (x[it] - xm) * (points[it].kg - ym) } / denominator * 7
+    }
+    // Preliminary estimate only; short-term weight change includes water.
+    fun calibrateTdee(points: List<WeightPoint>, intake: List<Double>, today: LocalDate): Double? {
+        val valid = points.filter { it.date in today.minusDays(14).toString()..today.minusDays(1).toString() && it.kg.isFinite() && it.kg in 30.0..400.0 }.distinctBy { it.date }.sortedBy { it.date }
+        if (valid.size < 7 || intake.size !in 12..14 || intake.any { !it.isFinite() || it <= 0 }) return null
+        if (LocalDate.parse(valid.last().date).toEpochDay() - LocalDate.parse(valid.first().date).toEpochDay() < 10) return null
+        val slope = trend(valid) ?: return null
+        val estimate = intake.average() - slope * 7700.0 / 7.0
+        return estimate.takeIf { it.isFinite() && it in 1000.0..5000.0 }
     }
     fun smoothed(points: List<WeightPoint>): List<WeightPoint> = points.mapNotNull { p ->
         val lower = LocalDate.parse(p.date).minusDays(6).toString()
@@ -143,8 +152,13 @@ object EffectsSupport {
             val sleep = notes.mapNotNull { it.sleepHours }
             "Wpisy samopoczucia: ${notes.size}. Głód ${rating(notes.map { it.hunger }.average())}/5, energia ${rating(notes.map { it.energy }.average())}/5. Sen: ${if (sleep.isEmpty()) "brak danych" else "${rating(sleep.average())} h (${sleep.size} wpisów)"}. To zestawienie, nie dowód przyczyny zmian wagi."
         }
+        val calibrationStart = today.minusDays(14).toString()
+        val calibrationEnd = today.minusDays(1).toString()
+        val calibrationWeights = merged.values.filter { it.date in calibrationStart..calibrationEnd }.sortedBy { it.date }
+        val calibrationFood = days.distinctBy { it.date }.filter { it.date in calibrationStart..calibrationEnd && it.meals.isNotEmpty() && it.nutritionComplete && it.calories > 0 && WeeklyEnergySupport.isFoodConfirmed(it, confirmations.find { c -> c.date == it.date }) }
+        val calibrated = calibrateTdee(calibrationWeights, calibrationFood.map { it.calories.toDouble() }, today)
         return EffectsReport(points, trend, complete.size, confirmed.size, logged.count { !it.nutritionComplete }, logged.size, periodDays, mean, protein,
-            maintenance, reference, waistChange, delta, state, reason, weeklyText, if (comparisons.isEmpty()) "Potrzebne wyniki tego samego ćwiczenia z co najmniej dwóch dat." else comparisons.joinToString("\n"), wellbeing)
+            maintenance, reference, waistChange, delta, state, reason, weeklyText, if (comparisons.isEmpty()) "Potrzebne wyniki tego samego ćwiczenia z co najmniej dwóch dat." else comparisons.joinToString("\n"), wellbeing, calibrated, calibrationFood.size)
     }
 }
 

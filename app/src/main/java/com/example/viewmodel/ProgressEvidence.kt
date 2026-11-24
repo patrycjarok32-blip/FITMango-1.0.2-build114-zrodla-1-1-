@@ -47,7 +47,10 @@ object ProgressEvidence {
         if (!comparable) reasons += "Porównanie średnich wymaga co najmniej dwóch dat pomiaru w pierwszych i ostatnich trzech dniach okresu."
         if (pairs.size < approved.size) reasons += "Bilans odczytany z Health Connect obejmuje tylko ${pairs.size} wspólnych dni jedzenia i spalania."
         reasons += "Krótki okres, woda, warunki ważenia i błędy zapisu ograniczają ocenę; nie podawaj procentowej pewności ani dokładnej utraty tłuszczu."
-        val facts = JSONObject().put("zatwierdzone_dni", approved.size).put("dni_okresu", length)
+        val facts = JSONObject().put("tdee_wstepne_14_dni_kcal", numeric(report.calibratedTdee))
+            .put("tdee_dni_precyzyjne", report.calibrationDays)
+            .put("tdee_uwaga", "Wstępny szacunek z ostatnich 14 zakończonych dni, niezależny od zakresu raportu. Woda i cykl ograniczają dokładność. Nie dodawaj kalorii treningowych ani nie zmieniaj automatycznie celu.")
+            .put("zatwierdzone_dni", approved.size).put("dni_okresu", length)
             .put("dni_bez_jedzenia", length - food.size).put("zatwierdzone_dni_z_wartosciami_szacunkowymi", estimated).put("dni_niezatwierdzone", unapproved)
             .put("srednie_kcal", numeric(kcal)).put("srednie_bialko_g", numeric(protein))
             .put("srednie_weglowodany_g", numeric(mean { it.carbs.toDouble() })).put("srednie_tluszcze_g", numeric(mean { it.fat.toDouble() }))

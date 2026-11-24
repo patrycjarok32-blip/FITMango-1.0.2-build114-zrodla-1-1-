@@ -487,6 +487,9 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
             } }
             item { CollapsibleMangoCard("Zapotrzebowanie i cel", "effects_energy") {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Inteligentne TDEE • ostatnie 14 zakończonych dni", style = MaterialTheme.typography.titleMedium)
+                Text(r.calibratedTdee?.let { "Wstępny szacunek: ${it.toInt()} kcal/dzień" } ?: "Za mało wiarygodnych danych do kalibracji.")
+                Text("Precyzyjne zatwierdzone dni: ${r.calibrationDays}/14. Potrzeba min. 12 dni i 7 pomiarów wagi rozłożonych na min. 10 dni. Woda i cykl mogą zniekształcać wynik. Nie dodawaj ponownie kalorii treningowych; cel nie zmienia się automatycznie.", style = MaterialTheme.typography.bodySmall)
                 Text("Utrzymanie z profilu: ${r.maintenance?.toInt()?.let { "$it kcal/dzień" } ?: "uzupełnij Profil"}.")
                 Text("Cel jedzenia: ${profile?.targetCalories ?: "brak danych"} kcal. Średnia ze wszystkich zatwierdzonych dni (także zaakceptowanych szacunków): ${r.meanCalories?.toInt() ?: "brak danych"} kcal; białko: ${r.meanProtein?.toInt() ?: "brak danych"} g.")
                 Text(EnergyCalculatorSupport.base(profile, energySettings)?.explanation ?: "Uzupełnij poprawny Profil; indywidualne cele ustaw ręcznie.", style = MaterialTheme.typography.bodySmall)
