@@ -1,10 +1,12 @@
 pluginManagement {
-  // Resolve KSP directly from Maven Central. This avoids intermittent failures
+  // Resolve KSP and Kotlin plugins directly from Maven Central. This avoids intermittent failures
   // resolving its plugin marker through the Gradle Plugin Portal.
   resolutionStrategy {
     eachPlugin {
-      if (requested.id.id == "com.google.devtools.ksp") {
-        useModule("com.google.devtools.ksp:symbol-processing-gradle-plugin:${requested.version}")
+      when (requested.id.id) {
+        "com.google.devtools.ksp" -> useModule("com.google.devtools.ksp:symbol-processing-gradle-plugin:${requested.version}")
+        "org.jetbrains.kotlin.plugin.compose" -> useModule("org.jetbrains.kotlin:compose-compiler-gradle-plugin:${requested.version}")
+        "org.jetbrains.kotlin.android", "org.jetbrains.kotlin.jvm" -> useModule("org.jetbrains.kotlin:kotlin-gradle-plugin:${requested.version}")
       }
     }
   }

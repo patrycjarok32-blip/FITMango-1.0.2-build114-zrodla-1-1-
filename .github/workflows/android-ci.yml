@@ -17,7 +17,7 @@ concurrency:
 jobs:
   verify:
     name: Kotlin compile and unit tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
       GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx3g
@@ -64,7 +64,7 @@ jobs:
     name: Build signed release APK
     needs: verify
     if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
       GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx3g
