@@ -131,7 +131,7 @@ fun WeightTrendChart(points: List<WeightPoint>) {
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(points.first().date, style = MaterialTheme.typography.bodySmall); Text(points.last().date, style = MaterialTheme.typography.bodySmall) }
     Text("● pomiar • zielona linia: średnia dostępnych pomiarów z ostatnich 7 dni (min. 2). Dotknij punktu.", style = MaterialTheme.typography.bodySmall)
-    selected?.let { Text("${it.date}: ${it.kg} kg", color = LeafGreen, style = MaterialTheme.typography.titleSmall) }
+    selected?.let { Text("${it.date}: ${String.format(java.util.Locale.getDefault(), "%.2f", it.kg)} kg", color = LeafGreen, style = MaterialTheme.typography.titleSmall) }
 }
 
 @Composable
@@ -278,9 +278,9 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                         Text(check.weightStatus, style = MaterialTheme.typography.bodyMedium)
                         Text(check.foodStatus, style = MaterialTheme.typography.bodyMedium)
                         Text("Wiarygodność oceny: " + check.confidence, style = MaterialTheme.typography.bodySmall)
-                        Text("Kalorie aktywne z zegarka: " + (check.averageWatchActiveKcal?.let {
+                        Text("Kalorie treningowe z zegarka: " + (check.averageWatchActiveKcal?.let {
                             String.format(java.util.Locale.getDefault(), "%.0f kcal na sesję z odczytem", it)
-                        } ?: "brak danych") + " • sesje: " + check.watchSessions,
+                        } ?: "brak danych") + " • wszystkie sesje: " + check.watchSessions,
                             style = MaterialTheme.typography.bodySmall)
                         Text("To kontekst aktywności, nie całkowity wydatek energetyczny. Nie dodawaj drugi raz do TDEE.",
                             style = MaterialTheme.typography.bodySmall)
@@ -354,10 +354,10 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                         Text(check.explanation, style = MaterialTheme.typography.bodySmall)
                         Text("Zatwierdzone dni: ${check.approvedDays}/${check.periodDays} • ważenia: ${check.weightReadings}")
                         check.averageCalories?.let {
-                            Text("Średnie spożycie: " + String.format(java.util.Locale.getDefault(), "%.0f kcal/dzień", it))
+                            Text("Średnie spożycie (tylko zatwierdzone dni): " + String.format(java.util.Locale.getDefault(), "%.0f kcal/dzień", it))
                         }
                         check.averageGoalDifference?.let {
-                            Text("Średnia różnica od zapisanych celów: " +
+                            Text("Różnica od celu jedzenia (nie deficyt): " +
                                 String.format(java.util.Locale.getDefault(), "%+.0f kcal/dzień", it))
                         }
                         check.weightChange?.let {
@@ -376,6 +376,7 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                                     style = MaterialTheme.typography.bodySmall)
                             }
                             Text("Możliwe wyjaśnienia i ograniczenia", style = MaterialTheme.typography.titleSmall)
+                            Text("Cykl menstruacyjny, regeneracja po treningu i wahania wody mogą maskować zmianę masy. Porównuj pomiary w podobnej fazie cyklu, jeśli dotyczy. Bez zapisów nie ustalamy fazy ani przyczyny.", style = MaterialTheme.typography.bodySmall)
                             check.observations.forEach { Text("• $it", style = MaterialTheme.typography.bodySmall) }
                             Text("Na kolejne 7–14 dni", style = MaterialTheme.typography.titleSmall)
                             check.actions.forEach { Text("• $it", style = MaterialTheme.typography.bodySmall) }
@@ -455,7 +456,7 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                 Text(r.summary, style = MaterialTheme.typography.bodySmall)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) { Icon(Icons.Outlined.Timeline, contentDescription = null, tint = LeafGreen); Text("Wykres wagi", style = MaterialTheme.typography.titleSmall) }
                 WeightTrendChart(r.points)
-                Text("Talia: ${n(r.waistChange, "cm")} • Pomiary: ${r.points.size}", style = MaterialTheme.typography.bodySmall)
+                Text("Zmiana obwodu talii: ${r.waistChange?.let { String.format(java.util.Locale.getDefault(), "%+.2f cm", it) } ?: "brak dwóch wiarygodnych pomiarów"} • Ważenia: ${r.points.size}", style = MaterialTheme.typography.bodySmall)
 
             } } }
         item {

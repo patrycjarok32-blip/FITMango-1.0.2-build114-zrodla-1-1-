@@ -66,6 +66,8 @@ object ProgressEvidence {
         val averageGoalDifference = daysWithGoal.takeIf { it.isNotEmpty() }
             ?.map { (it.calories - it.targetCalories).toDouble() }?.average()
         val goalBarriers = mutableListOf<String>()
+        if (profile?.goal == "Redukcja" && change != null && change < 0) goalBarriers += "Średnia masy spada: nie klasyfikuj powolnej redukcji jako potwierdzonego zastoju."
+        goalBarriers += "Cykl menstruacyjny (jeśli dotyczy), regeneracja i woda mogą wpływać na wagę; bez zapisów nie przypisuj fazy ani przyczyny."
         if (approved.size < length)
             goalBarriers += "Niepełny zakres obserwacji: ${approved.size}/$length dni ma zatwierdzony dziennik. Pozostałych dni nie traktuj jako dni bez jedzenia."
         if (aboveGoal > 0)
@@ -215,7 +217,7 @@ object ProgressEvidence {
                         WeeklyEnergySupport.isFoodConfirmed(d, confirmations.find { it.date == d.date })
                 }.distinctBy { it.date }
                 append("${previousWeighIn.date} – ${currentWeighIn.date}: ${lengthDays} dni, zatwierdzone zapisy ${confirmed.size}/${lengthDays}.\n")
-                append("Masa: ${previousWeighIn.kg} → ${currentWeighIn.kg} kg (różnica ${"%.2f".format(java.util.Locale.ROOT, currentWeighIn.kg - previousWeighIn.kg)} kg; nie oznacza automatycznie zmiany tkanki tłuszczowej).\n")
+                append("Masa: ${"%.2f".format(java.util.Locale.ROOT, previousWeighIn.kg)} → ${"%.2f".format(java.util.Locale.ROOT, currentWeighIn.kg)} kg (różnica ${"%.2f".format(java.util.Locale.ROOT, currentWeighIn.kg - previousWeighIn.kg)} kg; nie oznacza automatycznie zmiany tkanki tłuszczowej).\n")
                 if (confirmed.isNotEmpty()) append("Średnie z potwierdzonych dni: ${confirmed.map { it.calories.toDouble() }.average().roundToInt()} kcal i ${confirmed.map { it.protein.toDouble() }.average().roundToInt()} g białka.\n")
                 else append("Brak zatwierdzonych dni jedzenia do obliczenia średnich.\n")
                 if (confirmed.size < lengthDays) append("Uwaga: brak zatwierdzenia w części dni ogranicza reprezentatywność średnich; nie traktuj tych dni jako zero.\n")

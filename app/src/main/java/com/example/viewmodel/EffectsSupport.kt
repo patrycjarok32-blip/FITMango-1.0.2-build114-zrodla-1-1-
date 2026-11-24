@@ -91,7 +91,7 @@ object EffectsSupport {
         val strong = samePhase && points.size >= 6 && span >= 21 && precise.size >= 21 && precise.size >= periodDays * .7 && trend != null
         val stable = trend != null && mass > 0 && abs(trend) / mass < .0015
         val reference = precise.takeIf { strong && stable }?.map { it.calories.toDouble() }?.average()
-        val waist = normalizedMeasurements.filter { it.date in start..end && it.waistCm.isFinite() && it.waistCm > 0 }
+        val waist = normalizedMeasurements.filter { it.date in start..end && it.waistCm.isFinite() && it.waistCm in 30f..250f }
             .groupBy { it.date }.map { (_, rows) -> rows.maxBy { it.timestamp } }.sortedBy { it.date }
         val waistChange = if (waist.size >= 2) (waist.last().waistCm - waist.first().waistCm).toDouble() else null
         val goal = profile?.goal ?: "Utrzymanie"
@@ -106,7 +106,7 @@ object EffectsSupport {
         val recentChange = listOfNotNull(settings.lastAdjustment, settings.goalChanged).any { java.time.temporal.ChronoUnit.DAYS.between(LocalDate.parse(it), today) < 21 }
         val bmi = if (profile != null && profile.heightCm > 0) mass / (profile.heightCm / 100.0).let { it * it } else 0.0
         val rawDelta = if (!strong || recentChange || profile == null || maintenance == null || profile.age < 18 || bmi < 18.5) null else when {
-            goal == "Redukcja" && trend!! >= -mass * .001 && profile.targetCalories - 100 >= maxOf(1500.0, maintenance * .8) -> -100
+            goal == "Redukcja" && bmi >= 25.0 && trend!! >= -mass * .001 && profile.targetCalories - 100 >= maxOf(1500.0, maintenance * .8) -> -100
             goal == "Redukcja" && trend!! < -mass * .01 -> 100
             goal == "Budowanie masy" && trend!! <= mass * .001 && profile.targetCalories + 100 <= maintenance * 1.15 -> 100
             goal != "Redukcja" && goal != "Budowanie masy" && trend!! > mass * .0015 && profile.targetCalories - 100 >= maxOf(1500.0, maintenance * .8) -> -100
@@ -115,7 +115,7 @@ object EffectsSupport {
         }
         val recentNotes = settings.wellbeing.filter { it.date >= today.minusDays(6).toString() && it.date <= end }
         val caution = recentNotes.size >= 3 && (recentNotes.map { it.hunger }.average() >= 4 || recentNotes.map { it.energy }.average() <= 2)
-        val delta = rawDelta?.takeIf { profile != null && profile.targetCalories + it >= profile.targetProtein * 4 + profile.targetFat * 9 && !(it < 0 && caution) }
+        val delta = rawDelta?.takeIf { energySettings?.individualPlan != true && profile != null && profile.targetCalories + it >= profile.targetProtein * 4 + profile.targetFat * 9 && !(it < 0 && caution) }
         val reason = when {
             energySettings?.individualPlan == true -> "Tryb indywidualny: nie proponujemy automatycznych celów ani korekt kalorii. Trend i zapisane pomiary pozostają dostępne."
             recentChange -> "Po zmianie celu lub zatwierdzonej korekcie czekamy co najmniej 21 dni na dalszą ocenę."
@@ -123,6 +123,7 @@ object EffectsSupport {
             rawDelta != null && rawDelta < 0 && caution -> "W ostatnich wpisach zgłaszasz duży głód lub mało energii. Nie proponujemy teraz obniżenia kalorii."
             !strong -> "Do liczbowej korekty wymagamy co najmniej 6 pomiarów rozłożonych na 21 dni oraz 21 zatwierdzonych dni jedzenia z precyzyjnymi wartościami składników (min. 70% okresu)."
             delta != null -> "To mały krok do rozważenia na podstawie trendu i zapisów z precyzyjnymi wartościami, nie pewny pomiar zapotrzebowania. Możesz go odrzucić."
+            goal == "Redukcja" && bmi < 25.0 -> "Przy BMI poniżej 25 nie proponujemy obniżenia kalorii na podstawie samej wagi. Porównaj średnie w podobnej fazie cyklu, jeśli dotyczy, oraz regenerację i obwody."
             else -> "Nie proponujemy teraz zmiany kalorii. Uwzględnij obwody, wyniki treningowe i samopoczucie."
         }
         val lastWeek = complete.filter { it.date >= today.minusDays(7).toString() }
