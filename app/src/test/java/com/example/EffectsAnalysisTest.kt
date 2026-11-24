@@ -16,22 +16,31 @@ import java.time.LocalDate
 class EffectsAnalysisTest {
     private val today = LocalDate.now()
     private fun day(date: String, complete: Boolean = true) = HabitDay(date, 1800, 110, 180, 60, 2000, 1800, 400, 2500, listOf("Posiłek"), emptyList(), complete)
-    private fun analyze(profile: UserProfileEntity = UserProfileEntity(currentWeightKg = 70f, targetCalories = 2200), settings: EffectsSettings = EffectsSettings()): EffectsReport {
+    private fun analyze(profile: UserProfileEntity = UserProfileEntity(currentWeightKg = 70f, targetCalories = 2200), settings: EffectsSettings = EffectsSettings(), weightLoss: Float = 0f): EffectsReport {
         val days = (1..29).map { day(today.minusDays(it.toLong()).toString()) }
-        return EffectsSupport.analyze((0..29).map { WeightLogEntity(id = it + 1L, date = today.minusDays(it.toLong()).toString(), weightKg = 70f) }, emptyList(), days,
+        return EffectsSupport.analyze((0..29).map { WeightLogEntity(id = it + 1L, date = today.minusDays(it.toLong()).toString(), weightKg = profile.currentWeightKg + weightLoss * it / 29f) }, emptyList(), days,
             days.map { EnergyConfirmation(it.date, WeeklyEnergySupport.fingerprint(it), 2200.0, "profile") }, profile, SportsData(), settings, today, 30)
     }
     @Test fun threeGoalsUseObservedTrendAndNeverCountExerciseCaloriesAgain() {
         val reduction = analyze()
         assertEquals(29, reduction.completeDays)
         assertEquals(0.0, reduction.trendKgWeek!!, 0.0001)
-        assertEquals(-100, reduction.proposedDelta)
+        assertNull(reduction.proposedDelta)
         assertEquals(1800.0, reduction.referenceIntake!!, .01)
         assertNull(analyze(UserProfileEntity(currentWeightKg = 70f, goal = "Utrzymanie")).proposedDelta)
         assertEquals(100, analyze(UserProfileEntity(currentWeightKg = 70f, targetCalories = 2200, goal = "Budowanie masy")).proposedDelta)
         assertNull(analyze(settings = EffectsSettings(lastAdjustment = today.minusDays(10).toString())).proposedDelta)
         assertNull(analyze(settings = EffectsSettings(goalChanged = today.minusDays(5).toString())).proposedDelta)
         assertNull(analyze(settings = EffectsSettings(wellbeing = (0..3).map { WellbeingDay(today.minusDays(it.toLong()).toString(), 5, 1, 6.0) })).proposedDelta)
+    }
+    @Test fun healthyBmiDoesNotTriggerCalorieCutEvenWithCompleteDiary() {
+        val profile = UserProfileEntity(currentWeightKg = 70f, heightCm = 175f, targetCalories = 2200, goal = "Redukcja")
+        val stable = analyze(profile)
+        assertEquals(29, stable.completeDays)
+        assertNull(stable.proposedDelta)
+        val falling = analyze(profile, weightLoss = 0.6f)
+        assertTrue(falling.trendKgWeek!! < 0)
+        assertNull(falling.proposedDelta)
     }
     @Test fun approvedEstimatesCountInAveragesButStaleAndTodayDoNotSupportCorrections() {
         val days = listOf(day(today.minusDays(1).toString(), false), day(today.minusDays(2).toString()), day(today.toString()))
