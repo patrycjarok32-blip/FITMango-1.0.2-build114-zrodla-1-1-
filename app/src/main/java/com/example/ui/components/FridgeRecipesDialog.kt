@@ -39,16 +39,24 @@ fun FridgeRecipesDialog(recipes: List<RecipeEntity>, contents: String, onContent
     var matches by remember { mutableStateOf(emptyList<FridgeRecipeMatch>()) }
     var suggestions by remember { mutableStateOf(emptyList<String>()) }
     var settledInput by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(recipes, contents) {
+    var searchRequest by remember { mutableIntStateOf(0) }
+    var searching by remember { mutableStateOf(false) }
+    var searchError by remember { mutableStateOf(false) }
+    LaunchedEffect(recipes, contents, searchRequest) {
         settledInput = null
-        showResults = false
-        delay(250)
+        searching = true
+        searchError = false
+        if (searchRequest == 0) delay(250)
+        try {
         val result = withContext(Dispatchers.Default) {
             FridgeRecipeSupport.find(recipes, contents) to FridgeRecipeSupport.suggestions(recipes, contents)
         }
         matches = result.first
         suggestions = result.second
         settledInput = contents
+        } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+        catch (e: Exception) { matches = emptyList(); suggestions = emptyList(); searchError = true }
+        finally { searching = false }
     }
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(modifier = Modifier.fillMaxWidth(0.95f).imePadding().heightIn(max = 560.dp),
@@ -64,7 +72,7 @@ fun FridgeRecipesDialog(recipes: List<RecipeEntity>, contents: String, onContent
                             Icon(Icons.Default.Clear, contentDescription = "Wyczyść produkty")
                         } }, minLines = 1, maxLines = 3,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = { keyboard?.hide(); showResults = true }),
+                        keyboardActions = KeyboardActions(onSearch = { keyboard?.hide(); showResults = true; searchRequest++ }),
                         modifier = Modifier.fillMaxWidth().testTag("fridge_contents_input"))
                     Text("Oddziel produkty przecinkami. Wybierz podpowiedź, aby dodać dokładną nazwę składnika.",
                         style = MaterialTheme.typography.bodySmall, color = GoldAccent)
@@ -79,12 +87,15 @@ fun FridgeRecipesDialog(recipes: List<RecipeEntity>, contents: String, onContent
                                 }
                             }
                         }
-                        Button(onClick = { keyboard?.hide(); showResults = true },
+                        Button(onClick = { keyboard?.hide(); showResults = true; searchRequest++ },
                             modifier = Modifier.fillMaxWidth().testTag("fridge_search_button")) {
                             Text("🔎 Znajdź przepisy")
                         }
                     }
-                    if (settledInput == contents && (showResults || matches.isNotEmpty())) {
+                    if (searching && entered.isNotEmpty()) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text("Wyszukiwanie w bazie przepisów…") }
+                    if (searchError) Text("Nie udało się przeszukać bazy. Naciśnij Znajdź przepisy ponownie.", color = MaterialTheme.colorScheme.error)
+                    if (recipes.isEmpty()) Text("Baza przepisów jest pusta lub jeszcze się ładuje.")
+                    if (!searching && settledInput == contents && (showResults || matches.isNotEmpty() || suggestions.isNotEmpty())) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Checkbox(checked = onlyComplete, onCheckedChange = { onlyComplete = it },
                                 modifier = Modifier.testTag("fridge_complete_only"))
@@ -99,7 +110,7 @@ fun FridgeRecipesDialog(recipes: List<RecipeEntity>, contents: String, onContent
                             SuggestionChip(onClick = { onContentsChange(FridgeRecipeSupport.completeSuggestion(contents, name)) },
                                 label = { Text(name) }, modifier = Modifier.fillMaxWidth())
                         }
-                        if (contents.trim().length >= 2 && matches.isEmpty() && suggestions.isEmpty()) {
+                        if (contents.trim().length >= 2 && matches.isEmpty()) {
                             Text("Brak dopasowań. Spróbuj innej nazwy produktu.", style = MaterialTheme.typography.bodyMedium)
                         }
                         if (displayed.isNotEmpty()) Text("Sprawdź ilości składników w przepisie.",
@@ -118,7 +129,7 @@ fun FridgeRecipesDialog(recipes: List<RecipeEntity>, contents: String, onContent
                                             val manager = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
                                                 as android.content.ClipboardManager
                                             manager.setPrimaryClip(android.content.ClipData.newPlainText(
-                                                "FITMango — lista zakupów", match.missing.joinToString("\\n")))
+                                                "FITMango — lista zakupów", match.missing.joinToString("\n")))
                                             android.widget.Toast.makeText(context, "Skopiowano brakujące produkty",
                                                 android.widget.Toast.LENGTH_SHORT).show()
                                         }) { Text("📋 Kopiuj brakujące produkty") }
