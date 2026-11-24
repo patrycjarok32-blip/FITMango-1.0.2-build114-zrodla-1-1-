@@ -9,16 +9,17 @@ import kotlin.math.abs
 
 data class WellbeingDay(val date: String, val hunger: Int, val energy: Int, val sleepHours: Double?)
 data class EffectsSettings(val low: Double? = null, val high: Double? = null, val wellbeing: List<WellbeingDay> = emptyList(),
-    val lastAdjustment: String? = null, val goalChanged: String? = null, val reductionPlan: ReductionPlan? = null)
+    val lastAdjustment: String? = null, val goalChanged: String? = null, val reductionPlan: ReductionPlan? = null, val cycleStarts: List<String> = emptyList())
 data class WeightPoint(val date: String, val kg: Double)
 data class EffectsReport(val points: List<WeightPoint>, val trendKgWeek: Double?, val completeDays: Int, val confirmedDays: Int,
     val partialDays: Int, val loggedDays: Int, val periodDays: Int, val meanCalories: Double?, val meanProtein: Double?,
     val maintenance: Double?, val referenceIntake: Double?, val waistChange: Double?, val proposedDelta: Int?, val summary: String,
-    val reasons: String, val weeklyText: String, val strengthText: String, val wellbeingText: String, val calibratedTdee: Double? = null, val calibrationDays: Int = 0)
+    val reasons: String, val weeklyText: String, val strengthText: String, val wellbeingText: String, val calibratedTdee: Double? = null, val calibrationDays: Int = 0, val tdee28: Double? = null, val tdee90: Double? = null, val cycleComparison: String = "")
 
 object EffectsSupport {
     const val KEY = "effects_v1"
     fun encode(s: EffectsSettings): String = JSONObject().put("low", s.low ?: JSONObject.NULL).put("high", s.high ?: JSONObject.NULL)
+        .put("cycleStarts", JSONArray(s.cycleStarts))
         .put("reductionPlan", s.reductionPlan?.let { plan ->
             JSONObject().put("start", plan.start).put("stages", JSONArray().also { a -> plan.stages.forEach {
                 a.put(JSONObject().put("calories", it.calories).put("weeks", it.weeks))
@@ -38,7 +39,9 @@ object EffectsSupport {
                 ReductionPlan(p.getString("start"), (0 until stages.length()).map { i ->
                     val stage = stages.getJSONObject(i); ReductionStage(stage.getInt("calories"), stage.getInt("weeks"))
                 })
-            })
+            }, (j.optJSONArray("cycleStarts") ?: JSONArray()).let { c -> (0 until c.length()).map { c.getString(it) } })
+        require(result.cycleStarts.size <= 120 && result.cycleStarts.distinct().size == result.cycleStarts.size)
+        result.cycleStarts.forEach { LocalDate.parse(it) }
         require((result.low == null && result.high == null) || (result.low != null && result.high != null && result.low.isFinite() && result.high.isFinite() && result.low in 30.0..400.0 && result.high > result.low && result.high <= 400))
         result.wellbeing.forEach { LocalDate.parse(it.date); require(it.hunger in 1..5 && it.energy in 1..5 && (it.sleepHours == null || it.sleepHours.isFinite() && it.sleepHours in 0.0..24.0)) }
         require(result.wellbeing.map { it.date }.distinct().size == result.wellbeing.size)
@@ -57,10 +60,11 @@ object EffectsSupport {
         return if (denominator <= 0) null else x.indices.sumOf { (x[it] - xm) * (points[it].kg - ym) } / denominator * 7
     }
     // Preliminary estimate only; short-term weight change includes water.
-    fun calibrateTdee(points: List<WeightPoint>, intake: List<Double>, today: LocalDate): Double? {
-        val valid = points.filter { it.date in today.minusDays(14).toString()..today.minusDays(1).toString() && it.kg.isFinite() && it.kg in 30.0..400.0 }.distinctBy { it.date }.sortedBy { it.date }
-        if (valid.size < 7 || intake.size !in 12..14 || intake.any { !it.isFinite() || it <= 0 }) return null
-        if (LocalDate.parse(valid.last().date).toEpochDay() - LocalDate.parse(valid.first().date).toEpochDay() < 10) return null
+    fun calibrateTdee(points: List<WeightPoint>, intake: List<Double>, today: LocalDate, window: Int = 14): Double? {
+        require(window in listOf(14, 28, 90))
+        val valid = points.filter { it.date in today.minusDays(window.toLong()).toString()..today.minusDays(1).toString() && it.kg.isFinite() && it.kg in 30.0..400.0 }.distinctBy { it.date }.sortedBy { it.date }
+        if (valid.size < window / 2 || intake.size !in ((window * 0.85).let { kotlin.math.ceil(it).toInt() })..window || intake.any { !it.isFinite() || it <= 0 }) return null
+        if (LocalDate.parse(valid.last().date).toEpochDay() - LocalDate.parse(valid.first().date).toEpochDay() < window - 4) return null
         val slope = trend(valid) ?: return null
         val estimate = intake.average() - slope * 7700.0 / 7.0
         return estimate.takeIf { it.isFinite() && it in 1000.0..5000.0 }
@@ -157,8 +161,13 @@ object EffectsSupport {
         val calibrationWeights = merged.values.filter { it.date in calibrationStart..calibrationEnd }.sortedBy { it.date }
         val calibrationFood = days.distinctBy { it.date }.filter { it.date in calibrationStart..calibrationEnd && it.meals.isNotEmpty() && it.nutritionComplete && it.calories > 0 && WeeklyEnergySupport.isFoodConfirmed(it, confirmations.find { c -> c.date == it.date }) }
         val calibrated = calibrateTdee(calibrationWeights, calibrationFood.map { it.calories.toDouble() }, today)
+        fun longer(window: Int): Double? {
+            val startDate = today.minusDays(window.toLong()).toString()
+            val food = days.distinctBy { it.date }.filter { it.date in startDate..calibrationEnd && it.meals.isNotEmpty() && it.nutritionComplete && it.calories > 0 && WeeklyEnergySupport.isFoodConfirmed(it, confirmations.find { c -> c.date == it.date }) }
+            return calibrateTdee(merged.values.toList(), food.map { it.calories.toDouble() }, today, window)
+        }
         return EffectsReport(points, trend, complete.size, confirmed.size, logged.count { !it.nutritionComplete }, logged.size, periodDays, mean, protein,
-            maintenance, reference, waistChange, delta, state, reason, weeklyText, if (comparisons.isEmpty()) "Potrzebne wyniki tego samego ćwiczenia z co najmniej dwóch dat." else comparisons.joinToString("\n"), wellbeing, calibrated, calibrationFood.size)
+            maintenance, reference, waistChange, delta, state, reason, weeklyText, if (comparisons.isEmpty()) "Potrzebne wyniki tego samego ćwiczenia z co najmniej dwóch dat." else comparisons.joinToString("\n"), wellbeing, calibrated, calibrationFood.size, longer(28), longer(90), CycleProgressSupport.compare(settings.cycleStarts, merged.values.toList(), today))
     }
 }
 

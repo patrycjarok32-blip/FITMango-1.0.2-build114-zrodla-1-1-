@@ -490,11 +490,24 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                 Text("Szacunkowe wartości składników: ${r.partialDays} dni. Pomiary wagi: ${r.points.size}. Dzisiejszy dzień jedzenia nie jest analizowany.")
                 Text("Brak wpisu to brak danych. Każdy zatwierdzony dzień oznacza pełny zapis i wchodzi do średnich. Szacunki składników oznaczamy osobno; automatyczna korekta kalorii wymaga precyzyjnych danych.")
             } }
+            item { CollapsibleMangoCard("Cykl menstruacyjny", "effects_cycle") {
+                var cycleDate by rememberSaveable { mutableStateOf(today.toString()) }
+                val parsed = runCatching { LocalDate.parse(cycleDate) }.getOrNull()
+                OutlinedTextField(cycleDate, { cycleDate = it.take(10) }, label = { Text("Pierwszy dzień miesiączki (RRRR-MM-DD)") }, modifier = Modifier.fillMaxWidth())
+                Button(enabled = !busy && parsed != null && parsed <= today && cycleDate !in settings.cycleStarts && settings.cycleStarts.size < 120, onClick = {
+                    busy = true; viewModel.saveEffectsSettings(settings.copy(cycleStarts = (settings.cycleStarts + cycleDate).sorted()), ::completed)
+                }) { Text("Dodaj początek cyklu") }
+                settings.cycleStarts.sortedDescending().forEach { start -> Row(verticalAlignment = Alignment.CenterVertically) { Text(start, Modifier.weight(1f)); TextButton(enabled = !busy, onClick = { busy = true; viewModel.saveEffectsSettings(settings.copy(cycleStarts = settings.cycleStarts - start), ::completed) }) { Text("Usuń") } } }
+                Text(r.cycleComparison)
+                Text("Porównanie dni cyklu jest orientacyjne; nie potwierdza owulacji ani faz hormonalnych.", style = MaterialTheme.typography.bodySmall)
+            } }
             item { CollapsibleMangoCard("Inteligentne TDEE i cel", "effects_energy") {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Inteligentne TDEE • ostatnie 14 zakończonych dni", style = MaterialTheme.typography.titleMedium)
                 Text(r.calibratedTdee?.let { "Wstępny szacunek: ${it.toInt()} kcal/dzień" } ?: "Za mało wiarygodnych danych do kalibracji.")
                 Text("Precyzyjne zatwierdzone dni: ${r.calibrationDays}/14. Potrzeba min. 12 dni i 7 pomiarów wagi rozłożonych na min. 10 dni. Woda i cykl mogą zniekształcać wynik. Nie dodawaj ponownie kalorii treningowych; cel nie zmienia się automatycznie.", style = MaterialTheme.typography.bodySmall)
+                Text("Kontrola 28 dni: " + (r.tdee28?.toInt()?.let { "$it kcal/dzień" } ?: "brak danych"))
+                Text("Kontrola 90 dni: " + (r.tdee90?.toInt()?.let { "$it kcal/dzień" } ?: "brak danych"))
                 Text("Utrzymanie z profilu: ${r.maintenance?.toInt()?.let { "$it kcal/dzień" } ?: "uzupełnij Profil"}.")
                 Text("Cel jedzenia: ${profile?.targetCalories ?: "brak danych"} kcal. Średnia ze wszystkich zatwierdzonych dni (także zaakceptowanych szacunków): ${r.meanCalories?.toInt() ?: "brak danych"} kcal; białko: ${r.meanProtein?.toInt() ?: "brak danych"} g.")
                 Text(EnergyCalculatorSupport.base(profile, energySettings)?.explanation ?: "Uzupełnij poprawny Profil; indywidualne cele ustaw ręcznie.", style = MaterialTheme.typography.bodySmall)
