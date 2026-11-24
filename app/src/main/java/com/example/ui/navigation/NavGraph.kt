@@ -292,8 +292,7 @@ fun MainNavigation(viewModel: DietaViewModel) {
                     onNavigateToMeasurements = { navController.navigate("measurements") },
                     onNavigateToDocuments = { navController.navigate(Screen.Documents.route) },
                     onNavigateToSport = { navController.navigate("sport") },
-                    onNavigateToEffects = { navController.navigate("effects") },
-                    onNavigateToSport = { navController.navigate(Screen.Sport.route) }
+                    onNavigateToEffects = { navController.navigate("effects") }
                 )
             }
             composable("nutrition_fix") {
