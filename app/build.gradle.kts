@@ -60,6 +60,8 @@ tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
   forkEvery = 1
   maxParallelForks = 1
   maxHeapSize = "1536m"
+  // Use Maven Central canonical endpoint for Robolectric runtime downloads.
+  systemProperty("robolectric.dependency.repo.url", "https://repo.maven.apache.org/maven2")
   testLogging {
     events("started", "passed", "skipped", "failed")
     exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
