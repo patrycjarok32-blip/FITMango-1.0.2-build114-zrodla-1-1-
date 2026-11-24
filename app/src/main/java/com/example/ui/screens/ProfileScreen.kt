@@ -49,7 +49,9 @@ fun ProfileScreen(
     viewModel: DietaViewModel,
     onNavigateToMeasurements: (() -> Unit)? = null,
     onNavigateToAiCoach: (() -> Unit)? = null,
-    onNavigateToEffects: (() -> Unit)? = null
+    onNavigateToEffects: (() -> Unit)? = null,
+    onNavigateToSport: (() -> Unit)? = null,
+    initialDetail: String? = null
 ) {
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
     val weightLogs by viewModel.weightLogs.collectAsStateWithLifecycle()
@@ -121,7 +123,7 @@ fun ProfileScreen(
     val context = LocalContext.current
     val navPrefs = remember(context) { context.getSharedPreferences("FITMangoProfileNavigation", 0) }
     var tab by rememberSaveable { mutableStateOf(navPrefs.getString("tab", "profile").takeIf { it in ProfileHubCatalog.tabs } ?: "profile") }
-    var detail by rememberSaveable { mutableStateOf<String?>(null) }
+    var detail by rememberSaveable { mutableStateOf<String?>(initialDetail) }
     var parentDetails by rememberSaveable { mutableStateOf(emptyList<String>()) }
     val detailStates = rememberSaveableStateHolder()
     val profileList = rememberLazyListState(navPrefs.getInt("profile_index", 0).coerceAtLeast(0), navPrefs.getInt("profile_offset", 0).coerceAtLeast(0))
@@ -198,7 +200,7 @@ fun ProfileScreen(
     BackHandler(enabled = detail != null, onBack = returnToHub)
     if (detail == "effects") {
         detailStates.SaveableStateProvider("profile_detail_effects") {
-            EffectsScreen(viewModel, onBack = returnToHub, onProfile = { openDetail("calculator") })
+            EffectsScreen(viewModel, onBack = returnToHub, onProfile = { openDetail("calculator") }, onSport = { onNavigateToSport?.invoke() ?: openDetail("effects") }, onAi = { onNavigateToAiCoach?.invoke() ?: openDetail("analysis") }, onMeasurements = { onNavigateToMeasurements?.invoke() ?: openDetail("measurements") }, onPhotos = { openDetail("body_photos") })
         }
         return
     }

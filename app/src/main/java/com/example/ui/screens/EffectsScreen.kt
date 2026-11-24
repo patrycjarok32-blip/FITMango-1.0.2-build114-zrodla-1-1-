@@ -172,68 +172,8 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
     fun n(value: Double?, unit: String) = value?.let { String.format(java.util.Locale.getDefault(), "%.2f %s", it, unit) } ?: "brak danych"
     LazyColumn(Modifier.fillMaxSize().background(DarkBackground).padding(horizontal = 16.dp), state = rememberLazyListState(), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
         item {
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("🥭 Centrum Postępów i AI", style = MaterialTheme.typography.titleLarge)
-                    Text("Sylwetka, treningi i rekomendacje w jednym punkcie startowym. Dane pozostają w dotychczasowych modułach.",
-                        style = MaterialTheme.typography.bodySmall)
-                    Button(onClick = onMeasurements, modifier = Modifier.fillMaxWidth().testTag("progress_hub_body")) {
-                        Text("📏 Sylwetka • pomiary i zdjęcia")
-                    }
-                    OutlinedButton(onClick = onPhotos, modifier = Modifier.fillMaxWidth().testTag("progress_hub_photos")) { Text("📷 Zdjęcia przód / bok / tył • porównanie AI") }
-                    OutlinedButton(onClick = onSport, modifier = Modifier.fillMaxWidth().testTag("progress_hub_sport")) {
-                        Text("🏋️ Trening • postępy i regeneracja")
-                    }
-                    OutlinedButton(onClick = onAi, modifier = Modifier.fillMaxWidth().testTag("progress_hub_ai")) {
-                        Text("🧠 Sugestie AI • wspólna analiza")
-                    }
-                    Text("Poniżej: trend masy ciała, bilans energii i analiza postępów. Sugestie AI nie zmieniają celów bez zatwierdzenia.",
-                        style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
-        item { CollapsibleMangoCard("Wspólny raport AI • sylwetka, dieta i sport", "effects_ai") {
-            Text("Jeden raport obejmuje pomiary sylwetki, daty zdjęć, dietę, treningi i dostępne dane Health Connect. Zdjęcia nie są wysyłane do AI ani oceniane wizualnie. Raport lokalny działa bez AI. Po nowych wpisach wygeneruj analizę ponownie.")
-            TextButton(onClick = onProfile) { Text("Ustawienia AI w Profilu") }
-            val aiPulse by animateFloatAsState(if (aiBusy && motion) 0.72f else 1f, animationSpec = tween(if (motion) 450 else 0), label = "ai_busy_pulse")
-            Button(enabled = !aiBusy && report != null, onClick = { viewModel.runEffectsAiAnalysis(range) }) {
-                Icon(Icons.Outlined.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp).graphicsLayer { alpha = aiPulse })
-                Spacer(Modifier.width(8.dp))
-                Text(if (aiBusy) "Przygotowywanie…" else "Wyjaśnij moje efekty")
-            }
-            if (aiBusy) LinearProgressIndicator(Modifier.fillMaxWidth())
-            AnimatedVisibility(visible = aiText.isNotBlank(), enter = if (motion) fadeIn(tween(280)) else fadeIn(tween(0)), exit = fadeOut(tween(0))) { Text(aiText) }
-        } }
-        item {
-            val sorted = measurements.filter { it.weightKg.isFinite() && it.weightKg > 0f }
-                .sortedBy { it.date }
-            val first = sorted.firstOrNull()
-            val last = sorted.lastOrNull()
-            Card(colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                Column(Modifier.fillMaxWidth().padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("📊 Moja przemiana", style = MaterialTheme.typography.titleMedium)
-                    if (first != null && last != null && first.id != last.id) {
-                        val difference = com.example.viewmodel.MangoDailyTools.weightChange(
-                            first.weightKg, last.weightKg)
-                        Text("Od ${first.date} do ${last.date}")
-                        if (difference != null) Text("Zmiana masy: " +
-                            String.format(java.util.Locale.getDefault(), "%+.1f kg", difference))
-                        if (first.waistCm > 0f && last.waistCm > 0f)
-                            Text("Zmiana talii: " + String.format(java.util.Locale.getDefault(),
-                                "%+.1f cm", last.waistCm - first.waistCm))
-                        Text("To porównanie zapisanych pomiarów, nie ocena wyglądu.",
-                            style = MaterialTheme.typography.bodySmall)
-                    } else {
-                        Text("Dodaj co najmniej dwa pomiary, aby porównać postępy.")
-                    }
-                }
-            }
-        }
-        item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Postępy", style = MaterialTheme.typography.headlineSmall,
+                Text("Moje postępy", style = MaterialTheme.typography.headlineSmall,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.weight(1f))
                 TextButton(onClick = onBack) { Text("Wróć") }
             }
@@ -259,6 +199,69 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                 }
             }
         }
+        item {
+            val current = report
+            if (current != null) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ProgressMetric("Aktualna waga", current.points.lastOrNull()?.kg?.let { n(it, "kg") } ?: "—", Icons.Outlined.MonitorWeight, Modifier.weight(1f))
+                    ProgressMetric("Zmiana wagi", if (current.points.size >= 2) n(current.points.last().kg - current.points.first().kg, "kg") else "—", Icons.Outlined.ShowChart, Modifier.weight(1f))
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ProgressMetric("Cel dzienny", profile?.targetCalories?.let { "$it kcal" } ?: "—", Icons.Outlined.LocalFireDepartment, Modifier.weight(1f))
+                    ProgressMetric("Trend tygodniowy", n(current.trendKgWeek, "kg"), Icons.Outlined.Timeline, Modifier.weight(1f))
+                }
+                Text(current.summary, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 8.dp))
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ProgressShortcut("Sylwetka", Icons.Outlined.MonitorWeight, onMeasurements, Modifier.weight(1f), "progress_hub_body")
+                ProgressShortcut("Zdjęcia", Icons.Outlined.CameraAlt, onPhotos, Modifier.weight(1f), "progress_hub_photos")
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ProgressShortcut("Trening", Icons.Outlined.FitnessCenter, onSport, Modifier.weight(1f), "progress_hub_sport")
+                ProgressShortcut("Analiza AI", Icons.Outlined.AutoAwesome, onAi, Modifier.weight(1f), "progress_hub_ai")
+            }
+        }
+        item { CollapsibleMangoCard("Wspólny raport AI • sylwetka, dieta i sport", "effects_ai") {
+            Text("Jeden raport obejmuje pomiary sylwetki, daty zdjęć, dietę, treningi i dostępne dane Health Connect. Zdjęcia nie są wysyłane do AI ani oceniane wizualnie. Raport lokalny działa bez AI. Po nowych wpisach wygeneruj analizę ponownie.")
+            TextButton(onClick = onProfile) { Text("Ustawienia AI w Profilu") }
+            val aiPulse by animateFloatAsState(if (aiBusy && motion) 0.72f else 1f, animationSpec = tween(if (motion) 450 else 0), label = "ai_busy_pulse")
+            Button(enabled = !aiBusy && report != null, onClick = { viewModel.runEffectsAiAnalysis(range) }) {
+                Icon(Icons.Outlined.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp).graphicsLayer { alpha = aiPulse })
+                Spacer(Modifier.width(8.dp))
+                Text(if (aiBusy) "Przygotowywanie…" else "Wyjaśnij moje efekty")
+            }
+            if (aiBusy) LinearProgressIndicator(Modifier.fillMaxWidth())
+            AnimatedVisibility(visible = aiText.isNotBlank(), enter = if (motion) fadeIn(tween(280)) else fadeIn(tween(0)), exit = fadeOut(tween(0))) { Text(aiText) }
+        } }
+        item {
+            val sorted = measurements.filter { it.weightKg.isFinite() && it.weightKg > 0f }
+                .sortedBy { it.date }
+            val first = sorted.firstOrNull()
+            val last = sorted.lastOrNull()
+            Card(colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                Column(Modifier.fillMaxWidth().padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Moja przemiana • pomiary sylwetki", style = MaterialTheme.typography.titleMedium)
+                    if (first != null && last != null && first.id != last.id) {
+                        val difference = com.example.viewmodel.MangoDailyTools.weightChange(
+                            first.weightKg, last.weightKg)
+                        Text("Od ${first.date} do ${last.date}")
+                        if (difference != null) Text("Zmiana masy: " +
+                            String.format(java.util.Locale.getDefault(), "%+.1f kg", difference))
+                        if (first.waistCm > 0f && last.waistCm > 0f)
+                            Text("Zmiana talii: " + String.format(java.util.Locale.getDefault(),
+                                "%+.1f cm", last.waistCm - first.waistCm))
+                        Text("To porównanie zapisanych pomiarów, nie ocena wyglądu.",
+                            style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        Text("Dodaj co najmniej dwa pomiary, aby porównać postępy.")
+                    }
+                }
+            }
+        }
         val r = report
         if (r != null) {
             item {
@@ -276,8 +279,9 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                         Text("Czy mój deficyt działa? • 28 dni", style = MaterialTheme.typography.titleMedium)
                         Text(check.status, style = MaterialTheme.typography.titleLarge)
                         Text(check.weightStatus, style = MaterialTheme.typography.bodyMedium)
+                        Text("Wiarygodność: " + check.confidence, style = MaterialTheme.typography.bodySmall)
+                        if (expanded) {
                         Text(check.foodStatus, style = MaterialTheme.typography.bodyMedium)
-                        Text("Wiarygodność oceny: " + check.confidence, style = MaterialTheme.typography.bodySmall)
                         Text("Kalorie treningowe z zegarka: " + (check.averageWatchActiveKcal?.let {
                             String.format(java.util.Locale.getDefault(), "%.0f kcal na sesję z odczytem", it)
                         } ?: "brak danych") + " • wszystkie sesje: " + check.watchSessions,
@@ -363,6 +367,7 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                         check.weightChange?.let {
                             Text("Zmiana średniej z pierwszego i ostatniego tygodnia: " +
                                 String.format(java.util.Locale.getDefault(), "%+.2f kg", it))
+                        }
                         }
                         TextButton(onClick = { expanded = !expanded },
                             modifier = Modifier.testTag("deficit_monitor_details")) {
@@ -485,7 +490,7 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                 Text("Szacunkowe wartości składników: ${r.partialDays} dni. Pomiary wagi: ${r.points.size}. Dzisiejszy dzień jedzenia nie jest analizowany.")
                 Text("Brak wpisu to brak danych. Każdy zatwierdzony dzień oznacza pełny zapis i wchodzi do średnich. Szacunki składników oznaczamy osobno; automatyczna korekta kalorii wymaga precyzyjnych danych.")
             } }
-            item { CollapsibleMangoCard("Zapotrzebowanie i cel", "effects_energy") {
+            item { CollapsibleMangoCard("Inteligentne TDEE i cel", "effects_energy") {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Inteligentne TDEE • ostatnie 14 zakończonych dni", style = MaterialTheme.typography.titleMedium)
                 Text(r.calibratedTdee?.let { "Wstępny szacunek: ${it.toInt()} kcal/dzień" } ?: "Za mało wiarygodnych danych do kalibracji.")
@@ -502,7 +507,7 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                 }
             } }
             item { CollapsibleMangoCard("Raport tygodniowy", "effects_week") { Text(r.weeklyText) } }
-            item { CollapsibleMangoCard("Trening i samopoczucie", "effects_wellbeing") {
+            item { CollapsibleMangoCard("Aktywność i regeneracja", "effects_wellbeing") {
                 Text(r.strengthText)
                 Text("Pokazujemy zapisane wyniki; porównaj także powtórzenia i technikę ćwiczenia.", style = MaterialTheme.typography.bodySmall)
                 Text(r.wellbeingText)
@@ -534,4 +539,24 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
         text = { Text("Cel: $target → ${target + delta} kcal. Białko i tłuszcze zachowujemy; węglowodany dopasujemy do nowego celu. Kolejna propozycja pojawi się najwcześniej po 21 dniach nowych obserwacji.") },
         confirmButton = { TextButton(enabled = !busy, onClick = { busy = true; viewModel.applyEffectsAdjustment(target, delta, range) { completed(it); if (it == null) adjustment = null } }) { Text("Zatwierdź") } },
         dismissButton = { TextButton(enabled = !busy, onClick = { adjustment = null }) { Text("Odrzuć") } }) }
+}
+
+@Composable
+private fun ProgressMetric(label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, modifier: Modifier) {
+    Card(modifier, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Text(label, style = MaterialTheme.typography.labelMedium)
+            Text(value, style = MaterialTheme.typography.titleLarge)
+        }
+    }
+}
+@Composable
+private fun ProgressShortcut(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, action: () -> Unit, modifier: Modifier, tag: String) {
+    OutlinedCard(onClick = action, modifier = modifier.testTag(tag)) {
+        Column(Modifier.fillMaxWidth().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Text(label, style = MaterialTheme.typography.labelLarge)
+        }
+    }
 }

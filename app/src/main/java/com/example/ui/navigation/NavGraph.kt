@@ -292,7 +292,8 @@ fun MainNavigation(viewModel: DietaViewModel) {
                     onNavigateToMeasurements = { navController.navigate("measurements") },
                     onNavigateToDocuments = { navController.navigate(Screen.Documents.route) },
                     onNavigateToSport = { navController.navigate("sport") },
-                    onNavigateToEffects = { navController.navigate("effects") }
+                    onNavigateToEffects = { navController.navigate("effects") },
+                    onNavigateToSport = { navController.navigate(Screen.Sport.route) }
                 )
             }
             composable("nutrition_fix") {
@@ -346,7 +347,10 @@ fun MainNavigation(viewModel: DietaViewModel) {
                 SportsScreen(viewModel, onBack = { navController.popBackStack() })
             }
             composable("effects") {
-                EffectsScreen(viewModel, onBack = { navController.popBackStack() }, onProfile = { navController.navigate(Screen.Profile.route) }, onSport = { navController.navigate(Screen.Sport.route) }, onAi = { navController.navigate(Screen.AiCoach.route) }, onMeasurements = { navController.navigate("measurements") }, onPhotos = { navController.navigate(Screen.Profile.route) })
+                EffectsScreen(viewModel, onBack = { navController.popBackStack() }, onProfile = { navController.navigate(Screen.Profile.route) }, onSport = { navController.navigate(Screen.Sport.route) }, onAi = { navController.navigate(Screen.AiCoach.route) }, onMeasurements = { navController.navigate("measurements") }, onPhotos = { navController.navigate("body_photos") })
+            }
+            composable("body_photos") {
+                ProfileScreen(viewModel = viewModel, initialDetail = "body_photos")
             }
             composable("measurements") {
                 MeasurementsScreen(
