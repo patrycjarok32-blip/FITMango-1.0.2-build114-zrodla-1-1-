@@ -10,11 +10,14 @@ data class FridgeRecipeMatch(val recipe: RecipeEntity, val available: List<Strin
 
 /** Matches names only; quantities, freshness and dietary suitability must still be checked. */
 object FridgeRecipeSupport {
-    private fun key(raw: String): String {
-        val name = MealPlannerSupport.parseSingleIngredientLine(raw).name
+    private val marks = Regex("\\p{M}")
+    private val punctuation = Regex("[^a-z0-9 ]")
+    private val spaces = Regex("\\s+")
+    private fun key(raw: String): String = normalized( MealPlannerSupport.parseSingleIngredientLine(raw).name )
+    private fun normalized(name: String): String {
         return Normalizer.normalize(name.lowercase(Locale.ROOT).replace('ł', 'l'), Normalizer.Form.NFD)
-            .replace(Regex("\\p{M}"), "").replace(Regex("[^a-z0-9 ]"), " ")
-            .replace(Regex("\\s+"), " ").trim()
+            .replace(marks, "").replace(punctuation, " ")
+            .replace(spaces, " ").trim()
     }
     private val aliases = listOf(
         listOf("jajko", "jajka", "jajek", "jajkiem", "egg", "eggs"),
@@ -68,14 +71,15 @@ object FridgeRecipeSupport {
     fun removeProduct(contents: String, product: String): String =
         enteredProducts(contents).filterNot { key(it) == key(product) }.joinToString(", ")
 
-    fun find(recipes: List<RecipeEntity>, contents: String): List<FridgeRecipeMatch> {
+    fun find(recipes: List<RecipeEntity>, contents: String, checkpoint: () -> Unit = {}): List<FridgeRecipeMatch> {
         val stored = enteredProducts(contents)
         if (stored.isEmpty()) return emptyList()
         val prepared = stored.map { tokens(key(it)) }
         return recipes.mapNotNull { recipe ->
+            checkpoint()
             val names = MealPlannerSupport.parseRecipeIngredients(recipe.ingredients).map { it.name }.filter { it.isNotBlank() }.distinct()
             if (names.isEmpty()) return@mapNotNull null
-            val keyed = names.map { it to tokens(key(it)) }
+            val keyed = names.map { it to tokens(normalized(it)) }
             val (available, missing) = keyed.partition { (_, required) -> prepared.any { matchTokens(required, it) } }
             val possible = missing.any { (_, required) -> prepared.any { possibleMatch(required, it) } }
             if (available.isEmpty() && !possible) null else FridgeRecipeMatch(recipe, available.map { it.first }, missing.map { it.first })

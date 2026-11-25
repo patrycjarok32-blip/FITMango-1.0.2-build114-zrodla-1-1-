@@ -27,7 +27,7 @@ import com.example.ui.theme.*
 import com.example.viewmodel.FridgeRecipeMatch
 import com.example.viewmodel.FridgeRecipeSupport
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -46,15 +46,19 @@ fun FridgeRecipesDialog(recipes: List<RecipeEntity>, contents: String, onContent
         settledInput = null
         searching = true
         searchError = false
-        if (searchRequest == 0) delay(350)
+        if (searchRequest == 0) { searching = false; return@LaunchedEffect }
         try {
-        val result = withContext(Dispatchers.Default) {
-            FridgeRecipeSupport.find(recipes, contents) to (if (showResults) emptyList() else FridgeRecipeSupport.suggestions(recipes, contents))
+        val result = kotlinx.coroutines.withTimeout(15000L) {
+            withContext(Dispatchers.Default) {
+                val job = kotlinx.coroutines.currentCoroutineContext()
+                FridgeRecipeSupport.find(recipes, contents) { job.ensureActive() }
+            }
         }
-        matches = result.first
-        suggestions = result.second
+        matches = result
+        suggestions = emptyList()
         settledInput = contents
-        } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+        } catch (e: kotlinx.coroutines.TimeoutCancellationException) { matches = emptyList(); searchError = true }
+        catch (e: kotlinx.coroutines.CancellationException) { throw e }
         catch (e: Exception) { matches = emptyList(); suggestions = emptyList(); searchError = true }
         finally { searching = false }
     }
@@ -74,7 +78,7 @@ fun FridgeRecipesDialog(recipes: List<RecipeEntity>, contents: String, onContent
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         keyboardActions = KeyboardActions(onSearch = { keyboard?.hide(); showResults = true; searchRequest++ }),
                         modifier = Modifier.fillMaxWidth().testTag("fridge_contents_input"))
-                    Text("Oddziel produkty przecinkami. Wybierz podpowiedź, aby dodać dokładną nazwę składnika.",
+                    Text("Oddziel produkty przecinkami, a następnie naciśnij Znajdź przepisy.",
                         style = MaterialTheme.typography.bodySmall, color = GoldAccent)
                     val entered = FridgeRecipeSupport.enteredProducts(contents)
                     if (entered.isNotEmpty()) {
@@ -88,7 +92,7 @@ fun FridgeRecipesDialog(recipes: List<RecipeEntity>, contents: String, onContent
                             }
                         }
                         Button(onClick = { keyboard?.hide(); showResults = true; searchRequest++ },
-                            modifier = Modifier.fillMaxWidth().testTag("fridge_search_button")) {
+                            enabled = !searching, modifier = Modifier.fillMaxWidth().testTag("fridge_search_button")) {
                             Text("🔎 Znajdź przepisy")
                         }
                     }
