@@ -2,6 +2,9 @@ package com.example.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -15,10 +18,11 @@ import java.util.Locale
 @Composable
 fun SportTodayDashboard(today: LocalDate, data: SportsData,
     workouts: List<WorkoutSession>, resolvedSteps: Long?,
-    onStart: () -> Unit, onPlan: () -> Unit, onRecovery: () -> Unit, onHistory: () -> Unit) {
+    onStart: () -> Unit, onPlan: () -> Unit, onRecovery: () -> Unit, onHistory: () -> Unit,
+    onAdd: () -> Unit = onPlan, onDay: (LocalDate) -> Unit = { onPlan() }) {
     val plans = data.plans.filter { it.date == today.toString() }
     val plan = plans.firstOrNull { !it.rest } ?: plans.firstOrNull()
-    val finishedPlans = plans.count { MangoWorkoutInsights.plannedStatus(it, data, workouts) == "✓ Wykonany" }
+    val finishedPlans = plans.count { !it.rest && MangoWorkoutInsights.plannedStatus(it, data, workouts) == "✓ Wykonany" }
     val recordedToday = ActivityRecoverySupport.daySessions(data, today)
     val recordedMinutes = ActivityRecoverySupport.dayMinutes(data, today)
     val active = workouts.firstOrNull { it.ended == 0L }
@@ -31,6 +35,21 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
                 style = MaterialTheme.typography.titleMedium)
             Text("Sesje z planu: $finishedPlans / ${plans.count { !it.rest }}",
                 style = MaterialTheme.typography.bodySmall)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                val monday = today.minusDays((today.dayOfWeek.value - 1).toLong())
+                (0..6).forEach { offset ->
+                    val day = monday.plusDays(offset.toLong())
+                    val count = data.plans.count { it.date == day.toString() && !it.rest }
+                    OutlinedCard(onClick = { onDay(day) }, modifier = Modifier.weight(1f).testTag("sport7_day_$day")) {
+                        Column(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(listOf("Pn","Wt","Śr","Cz","Pt","So","Nd")[offset], style = MaterialTheme.typography.labelSmall)
+                            Text(day.dayOfMonth.toString(), style = MaterialTheme.typography.titleSmall)
+                            Text(count.toString(), style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
+            Text("Liczby w kalendarzu oznaczają zaplanowane jednostki.", style = MaterialTheme.typography.labelSmall)
             if (recordedToday.isNotEmpty()) {
                 Card(modifier = Modifier.fillMaxWidth().testTag("sport_recorded_today"),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
@@ -39,7 +58,7 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
                             style = MaterialTheme.typography.titleSmall)
                         Text("${recordedToday.size} aktywności • $recordedMinutes min",
                             style = MaterialTheme.typography.bodyMedium)
-                        recordedToday.take(4).forEach { session ->
+                        recordedToday.forEach { session ->
                             val minutes = java.time.Duration.between(
                                 java.time.Instant.parse(session.start),
                                 java.time.Instant.parse(session.end)).toMinutes()
@@ -57,7 +76,7 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
                     }
                 }
             }
-            plans.filterNot { it.rest }.take(3).forEach { session ->
+            plans.filterNot { it.rest }.forEach { session ->
                 val status = MangoWorkoutInsights.plannedStatus(session, data, workouts)
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                     Column(Modifier.fillMaxWidth().padding(10.dp)) {
@@ -88,6 +107,7 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
                 OutlinedButton(onClick = onPlan, modifier = Modifier.weight(1f)) { Text("Edytuj plan") }
                 OutlinedButton(onClick = onHistory, modifier = Modifier.weight(1f)) { Text("Historia") }
             }
+            OutlinedButton(onClick = onAdd, modifier = Modifier.fillMaxWidth().testTag("sport7_add")) { Icon(Icons.Outlined.Add, contentDescription = null); Text("Dodaj jednostkę") }
             TextButton(onClick = onRecovery) { Text("🌿 Samopoczucie i regeneracja") }
             Text("Wykonane sesje siłowe: $completed • Zapisane serie: ${data.sets.size}",
                 style = MaterialTheme.typography.bodySmall)

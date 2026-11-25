@@ -18,6 +18,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -55,10 +57,10 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
     val profile by viewModel.userProfile.collectAsStateWithLifecycle()
     var activitySection by rememberSaveable { mutableStateOf("today") }
     var trainingPage by rememberSaveable { mutableStateOf("plan") }
-    var showWeeklyTrainingCalendar by rememberSaveable { mutableStateOf(false) }
+    var showWeeklyTrainingCalendar by rememberSaveable { mutableStateOf(true) }
     var workoutDate by rememberSaveable { mutableStateOf(today.toString()) }
     var selectedCalendarDate by rememberSaveable { mutableStateOf(today.toString()) }
-    var showAddActivity by rememberSaveable(workoutDate) { mutableStateOf(false) }
+    var showAddActivity by rememberSaveable { mutableStateOf(false) }
     var showTrainingProfile by rememberSaveable { mutableStateOf(false) }
     var showProgramLibrary by rememberSaveable { mutableStateOf(false) }
     var showExtendedProgress by rememberSaveable { mutableStateOf(false) }
@@ -125,7 +127,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text("💪  Centrum sportowe", style = MaterialTheme.typography.headlineSmall,
+                        Text("Sport 7.0", style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold, color = LeafGreen)
                         Text("Aktywność • siła • regeneracja", style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -142,16 +144,16 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(vertical = 4.dp)) {
                 listOf(
-                    Triple("today", "🏠", "Dzisiaj"),
-                    Triple("training", "🗓️", "Plan"),
-                    Triple("session", "▶", "Trening"),
-                    Triple("progress", "📈", "Postępy")
-                ).forEach { (key, emoji, label) ->
+                    Triple("today", Icons.Outlined.Today, "Dzisiaj"),
+                    Triple("training", Icons.Outlined.DateRange, "Plan"),
+                    Triple("session", Icons.Outlined.FitnessCenter, "Trening"),
+                    Triple("progress", Icons.Outlined.ShowChart, "Postępy")
+                ).forEach { (key, icon, label) ->
                     item {
                         FilterChip(
                             selected = activitySection == (if (key == "session") "training" else key) && (key != "session" || trainingPage == "session") && (key != "training" || trainingPage == "plan"),
                             onClick = { activitySection = if (key == "session") "training" else key; if (key == "training" || key == "session") trainingPage = if (key == "session") "session" else "plan"; showExtras = false; showReport = false },
-                            label = { Text("$emoji  $label") },
+                            label = { Text(label) }, leadingIcon = { Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp)) },
                             modifier = Modifier.testTag("sport_${key}_tab")
                         )
                     }
@@ -494,13 +496,14 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 }
             }
         }
-        if (activitySection == "today") item { FreshMangoSportHeader() }
         if (activitySection == "today") item {
             FreshMangoSportRings(progress.first, progress.second, week.activeDays, ActivityRecoverySupport.unit(data))
         }
         if (activitySection == "today") item {
             SportTodayDashboard(today, data, workouts, current.steps,
-                onStart = { activitySection = "training"; trainingPage = "session" },
+                onStart = { activitySection = "training"; trainingPage = "session"; workoutDate = today.toString() },
+                onAdd = { activitySection = "training"; trainingPage = "session"; workoutDate = today.toString(); showAddActivity = true },
+                onDay = { day -> selectedCalendarDate = day.toString(); workoutDate = day.toString(); activitySection = "training"; trainingPage = "plan"; showWeeklyTrainingCalendar = true },
                 onPlan = { activitySection = "training"; trainingPage = "plan" },
                 onRecovery = { activitySection = "recovery" },
                 onHistory = { activitySection = "history" })
@@ -511,7 +514,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                 Text(if (trainingPage == "plan") "Plan tygodnia" else "Trening • ${workoutDate}",
                     style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
                 TextButton(onClick = {
-                    trainingPage = "session"; workoutDate = today.toString(); showAddActivity = true
+                    workoutDate = if (trainingPage == "plan") selectedCalendarDate else workoutDate; trainingPage = "session"; showAddActivity = true
                 }) { Text("＋ Dodaj sesję") }
             }
             Text(if (trainingPage == "plan") "Wybierz dzień, aby zobaczyć lub dodać treningi."
