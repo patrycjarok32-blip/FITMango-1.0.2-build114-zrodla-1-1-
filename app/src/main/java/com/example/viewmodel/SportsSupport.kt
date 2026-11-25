@@ -31,6 +31,26 @@ object PlannedActivityMatching {
         record.activityType == 56 || record.activityType == 57 ||
             listOf("run", "bieg", "jogging").any { record.title.contains(it, ignoreCase = true) }
 
+    private fun kind(text: String): String? {
+        val value = text.lowercase()
+        return when {
+            listOf("run", "bieg", "jogging").any { it in value } -> "run"
+            listOf("rower", "cycling", "biking", "bike").any { it in value } -> "bike"
+            listOf("spacer", "walking", "walk").any { it in value } -> "walk"
+            listOf("pływ", "swim").any { it in value } -> "swim"
+            listOf("stretch", "rozciąg").any { it in value } -> "stretch"
+            "yoga" in value || "joga" in value -> "yoga"
+            "pilates" in value -> "pilates"
+            else -> null
+        }
+    }
+    private fun planKind(plan: SportPlan): String? =
+        if (plan.rest || plan.exercises.isNotEmpty()) null
+        else if (isRun(plan)) "run" else kind(plan.title) ?: kind(plan.category)
+
+    private fun recordKind(record: SportSession): String? =
+        if (isRunning(record)) "run" else kind(SportSessionPresentation.typeLabel(record.activityType).orEmpty()) ?: kind(record.title)
+
     private fun candidates(plan: SportPlan, data: SportsData): List<SportSession> =
         ActivityRecoverySupport.unique(data.history).filter { record ->
             val start = runCatching { Instant.parse(record.start) }.getOrNull() ?: return@filter false
@@ -41,19 +61,19 @@ object PlannedActivityMatching {
                 duration >= (plan.targetMinutes * 0.75).toLong()
             val distanceFit = plan.targetDistanceKm == null || record.distanceKm == null ||
                 record.distanceKm >= plan.targetDistanceKm * 0.8
-            day == plan.date && isRunning(record) && duration > 0 &&
+            day == plan.date && planKind(plan) != null && planKind(plan) == recordKind(record) && duration > 0 &&
                 minutesFit && distanceFit &&
                 data.linkedActivities.values.none { it == record.id }
         }
 
-    /** Only an unambiguous running record can complete a plan automatically.
+    /** Only an unambiguous same-sport record can complete a plan automatically.
      * Manual links always take precedence; no Health Connect record is modified.
      */
     fun match(plan: SportPlan, data: SportsData): SportSession? {
         if (plan.rest) return null
         val explicit = data.linkedActivities[plan.sessionId]
         if (explicit != null) return data.history.firstOrNull { it.id == explicit }
-        if (!isRun(plan)) return null
+        if (planKind(plan) == null) return null
         val matches = candidates(plan, data)
         // Identical records without distance, calories or an activity type are
         // insufficient evidence to decide which Health Connect entry completed
@@ -69,7 +89,7 @@ object PlannedActivityMatching {
         val record = matches.single()
         // A run cannot automatically complete two planned sessions on the same day.
         val competing = data.plans.any { other ->
-            other != plan && isRun(other) && other.date == plan.date &&
+            other != plan && planKind(other) == planKind(plan) && other.date == plan.date &&
                 candidates(other, data).any { it.id == record.id }
         }
         return record.takeUnless { competing }

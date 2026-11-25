@@ -31,6 +31,7 @@ fun SportInsightsCards(data: SportsData, today: LocalDate, report: SportsReportN
         }.getOrNull()
     }.filter { it.second <= today }
     val recent = dated.filter { it.second >= today.minusDays(6) }
+    val prior = dated.filter { it.second in today.minusDays(13)..today.minusDays(7) }
     val sets = data.sets.filter { it.date <= today.toString() }
     val latest = data.recovery.firstOrNull { it.date == today.toString() }
     val sleep = data.daily.find { it.date == today.toString() }?.sleepMinutes
@@ -45,7 +46,7 @@ fun SportInsightsCards(data: SportsData, today: LocalDate, report: SportsReportN
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Text("Gotowość do treningu", style = MaterialTheme.typography.titleMedium, color = LeafGreen)
             Text(readiness)
-            Text("Ostatnie samopoczucie: " + (latest?.let { "${it.date} • energia ${it.energy}/5, zmęczenie ${it.fatigue}/5" } ?: "brak") +
+            Text("Samopoczucie dziś: " + (latest?.let { "${it.date} • energia ${it.energy}/5, zmęczenie ${it.fatigue}/5" } ?: "brak") +
                 " • sen dziś: " + (sleep?.let { "${it / 60} h ${it % 60} min" } ?: "brak"),
                 style = MaterialTheme.typography.bodySmall)
             Text("Wskaźnik orientacyjny, nie ocena medyczna. Nie zmienia planu treningowego.",
@@ -141,7 +142,7 @@ fun SportInsightsCards(data: SportsData, today: LocalDate, report: SportsReportN
     }
     MangoCard(Modifier.fillMaxWidth().testTag("sport_cardio_stats")) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Statystyki cardio • 7 dni", style = MaterialTheme.typography.titleMedium, color = WaterAccent)
+            Text("Centrum biegania i cardio • 7 dni", style = MaterialTheme.typography.titleMedium, color = WaterAccent)
             val types = listOf("Spacer" to listOf("spacer", "walk"), "Bieganie" to listOf("bieg", "run"),
                 "Rower" to listOf("rower", "cycl", "bik"), "Pływanie" to listOf("pływ", "swim"))
             types.forEach { (name, words) ->
@@ -153,6 +154,8 @@ fun SportInsightsCards(data: SportsData, today: LocalDate, report: SportsReportN
                 Text("$name: ${sessions.size} sesji • $minutes min" +
                     (if (sessions.any { it.first.distanceKm != null }) " • ${String.format(java.util.Locale.getDefault(), "%.1f", km)} km" else ""),
                     style = MaterialTheme.typography.bodyMedium)
+                val previous = prior.filter { entry -> words.any { it in SportSessionPresentation.label(entry.first).lowercase() } }
+                Text("Poprzednie 7 dni: ${previous.size} sesji • ${previous.sumOf { it.third }} min", style = MaterialTheme.typography.labelSmall)
                 pace?.let { Text("Średnie tempo: ${"%.2f".format(it)} min/km • ${measured.size}/${sessions.size} sesji z dystansem", style = MaterialTheme.typography.bodySmall) }
             }
             Text("Dystans wyświetlany tylko, gdy jest zapisany w aktywności.",

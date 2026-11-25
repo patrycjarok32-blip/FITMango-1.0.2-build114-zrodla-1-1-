@@ -58,6 +58,7 @@ Gdy istnieje tylko jeden pomiar masy, podaj jego datę i wartość, ale nie opis
 Oddzielaj zatwierdzenie dnia od pewności makroskładników: dzień zatwierdzony jest pełnym zapisem, nawet jeśli część wartości odżywczych jest szacunkowa.
 Nie określaj celu kalorii jako zapotrzebowania energetycznego, nie traktuj bilansu zegarka jako precyzyjnego deficytu, nie obiecuj zmiany masy.
 Nie używaj ogólnikowych pochwał, nie diagnozuj niedoborów, nie oceniaj jakości potraw wyłącznie po nazwie.
+W sekcji aktywności uwzględnij sport_7: zapisane serie, objętość i potwierdzone powiązania planu. Nie traktuj niepowiązanych sesji jako pominiętych i nie wnioskuj o zmianie siły z samej objętości.
 Odpowiedź po polsku, czytelna na małym ekranie: krótkie akapity, maksymalnie 3 punkty na sekcję, bez tabel i bez długiego wstępu.
 """.trimIndent()
 
@@ -122,6 +123,16 @@ Odpowiedź po polsku, czytelna na małym ekranie: krótkie akapity, maksymalnie 
         } ?: JSONObject.NULL)
         val evidence = ProgressEvidence.build(profile, days, confirmations, energy, report, scale, from, until, today)
         evidence.facts.put("aktywnosc_okresu", root.getJSONObject("aktywnosc_okresu"))
+        val planned = sports.plans.filter { !it.rest && inRange(it.date) }
+        val matched = planned.count { PlannedActivityMatching.match(it, sports) != null }
+        val strengthSets = sports.sets.filter { inRange(it.date) }
+        val sportFacts = JSONObject().put("zaplanowane_sesje", planned.size)
+            .put("sesje_potwierdzone_powiazaniem_z_aktywnoscia", matched)
+            .put("zapisane_serie_silowe", strengthSets.size)
+            .put("objetosc_kg_razy_powtorzenia", strengthSets.sumOf { it.kg * it.reps })
+            .put("dni_z_seriami", strengthSets.map { it.date }.distinct().size)
+            .put("uwaga", "Powiązania nie obejmują wszystkich sesji siłowych. Serie nie są dodatkowymi sesjami ani kaloriami.")
+        evidence.facts.put("sport_7", sportFacts)
         root.put("kontrola_danych_obliczenia_lokalne", evidence.facts)
         root.put("sklad_ciala_z_wagi", ScaleMeasurementsSupport.aiRows(scale, from, until))
         root.put("pominiete_szczegoly_pomiarow_wagi", (scale.count { inRange(it.date) } - 300).coerceAtLeast(0))
