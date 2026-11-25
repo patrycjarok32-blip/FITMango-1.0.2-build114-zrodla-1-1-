@@ -20,7 +20,7 @@ object FridgeRecipeSupport {
         listOf("jajko", "jajka", "jajek", "jajkiem", "egg", "eggs"),
         listOf("serek wiejski", "serka wiejskiego", "cottage cheese"),
         listOf("ryz", "ryzu", "rice"), listOf("kurczak", "kurczaka", "chicken"),
-        listOf("mleko", "mleka", "milk"), listOf("pomidor", "pomidory", "pomidorow", "tomato", "tomatoes"),
+        listOf("mleko", "mleka", "milk"), listOf("maka", "maki", "make", "flour"), listOf("pomidor", "pomidory", "pomidorow", "tomato", "tomatoes"),
         listOf("ogorek", "ogorki", "ogorka", "cucumber"), listOf("ziemniak", "ziemniaki", "ziemniakow", "potato", "potatoes"),
         listOf("banan", "banany", "banana"), listOf("jablko", "jablka", "apple", "apples"),
         listOf("cebula", "cebuli", "onion"), listOf("marchew", "marchewka", "carrot"),
@@ -30,14 +30,18 @@ object FridgeRecipeSupport {
     private fun canonicalPhrase(value: String): String = aliases.firstOrNull { value in it }?.first() ?: value
     private fun tokens(text: String) = canonicalPhrase(text).split(' ').filter { it.isNotBlank() }.map(::canonicalWord)
 
-    fun matches(ingredient: String, stored: String): Boolean {
-        val required = tokens(key(ingredient)); val have = tokens(key(stored))
+    private fun matchTokens(required: List<String>, have: List<String>): Boolean {
         if (required.isEmpty() || have.isEmpty()) return false
         if (required == have) return true
         // A specific product must not be replaced with a generic one (e.g. oat milk with milk).
         val generic = setOf("z", "ze", "i", "the", "of", "a")
         return required.filter { it !in generic }.all { it in have }
     }
+
+    fun matches(ingredient: String, stored: String): Boolean = matchTokens(tokens(key(ingredient)), tokens(key(stored)))
+
+    private fun possibleMatch(required: List<String>, have: List<String>): Boolean =
+        have.isNotEmpty() && have.all { it in required } && have.any { it in setOf("mleko", "maka", "jajko") }
 
     fun suggestions(recipes: List<RecipeEntity>, contents: String): List<String> {
         val query = contents.split(',', ';', '\n').last().trim()
@@ -67,11 +71,14 @@ object FridgeRecipeSupport {
     fun find(recipes: List<RecipeEntity>, contents: String): List<FridgeRecipeMatch> {
         val stored = enteredProducts(contents)
         if (stored.isEmpty()) return emptyList()
+        val prepared = stored.map { tokens(key(it)) }
         return recipes.mapNotNull { recipe ->
             val names = MealPlannerSupport.parseRecipeIngredients(recipe.ingredients).map { it.name }.filter { it.isNotBlank() }.distinct()
             if (names.isEmpty()) return@mapNotNull null
-            val (available, missing) = names.partition { required -> stored.any { matches(required, it) } }
-            if (available.isEmpty()) null else FridgeRecipeMatch(recipe, available, missing)
+            val keyed = names.map { it to tokens(key(it)) }
+            val (available, missing) = keyed.partition { (_, required) -> prepared.any { matchTokens(required, it) } }
+            val possible = missing.any { (_, required) -> prepared.any { possibleMatch(required, it) } }
+            if (available.isEmpty() && !possible) null else FridgeRecipeMatch(recipe, available.map { it.first }, missing.map { it.first })
         }.sortedWith(compareByDescending<FridgeRecipeMatch> { it.coverage }.thenByDescending { it.available.size }.thenBy { it.missing.size }.thenBy { it.recipe.title })
     }
 }

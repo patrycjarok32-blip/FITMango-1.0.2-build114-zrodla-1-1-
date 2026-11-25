@@ -42,14 +42,14 @@ fun FridgeRecipesDialog(recipes: List<RecipeEntity>, contents: String, onContent
     var searchRequest by remember { mutableIntStateOf(0) }
     var searching by remember { mutableStateOf(false) }
     var searchError by remember { mutableStateOf(false) }
-    LaunchedEffect(recipes, contents, searchRequest) {
+    LaunchedEffect(contents, searchRequest, recipes.size) {
         settledInput = null
         searching = true
         searchError = false
-        if (searchRequest == 0) delay(250)
+        if (searchRequest == 0) delay(350)
         try {
         val result = withContext(Dispatchers.Default) {
-            FridgeRecipeSupport.find(recipes, contents) to FridgeRecipeSupport.suggestions(recipes, contents)
+            FridgeRecipeSupport.find(recipes, contents) to (if (showResults) emptyList() else FridgeRecipeSupport.suggestions(recipes, contents))
         }
         matches = result.first
         suggestions = result.second
@@ -120,7 +120,7 @@ fun FridgeRecipesDialog(recipes: List<RecipeEntity>, contents: String, onContent
                                 colors = CardDefaults.outlinedCardColors(containerColor = MutedSurface1)) {
                                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Text(match.recipe.title, fontWeight = FontWeight.SemiBold)
-                                    Text("Masz: ${match.available.joinToString(", ")}", color = LeafGreen, style = MaterialTheme.typography.bodySmall)
+                                    Text(if (match.available.isEmpty()) "Podobne składniki — sprawdź rodzaj produktu" else "Masz: ${match.available.joinToString(", ")}", color = LeafGreen, style = MaterialTheme.typography.bodySmall)
                                     Text(if (match.missing.isEmpty()) "Masz wszystkie składniki — sprawdź ilości." else "Brakuje: ${match.missing.joinToString(", ")}",
                                         color = if (match.missing.isEmpty()) LeafGreen else OrangeInk, style = MaterialTheme.typography.bodySmall)
                                     if (match.missing.isNotEmpty()) {

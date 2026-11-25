@@ -55,4 +55,8 @@ class FridgeRecipeSupportTest {
         val recipes = listOf(recipe(1, "Jajecznica", "Jajka — 2 szt.\nPomidor — 100 g"))
         assertTrue(FridgeRecipeSupport.suggestions(recipes, "jajko, jaj").isEmpty())
     }
+    @org.junit.Test fun flourInflectionsMatch() {
+        org.junit.Assert.assertTrue(FridgeRecipeSupport.matches("mąki", "mąka"))
+        org.junit.Assert.assertFalse(FridgeRecipeSupport.matches("mleko owsiane", "mleko"))
+    }
 }
