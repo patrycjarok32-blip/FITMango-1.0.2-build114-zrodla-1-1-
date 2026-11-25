@@ -73,6 +73,10 @@ fun WorkoutModeCard(
                         Text("Wszystkie serie ukończone — możesz zakończyć trening.",
                             style = MaterialTheme.typography.bodyMedium)
                     }
+                    if (nextSet != null) {
+                        val suggestion = remember(nextSet.exercise, workouts) { MangoWorkoutInsights.trainingSuggestion(nextSet.exercise, workouts) }
+                        Text("Mango Trener: $suggestion", style = MaterialTheme.typography.bodySmall)
+                    }
                     val elapsedMinutes = WorkoutSessionStore.activeDurationMillis(active, clockNow) / 60000L
                     Text("Czas aktywny (bez pauz): ${elapsedMinutes} min",
                         style = MaterialTheme.typography.bodySmall)

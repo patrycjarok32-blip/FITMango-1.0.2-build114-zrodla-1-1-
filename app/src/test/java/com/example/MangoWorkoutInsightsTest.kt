@@ -40,6 +40,12 @@ class MangoWorkoutInsightsTest {
             listOf(session("a", day.toString(), 61000L, 10.0))))
         assertEquals("0/2 wykonane", MangoWorkoutInsights.dayPlanStatus(day, day, data, emptyList()))
     }
+    @Test fun progressionRequiresTwoCompletedSessions() {
+        val first = session("a", "2026-11-10", 61000L, 10.0)
+        val second = session("b", "2026-11-12", 121000L, 10.0)
+        assertTrue(MangoWorkoutInsights.trainingSuggestion("Floor press", listOf(first)).contains("Brak podstaw"))
+        assertTrue(MangoWorkoutInsights.trainingSuggestion("Floor press", listOf(first, second)).contains("Dwie ukończone sesje"))
+    }
     @Test fun quickPlanDoesNotMutateOriginal() {
         val plan = SportPlan("2026-11-12", "PUSH", false,
             listOf(PlannedExercise("Floor press", 5, 10, 60),

@@ -33,6 +33,7 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
             Text(today.format(DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("pl"))))
             Text("Kroki: ${resolvedSteps?.toString() ?: "brak odczytu"} • Sesje: $recordedMinutes min",
                 style = MaterialTheme.typography.titleMedium)
+            MangoGuide(message = if (plans.any { !it.rest } && finishedPlans == plans.count { !it.rest }) "Brawo! Wszystkie zaplanowane sesje wykonane." else if (plans.any { !it.rest }) "Twój plan treningowy na dziś" else "Dzień bez zaplanowanej sesji — odpoczynek też jest ważny.", event = finishedPlans)
             Text("Sesje z planu: $finishedPlans / ${plans.count { !it.rest }}",
                 style = MaterialTheme.typography.bodySmall)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {

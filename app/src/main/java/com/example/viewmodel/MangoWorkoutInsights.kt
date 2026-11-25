@@ -60,14 +60,18 @@ object MangoWorkoutInsights {
     }
     fun trainingSuggestion(exercise: String, history: List<WorkoutSession>): String {
         val recent = history.filter { it.ended > 0L }.sortedByDescending { it.ended }
-            .flatMap { it.entries.filter { e -> e.done && e.exercise.equals(exercise, true) } }
-        if (recent.isEmpty()) return "Brak danych — zacznij od wygodnego obciążenia."
-        val latest = recent.first()
-        val comparable = recent.take(6)
-        val repeated = comparable.count { it.kg == latest.kg && it.reps >= latest.reps }
-        return if (repeated >= 3 && latest.reps >= 8)
-            "Stabilne serie: możesz rozważyć niewielki wzrost obciążenia po ocenie regeneracji."
-        else "Utrzymaj ${latest.kg} kg i obserwuj technikę oraz regenerację."
+            .mapNotNull { session ->
+                val sets = session.entries.filter { it.done && it.exercise.trim().equals(exercise.trim(), true) && it.kg > 0 && it.reps > 0 }
+                if (sets.isEmpty()) null else session to sets
+            }.take(2)
+        val latest = recent.firstOrNull() ?: return "Brak danych — zacznij od wygodnego obciążenia."
+        val weight = latest.second.maxOf { it.kg }
+        val comparable = recent.size == 2 && recent.all { (session, sets) ->
+            session.effort in 1..7 && sets.size >= 2 && sets.all { it.kg == weight && it.reps >= 8 }
+        }
+        return if (comparable)
+            "Dwie ukończone sesje z podobnym obciążeniem i umiarkowanym wysiłkiem. Rozważ najmniejszy dostępny wzrost ciężaru tylko przy dobrej technice i zapasie powtórzeń."
+        else "Utrzymaj $weight kg i obserwuj technikę oraz regenerację. Brak podstaw do automatycznego zwiększenia ciężaru."
     }
     fun calendarStatus(day: LocalDate, today: LocalDate, plans: List<SportPlan>,
         workouts: List<WorkoutSession>): String {

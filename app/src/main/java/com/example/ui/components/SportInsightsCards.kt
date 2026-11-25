@@ -147,10 +147,13 @@ fun SportInsightsCards(data: SportsData, today: LocalDate, report: SportsReportN
             types.forEach { (name, words) ->
                 val sessions = recent.filter { entry -> words.any { it in SportSessionPresentation.label(entry.first).lowercase() } }
                 val minutes = sessions.sumOf { it.third }
-                val km = sessions.mapNotNull { it.first.distanceKm }.sum()
+                val measured = sessions.filter { (it.first.distanceKm ?: 0.0) > 0.0 }
+                val km = measured.sumOf { it.first.distanceKm ?: 0.0 }
+                val pace = if (name == "Bieganie" && km > 0) measured.sumOf { it.third }.toDouble() / km else null
                 Text("$name: ${sessions.size} sesji • $minutes min" +
                     (if (sessions.any { it.first.distanceKm != null }) " • ${String.format(java.util.Locale.getDefault(), "%.1f", km)} km" else ""),
                     style = MaterialTheme.typography.bodyMedium)
+                pace?.let { Text("Średnie tempo: ${"%.2f".format(it)} min/km • ${measured.size}/${sessions.size} sesji z dystansem", style = MaterialTheme.typography.bodySmall) }
             }
             Text("Dystans wyświetlany tylko, gdy jest zapisany w aktywności.",
                 style = MaterialTheme.typography.labelSmall)
