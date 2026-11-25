@@ -2,13 +2,13 @@ package com.example.viewmodel
 
 object SportRecoveryAssessment {
     data class Result(val message: String, val activeDays: Int)
-    fun evaluate(energy: Int?, fatigue: Int?, sleepMinutes: Int?, activeDays: Int): Result {
+    fun evaluate(energy: Int?, fatigue: Int?, sleepMinutes: Long?, activeDays: Int): Result {
         val e = energy?.takeIf { it in 1..5 }
         val f = fatigue?.takeIf { it in 1..5 }
-        val sleep = sleepMinutes?.takeIf { it in 1..1440 }
+        val sleep = sleepMinutes?.takeIf { it in 1L..1440L }
         val days = activeDays.coerceIn(0, 3)
         val message = when {
-            e != null && e <= 2 || f != null && f >= 4 || sleep != null && sleep < 360 ->
+            e != null && e <= 2 || f != null && f >= 4 || sleep != null && sleep < 360L ->
                 "Rozważ odpoczynek lub lżejszą aktywność."
             e == null || f == null || sleep == null ->
                 "Niepełne dane — oceń samopoczucie i uzupełnij sen przed zwiększeniem obciążenia."
