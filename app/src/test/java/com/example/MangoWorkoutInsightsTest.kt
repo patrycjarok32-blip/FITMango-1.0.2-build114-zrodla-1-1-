@@ -30,6 +30,16 @@ class MangoWorkoutInsightsTest {
         assertEquals("✓ Ukończony (1)", MangoWorkoutInsights.calendarStatus(
             day, day.plusDays(2), listOf(plan), listOf(session("a", day.toString(), 61000L, 10.0))))
     }
+    @Test fun dayStatusCountsOnlyMatchingPlannedSessions() {
+        val day = LocalDate.parse("2026-11-10")
+        val plans = listOf(
+            SportPlan(day.toString(), "PUSH", false, listOf(PlannedExercise("Floor press", 3, 10))),
+            SportPlan(day.toString(), "Easy Run", false, category = "Bieganie"))
+        val data = SportsData(plans = plans)
+        assertEquals("1/2 wykonane", MangoWorkoutInsights.dayPlanStatus(day, day, data,
+            listOf(session("a", day.toString(), 61000L, 10.0))))
+        assertEquals("0/2 wykonane", MangoWorkoutInsights.dayPlanStatus(day, day, data, emptyList()))
+    }
     @Test fun quickPlanDoesNotMutateOriginal() {
         val plan = SportPlan("2026-11-12", "PUSH", false,
             listOf(PlannedExercise("Floor press", 5, 10, 60),

@@ -46,6 +46,18 @@ object MangoWorkoutInsights {
         if (strength.any { it.ended == 0L }) return "▶ W trakcie"
         return "◷ Zaplanowany"
     }
+    fun dayPlanStatus(day: LocalDate, today: LocalDate, data: SportsData, workouts: List<WorkoutSession>): String {
+        val plans = data.plans.filter { it.date == day.toString() && !it.rest }
+        if (plans.isEmpty()) return calendarStatus(day, today, data.plans.filter { it.date == day.toString() }, workouts)
+        val statuses = plans.map { plannedStatus(it, data, workouts) }
+        val done = statuses.count { it == "✓ Wykonany" }
+        val active = statuses.count { it == "▶ W trakcie" }
+        return "$done/${plans.size} wykonane" + when {
+            active > 0 -> " • $active w toku"
+            done < plans.size && day < today -> " • pozostałe niepotwierdzone"
+            else -> ""
+        }
+    }
     fun trainingSuggestion(exercise: String, history: List<WorkoutSession>): String {
         val recent = history.filter { it.ended > 0L }.sortedByDescending { it.ended }
             .flatMap { it.entries.filter { e -> e.done && e.exercise.equals(exercise, true) } }

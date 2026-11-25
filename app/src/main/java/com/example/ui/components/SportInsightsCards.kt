@@ -32,7 +32,7 @@ fun SportInsightsCards(data: SportsData, today: LocalDate, report: SportsReportN
     }.filter { it.second <= today }
     val recent = dated.filter { it.second >= today.minusDays(6) }
     val sets = data.sets.filter { it.date <= today.toString() }
-    val latest = data.recovery.filter { it.date <= today.toString() }.maxByOrNull { it.date }
+    val latest = data.recovery.firstOrNull { it.date == today.toString() }
     val sleep = data.daily.find { it.date == today.toString() }?.sleepMinutes
     val readiness = when {
         latest == null && sleep == null -> "Brak danych — dodaj samopoczucie lub odczyt snu"
@@ -145,7 +145,7 @@ fun SportInsightsCards(data: SportsData, today: LocalDate, report: SportsReportN
             val types = listOf("Spacer" to listOf("spacer", "walk"), "Bieganie" to listOf("bieg", "run"),
                 "Rower" to listOf("rower", "cycl", "bik"), "Pływanie" to listOf("pływ", "swim"))
             types.forEach { (name, words) ->
-                val sessions = recent.filter { entry -> words.any { it in entry.first.title.lowercase() } }
+                val sessions = recent.filter { entry -> words.any { it in SportSessionPresentation.label(entry.first).lowercase() } }
                 val minutes = sessions.sumOf { it.third }
                 val km = sessions.mapNotNull { it.first.distanceKm }.sum()
                 Text("$name: ${sessions.size} sesji • $minutes min" +

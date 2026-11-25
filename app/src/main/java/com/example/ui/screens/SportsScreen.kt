@@ -208,7 +208,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
                         }
                         val active = workouts.any { it.date == day.toString() && it.ended == 0L }
                         val recordedActivities = ActivityRecoverySupport.daySessions(data, day)
-                        val status = MangoWorkoutInsights.calendarStatus(day, today, plans, workouts)
+                        val status = MangoWorkoutInsights.dayPlanStatus(day, today, data, workouts)
                         val confirmed = plans.count { plan ->
                             PlannedActivityMatching.match(plan, data) != null
                         }
