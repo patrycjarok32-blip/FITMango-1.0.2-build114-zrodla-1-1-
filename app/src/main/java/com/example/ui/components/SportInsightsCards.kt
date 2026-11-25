@@ -35,13 +35,9 @@ fun SportInsightsCards(data: SportsData, today: LocalDate, report: SportsReportN
     val sets = data.sets.filter { it.date <= today.toString() }
     val latest = data.recovery.firstOrNull { it.date == today.toString() }
     val sleep = data.daily.find { it.date == today.toString() }?.sleepMinutes
-    val readiness = when {
-        latest == null && sleep == null -> "Brak danych — dodaj samopoczucie lub odczyt snu"
-        latest?.energy?.let { it <= 2 } == true || latest?.fatigue?.let { it >= 4 } == true ||
-            (sleep != null && sleep < 360) -> "Rozważ odpoczynek lub lżejszą aktywność"
-        latest?.energy?.let { it >= 4 } == true && latest?.fatigue?.let { it <= 2 } == true -> "Samopoczucie sprzyja aktywności"
-        else -> "Dostosuj intensywność do samopoczucia"
-    }
+    val recovery = SportRecoveryAssessment.evaluate(latest?.energy, latest?.fatigue, sleep,
+        dated.filter { it.second in today.minusDays(3)..today.minusDays(1) && it.third > 0 }.map { it.second }.distinct().size)
+    val readiness = recovery.message
     MangoCard(Modifier.fillMaxWidth().testTag("sport_readiness")) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Text("Gotowość do treningu", style = MaterialTheme.typography.titleMedium, color = LeafGreen)
@@ -49,6 +45,7 @@ fun SportInsightsCards(data: SportsData, today: LocalDate, report: SportsReportN
             Text("Samopoczucie dziś: " + (latest?.let { "${it.date} • energia ${it.energy}/5, zmęczenie ${it.fatigue}/5" } ?: "brak") +
                 " • sen dziś: " + (sleep?.let { "${it / 60} h ${it % 60} min" } ?: "brak"),
                 style = MaterialTheme.typography.bodySmall)
+            Text("Dni z zapisanym treningiem w poprzednich 3 dniach: ${recovery.activeDays}. Brak zapisu nie oznacza odpoczynku.", style = MaterialTheme.typography.bodySmall)
             Text("Wskaźnik orientacyjny, nie ocena medyczna. Nie zmienia planu treningowego.",
                 style = MaterialTheme.typography.labelSmall)
         }
