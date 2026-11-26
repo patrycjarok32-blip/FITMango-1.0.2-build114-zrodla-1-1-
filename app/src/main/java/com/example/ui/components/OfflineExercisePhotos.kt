@@ -108,16 +108,19 @@ internal fun WorkoutTechniquePhotos(exercise: String) {
                     ?: ExercisePhotoStore.load(context, exercise, step + 1)
             }
             val url = CuratedExercisePhotos.url(exercise, step + 1)
+            val fallback = CuratedExercisePhotos.illustrationUrl(exercise, step + 1)
+            var useIllustration by remember(exercise, step) { mutableStateOf(false) }
+            val displayedUrl = if (useIllustration) fallback else url
             Text(if (step == 0) "Pozycja początkowa" else "Pozycja końcowa",
                 style = MaterialTheme.typography.labelLarge)
             if (photo != null) {
                 Image(photo.asImageBitmap(), contentDescription = "$exercise — etap ${step + 1}",
                     modifier = Modifier.fillMaxWidth().heightIn(max = 180.dp), contentScale = ContentScale.Fit)
-            } else if (url != null) {
-                var failed by remember(url) { mutableStateOf(false) }
-                coil.compose.AsyncImage(model = coil.request.ImageRequest.Builder(context).data(url).diskCachePolicy(coil.request.CachePolicy.ENABLED).memoryCachePolicy(coil.request.CachePolicy.ENABLED).build(), contentDescription = "$exercise — etap ${step + 1}",
+            } else if (displayedUrl != null) {
+                var failed by remember(displayedUrl) { mutableStateOf(false) }
+                coil.compose.AsyncImage(model = coil.request.ImageRequest.Builder(context).data(displayedUrl).diskCachePolicy(coil.request.CachePolicy.ENABLED).memoryCachePolicy(coil.request.CachePolicy.ENABLED).build(), contentDescription = "$exercise — etap ${step + 1}",
                     modifier = Modifier.fillMaxWidth().height(150.dp), contentScale = ContentScale.Fit,
-                    onError = { failed = true }, onSuccess = { failed = false })
+                    onError = { if (fallback != null && displayedUrl != fallback) useIllustration = true else failed = true }, onSuccess = { failed = false })
                 if (failed) Text("Zdjęcie niedostępne. Sprawdź połączenie lub dodaj własne.",
                     style = MaterialTheme.typography.bodySmall)
             } else {
@@ -126,6 +129,10 @@ internal fun WorkoutTechniquePhotos(exercise: String) {
         }
         if (CuratedExercisePhotos.hasPhotos(exercise)) Text(CuratedExercisePhotos.CREDIT,
             style = MaterialTheme.typography.labelSmall)
+        if (CuratedExercisePhotos.illustrationUrl(exercise, 1) != null) {
+            val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+            TextButton(onClick = { uriHandler.openUri("https://repdb.co") }) { Text(CuratedExercisePhotos.REPDB_CREDIT) }
+        }
         TextButton(onClick = { showDetails = !showDetails }) {
             Text(if (showDetails) "Ukryj wskazówki i zdjęcia własne" else "Wskazówki i zdjęcia własne")
         }

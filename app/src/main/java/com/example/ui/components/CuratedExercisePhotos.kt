@@ -77,15 +77,34 @@ internal object CuratedExercisePhotos {
     private fun key(value: String) = java.text.Normalizer.normalize(value.trim().lowercase(java.util.Locale.ROOT), java.text.Normalizer.Form.NFC).replace(Regex("\\s+"), " ")
     private val normalizedImages = images.mapKeys { key(it.key) }
 
+    private val repdb = mapOf(
+        "Hack squat" to "hack-squat",
+        "Pompki na kolanach" to "knee-push-ups",
+        "Bird dog" to "bird-dog",
+        "Pallof press" to "cable-pallof-press",
+        "Kickback na wyciągu" to "cable-kickback",
+        "Wyprost biodra na wyciągu" to "cable-kickback",
+        "Wyprost biodra w klęku" to "glute-kickback",
+        "Hip thrust z gumą" to "banded-hip-thrust",
+        "Hip thrust z hantlem" to "dumbbell-hip-thrust",
+        "Hip thrust na Smithie" to "smith-machine-hip-thrust",
+    ).mapKeys { key(it.key) }
+    fun illustrationUrl(exercise: String, stage: Int): String? {
+        val id = repdb[key(exercise)] ?: return null
+        val pose = when (stage) { 0, 1 -> "start"; 2, 3 -> "peak"; else -> return null }
+        return "https://raw.githubusercontent.com/RepDB/exercise-dataset/main/images/flat/$id-$pose.webp"
+    }
+    const val REPDB_CREDIT = "Exercise data by RepDB (repdb.co)"
+
     fun url(exercise: String, stage: Int): String? {
-        val stills = normalizedImages[key(exercise)] ?: return null
+        val stills = normalizedImages[key(exercise)] ?: return illustrationUrl(exercise, stage)
         val index = when(stage) { 0, 1 -> 0; 2, 3 -> 1; else -> return null }
         return BASE + stills[index].split("/").joinToString("/") {
             java.net.URLEncoder.encode(it, "UTF-8").replace("+", "%20")
         }
     }
 
-    fun hasPhotos(exercise: String) = normalizedImages.containsKey(key(exercise))
+    fun hasPhotos(exercise: String) = normalizedImages.containsKey(key(exercise)) || repdb.containsKey(key(exercise))
     fun coveredCount() = StrengthExerciseLibrary.exercises.count { hasPhotos(it.name) }
     const val CREDIT = "Źródło: free-exercise-db. Ujęcia poglądowe; sprawdź technikę."
 }
