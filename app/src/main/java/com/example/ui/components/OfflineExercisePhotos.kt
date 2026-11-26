@@ -100,6 +100,26 @@ fun OfflineExercisePhotoStep(exercise: String, step: Int) {
 @Composable
 internal fun WorkoutTechniquePhotos(exercise: String) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember(context) { context.getSharedPreferences("FITMangoTechniqueVariants", android.content.Context.MODE_PRIVATE) }
+    val variants = if (exercise.trim().equals("Wyprost biodra (na stronę)", ignoreCase = true))
+        listOf("Wyprost biodra na wyciągu", "Wyprost biodra z gumą", "Wyprost biodra w klęku")
+        else emptyList()
+    var selected by remember(exercise) { mutableStateOf(prefs.getString(exercise, null)?.takeIf { it in variants }) }
+    if (variants.isNotEmpty()) {
+        Text("Wybierz wariant ćwiczenia, aby zobaczyć właściwą technikę.")
+        variants.forEach { variant ->
+            TextButton(onClick = { selected = variant; prefs.edit().putString(exercise, variant).apply() }) {
+                Text(if (selected == variant) "✓ $variant" else variant)
+            }
+        }
+        if (selected == null) return
+    }
+    WorkoutTechniquePhotoContent(exercise, selected ?: exercise)
+}
+
+@Composable
+private fun WorkoutTechniquePhotoContent(exercise: String, mediaExercise: String) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var showDetails by remember(exercise) { mutableStateOf(false) }
     Column(modifier = Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         for (step in 0..1) {
@@ -107,9 +127,9 @@ internal fun WorkoutTechniquePhotos(exercise: String) {
                 OfflineExercisePhotos.load(context, exercise, step)
                     ?: ExercisePhotoStore.load(context, exercise, step + 1)
             }
-            val url = CuratedExercisePhotos.url(exercise, step + 1)
-            val fallback = CuratedExercisePhotos.illustrationUrl(exercise, step + 1)
-            var useIllustration by remember(exercise, step) { mutableStateOf(false) }
+            val url = CuratedExercisePhotos.url(mediaExercise, step + 1)
+            val fallback = CuratedExercisePhotos.illustrationUrl(mediaExercise, step + 1)
+            var useIllustration by remember(mediaExercise, step) { mutableStateOf(false) }
             val displayedUrl = if (useIllustration) fallback else url
             val localRep = fallback?.substringAfter("/images/flat/", "")?.takeIf { it.isNotEmpty() }?.let { name ->
                 remember(name) { runCatching { context.assets.open("repdb/$name").use { BitmapFactory.decodeStream(it) } }.getOrNull() }
@@ -132,9 +152,9 @@ internal fun WorkoutTechniquePhotos(exercise: String) {
                 Text("Brak przypisanego zdjęcia dla tego wariantu.", style = MaterialTheme.typography.bodySmall)
             }
         }
-        if (CuratedExercisePhotos.hasPhotos(exercise)) Text(CuratedExercisePhotos.CREDIT,
+        if (CuratedExercisePhotos.hasPhotos(mediaExercise)) Text(CuratedExercisePhotos.CREDIT,
             style = MaterialTheme.typography.labelSmall)
-        if (CuratedExercisePhotos.illustrationUrl(exercise, 1) != null) {
+        if (CuratedExercisePhotos.illustrationUrl(mediaExercise, 1) != null) {
             val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
             TextButton(onClick = { uriHandler.openUri("https://repdb.co") }) { Text(CuratedExercisePhotos.REPDB_CREDIT) }
         }
