@@ -315,16 +315,7 @@ fun WorkoutModeCard(
                     title = { Text(selected.orEmpty()) },
                     text = {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("🎯 Jak wykonać ćwiczenie?", style = MaterialTheme.typography.titleMedium)
-                            Text(StrengthExerciseLibrary.exercises.firstOrNull {
-                                it.name == selected
-                            }?.tip ?: "Wykonuj ruch powoli i kontroluj technikę.")
-                            Text("Etapy ruchu", style = MaterialTheme.typography.titleSmall)
-                            ExerciseMovementGuide.steps(selected.orEmpty()).forEachIndexed { stepIndex, step ->
-                                Text(step.title, style = MaterialTheme.typography.labelLarge)
-                                Text(step.instruction, style = MaterialTheme.typography.bodySmall)
-                                OfflineExercisePhotoStep(selected.orEmpty(), stepIndex)
-                            }
+                            WorkoutTechniquePhotos(selected.orEmpty())
                         }
                     },
                     confirmButton = { TextButton(onClick = { showTechnique = false }) { Text("Zamknij") } })

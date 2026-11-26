@@ -94,3 +94,45 @@ fun OfflineExercisePhotoStep(exercise: String, step: Int) {
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }
 }
+
+@Composable
+internal fun WorkoutTechniquePhotos(exercise: String) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var showDetails by remember(exercise) { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        for (step in 0..1) {
+            val photo = remember(exercise, step) {
+                OfflineExercisePhotos.load(context, exercise, step)
+                    ?: ExercisePhotoStore.load(context, exercise, step + 1)
+            }
+            val url = CuratedExercisePhotos.url(exercise, step + 1)
+            Text(if (step == 0) "Pozycja początkowa" else "Pozycja końcowa",
+                style = MaterialTheme.typography.labelLarge)
+            if (photo != null) {
+                Image(photo.asImageBitmap(), contentDescription = "$exercise — etap ${step + 1}",
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 180.dp), contentScale = ContentScale.Fit)
+            } else if (url != null) {
+                var failed by remember(url) { mutableStateOf(false) }
+                coil.compose.AsyncImage(model = url, contentDescription = "$exercise — etap ${step + 1}",
+                    modifier = Modifier.fillMaxWidth().height(150.dp), contentScale = ContentScale.Fit,
+                    onError = { failed = true }, onSuccess = { failed = false })
+                if (failed) Text("Zdjęcie niedostępne. Sprawdź połączenie lub dodaj własne.",
+                    style = MaterialTheme.typography.bodySmall)
+            } else {
+                Text("Brak przypisanego zdjęcia dla tego wariantu.", style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        if (CuratedExercisePhotos.hasPhotos(exercise)) Text(CuratedExercisePhotos.CREDIT,
+            style = MaterialTheme.typography.labelSmall)
+        TextButton(onClick = { showDetails = !showDetails }) {
+            Text(if (showDetails) "Ukryj wskazówki i zdjęcia własne" else "Wskazówki i zdjęcia własne")
+        }
+        if (showDetails) {
+            ExerciseMovementGuide.steps(exercise).forEachIndexed { index, step ->
+                Text(step.title, style = MaterialTheme.typography.labelLarge)
+                Text(step.instruction, style = MaterialTheme.typography.bodySmall)
+                OfflineExercisePhotoStep(exercise, index)
+            }
+        }
+    }
+}
