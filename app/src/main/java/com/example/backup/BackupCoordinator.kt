@@ -72,6 +72,16 @@ class BackupCoordinator(
     }
     fun export(uri: Uri, password: String) = operation { _message.value = service.export(uri, password); status.exported() }
     fun saveAutomaticNow() = operation { service.saveAutomatic(); status.savedAutomatic(); _message.value = "Zapisano kopię na telefonie." }
+    fun saveLocalTo(uri: Uri) = operation {
+        val missing = service.saveAutomatic()
+        status.savedAutomatic()
+        service.exportAutomatic(uri)
+        status.exported()
+        _message.value = "Zapisano kopię w wybranym folderze." + if (missing > 0) " Niedostępne pliki: $missing." else ""
+        _lastLocalExport.value = uri
+    }
+    private val _lastLocalExport = MutableStateFlow<Uri?>(null)
+    val lastLocalExport = _lastLocalExport.asStateFlow()
     fun exportAutomatic(uri: Uri) = operation { service.exportAutomatic(uri); _message.value = "Zapisano plik kopii automatycznej." }
     fun prepareAutomatic() = prepare(Uri.fromFile(service.automaticFile))
     fun prepare(uri: Uri, password: String = "") = operation {

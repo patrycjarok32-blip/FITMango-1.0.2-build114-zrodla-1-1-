@@ -17,7 +17,12 @@ import com.example.viewmodel.DietaViewModel
 
 @Composable
 fun BackupSettingsCard(viewModel: DietaViewModel) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val backup = viewModel.backup
+    val lastLocalExport by backup.lastLocalExport.collectAsStateWithLifecycle()
+    val saveLocal = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+        uri?.let { backup.saveLocalTo(it) }
+    }
     val backupStatus by backup.status.state.collectAsStateWithLifecycle()
     val busy by backup.busy.collectAsStateWithLifecycle()
     val message by backup.message.collectAsStateWithLifecycle()
@@ -61,7 +66,34 @@ fun BackupSettingsCard(viewModel: DietaViewModel) {
             Text("Kopia automatyczna na telefonie: ${backup.status.date(backupStatus.lastAutomatic)}")
             Row { Switch(backupStatus.automatic, { backup.status.automatic(it) }); Text("Automatyczna kopia lokalna") }
             Text("Kopia lokalna pozostaje na telefonie. Eksport zewnętrzny zapisz osobno.", style = MaterialTheme.typography.bodySmall)
-            OutlinedButton(onClick = { backup.saveAutomaticNow() }, enabled = !busy) { Text("Zapisz kopię lokalną teraz") }
+            Button(onClick = { saveLocal.launch("FITMango-kopia-${java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmmss"))}.zip") }, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("Zapisz kopię lokalną do pliku") }
+            Text("Wybierz Pobrane (Downloads) lub własny folder. Kopia bez hasła — przechowuj ją prywatnie.", style = MaterialTheme.typography.bodySmall)
+            OutlinedButton(onClick = { backup.saveAutomaticNow() }, enabled = !busy) { Text("Zapisz tylko kopię wewnętrzną") }
+            lastLocalExport?.let { uri ->
+                val info = remember(uri) {
+                    runCatching {
+                        context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME, android.provider.OpenableColumns.SIZE), null, null, null)?.use { cursor ->
+                            if (cursor.moveToFirst()) cursor.getString(0) to cursor.getLong(1) else null
+                        }
+                    }.getOrNull()
+                }
+                Text("✓ Zapisano plik: ${info?.first ?: uri.lastPathSegment.orEmpty()}")
+                info?.let { Text("Rozmiar: ${android.text.format.Formatter.formatFileSize(context, it.second)}") }
+                Text("Miejsce: ${uri.authority.orEmpty()} • ${uri.lastPathSegment.orEmpty()}", style = MaterialTheme.typography.bodySmall)
+                var openError by remember(uri) { mutableStateOf(false) }
+                OutlinedButton(onClick = {
+                    openError = runCatching {
+                        context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW).setDataAndType(uri, "application/zip").addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION))
+                    }.isFailure
+                }) { Text("Otwórz zapisaną kopię") }
+                OutlinedButton(onClick = {
+                    openError = runCatching {
+                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).setType("application/zip").putExtra(android.content.Intent.EXTRA_STREAM, uri).addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        context.startActivity(android.content.Intent.createChooser(intent, "Udostępnij kopię"))
+                    }.isFailure
+                }) { Text("Udostępnij kopię") }
+                if (openError) Text("Nie można otworzyć pliku w tej aplikacji. Sprawdź folder wybrany podczas zapisu.")
+            }
             if (backupStatus.lastAutomatic > 0) {
                 OutlinedButton(onClick = { saveAutomatic.launch("FITMango-automatyczna-${java.time.LocalDate.now()}.zip") },
                     enabled = !busy, modifier = Modifier.testTag("backup_export_automatic")) {
