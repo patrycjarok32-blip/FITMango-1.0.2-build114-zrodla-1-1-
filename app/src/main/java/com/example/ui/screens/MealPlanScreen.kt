@@ -420,6 +420,12 @@ fun MealPlanScreen(viewModel: DietaViewModel, onShopping: (() -> Unit)? = null) 
                 }
             }
 
+            if (onShopping != null) {
+                OutlinedButton(onClick = onShopping, modifier = Modifier.fillMaxWidth().testTag("meal_plan_shopping")) {
+                    Text("🛒 Lista zakupów")
+                }
+            }
+
             if (isLoading) {
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth(),
@@ -506,9 +512,7 @@ fun MealPlanScreen(viewModel: DietaViewModel, onShopping: (() -> Unit)? = null) 
                     }
                 }
                 item {
-                    if (onShopping != null) OutlinedButton(onClick = onShopping, modifier = Modifier.fillMaxWidth().testTag("meal_plan_shopping")) {
-                        Text("🛒 Lista zakupów")
-                    }
+
                 }
                 item {
                     var toolsExpanded by rememberSaveable { mutableStateOf(false) }
