@@ -299,7 +299,7 @@ fun MainNavigation(viewModel: DietaViewModel) {
                 NutritionFixScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
             }
             composable(Screen.MealPlan.route) {
-                MealPlanScreen(viewModel = viewModel)
+                MealPlanScreen(viewModel = viewModel, onShopping = { navController.navigate(Screen.Shopping.route) })
             }
             composable(Screen.Documents.route) {
                 DocumentsScreen(viewModel = viewModel, onNavigateHome = {

@@ -17,6 +17,8 @@ fun NutritionAttentionCard(viewModel: DietaViewModel, openFirstMissing: Boolean 
     val recipes by viewModel.recipes.collectAsStateWithLifecycle()
     val rows by viewModel.recipeIngredients.collectAsStateWithLifecycle()
     val revision by viewModel.usability.revision.collectAsStateWithLifecycle()
+    var loading by remember { mutableStateOf(true) }
+    var loadError by remember { mutableStateOf(false) }
     var queue by remember { mutableStateOf(emptyList<NutritionRepairTarget>()) }
     var query by remember { mutableStateOf("") }
     var visibleLimit by remember(query) { mutableIntStateOf(10) }
@@ -25,7 +27,12 @@ fun NutritionAttentionCard(viewModel: DietaViewModel, openFirstMissing: Boolean 
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(meals, recipes, rows, revision) {
-        queue = withContext(Dispatchers.Default) { UniversalNutritionRepair.collect(recipes, meals, rows) }
+        loading = true
+        loadError = false
+        try { queue = withContext(Dispatchers.Default) { UniversalNutritionRepair.collect(recipes, meals, rows) } }
+        catch (e: kotlinx.coroutines.CancellationException) { throw e }
+        catch (e: Exception) { loadError = true }
+        finally { loading = false }
     }
     LaunchedEffect(queue, openFirstMissing) {
         if (openFirstMissing && !initialTargetOpened && queue.isNotEmpty()) {
@@ -33,11 +40,13 @@ fun NutritionAttentionCard(viewModel: DietaViewModel, openFirstMissing: Boolean 
             initialTargetOpened = true
         }
     }
-    CollapsibleMangoCard("Co wymaga uwagi? (${queue.size})", "nutrition_attention") {
+    CollapsibleMangoCard(if (loading) "Sprawdzanie składników…" else "Co wymaga uwagi? (${queue.size})", "nutrition_attention") {
+        if (loading) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text("Sprawdzanie przepisów i jadłospisu…"); return@CollapsibleMangoCard }
+        if (loadError) { Text("Nie udało się sprawdzić składników. Otwórz ekran ponownie."); return@CollapsibleMangoCard }
         UniversalNutritionRepairPanel(viewModel, queue)
         HorizontalDivider()
         Text("Pozostałe produkty możesz też uzupełnić pojedynczo z etykiety lub wybranej bazy. Brak kalorii nie jest zerem; przyprawy pomijamy zgodnie z Twoim ustawieniem.", style = MaterialTheme.typography.bodySmall)
-        if (queue.isEmpty()) Text("Brak brakujących kalorii lub makro. Ilości sprawdzisz w szczegółach posiłków.")
+        if (queue.isEmpty()) Text("Nie znaleziono braków kalorii ani makro. Brakujące ilości uzupełnij w szczegółach konkretnego posiłku.")
         else {
             val quantityGaps = queue.count { it.quantityMissing }
             val withBarcode = queue.count { it.barcode.isNotBlank() }

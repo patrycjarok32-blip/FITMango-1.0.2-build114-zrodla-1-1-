@@ -86,7 +86,7 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun MealPlanScreen(viewModel: DietaViewModel) {
+fun MealPlanScreen(viewModel: DietaViewModel, onShopping: (() -> Unit)? = null) {
     val mealPlans by viewModel.mealPlans.collectAsStateWithLifecycle()
     val shoppingItems by viewModel.shoppingItems.collectAsStateWithLifecycle()
     val sportPlanner: com.example.viewmodel.SportsViewModel =
@@ -503,6 +503,11 @@ fun MealPlanScreen(viewModel: DietaViewModel) {
                             Text("Wspólny podgląd istniejących danych. Zmiany posiłków i treningów wykonuj w ich edytorach.",
                                 style = MaterialTheme.typography.bodySmall)
                         }
+                    }
+                }
+                item {
+                    if (onShopping != null) OutlinedButton(onClick = onShopping, modifier = Modifier.fillMaxWidth().testTag("meal_plan_shopping")) {
+                        Text("🛒 Lista zakupów")
                     }
                 }
                 item {
@@ -1298,6 +1303,8 @@ internal fun PlannedMealDetailCard(
         MealConvenienceSupport.missingIngredients(resolvedIngredients, recipeIngredients.filter { it.recipeId == recipe?.id })
     }
     var repairIngredientName by rememberSaveable(meal.id) { mutableStateOf<String?>(null) }
+    val macroMissing = missingIngredients.count { MealConvenienceSupport.hasMissingNutrition(it, recipeIngredients.filter { row -> row.recipeId == recipe?.id }) }
+    val quantityOnlyMissing = missingIngredients.size - macroMissing
     var showMissing by rememberSaveable(meal.id) { mutableStateOf(false) }
     var repairQuantity by rememberSaveable(meal.id) { mutableStateOf("") }
     var repairSaving by remember { mutableStateOf(false) }
@@ -1523,15 +1530,15 @@ internal fun PlannedMealDetailCard(
             if (expanded) nutrition.note?.let { Text(it, color = GoldAccent, fontSize = 12.sp) }
             if (expanded || missingIngredients.isNotEmpty() || nutrition.isPartial) {
                 NutritionStatusBadge(if (missingIngredients.isEmpty() && !nutrition.isPartial) NutritionStatus.COMPLETE else NutritionStatus.MISSING,
-                    if (missingIngredients.isEmpty() && !nutrition.isPartial) "Pełne dane kalorii i makro" else if (missingIngredients.isNotEmpty()) "Brak wartości dla ${missingIngredients.size} składników" else "Część wartości odżywczych jest szacowana",
+                    if (missingIngredients.isEmpty() && !nutrition.isPartial) "Pełne dane kalorii i makro" else if (missingIngredients.isNotEmpty()) listOfNotNull(if (macroMissing > 0) "Brak kalorii lub makro: $macroMissing" else null, if (quantityOnlyMissing > 0) "Brak ilości: $quantityOnlyMissing" else null).joinToString(" • ") else "Część wartości odżywczych jest szacowana",
                     Modifier.testTag("nutrition_completeness_${meal.id}"))
             }
             if (expanded) Text("Rozpoznane produkty dostają kalorie i makro automatycznie, także po odmianie nazwy. Szacunki z tabeli oraz masy jajek i ząbków są oznaczone. Zapisane przez Ciebie wartości mają pierwszeństwo.", color = GoldAccent, fontSize = 12.sp)
             if (expanded && missingIngredients.isNotEmpty()) {
-                TextButton(onClick = { showMissing = !showMissing; expanded = true }, modifier = Modifier.testTag("repair_nutrition_${meal.id}")) { Text(if (showMissing) "Zwiń brakujące dane" else "Uzupełnij brakujące dane (${missingIngredients.size})") }
+                TextButton(onClick = { showMissing = !showMissing; expanded = true }, modifier = Modifier.testTag("repair_nutrition_${meal.id}")) { Text(if (showMissing) "Zwiń brakujące dane" else "Sprawdź składniki (${missingIngredients.size})") }
                 if (showMissing) missingIngredients.forEach { item ->
                     Row(Modifier.fillMaxWidth()) {
-                        Text(item.ingredientName, Modifier.weight(1f).padding(top = 12.dp), fontSize = 12.sp)
+                        Text(item.ingredientName + if (MealConvenienceSupport.hasMissingNutrition(item, recipeIngredients.filter { it.recipeId == recipe?.id })) " • kalorie/makro" else " • ilość", Modifier.weight(1f).padding(top = 12.dp), fontSize = 12.sp)
                         TextButton(onClick = { onSwapIngredientClick("${item.originalIngredientName} — ${MealPlannerSupport.formatQuantityNumber((item.originalBaseQuantity ?: 1f) * meal.servings)} ${item.originalUnit}") }) { Text("Baza") }
                         if (viewModel != null) TextButton(onClick = {
                             repairIngredientName = item.originalIngredientName
