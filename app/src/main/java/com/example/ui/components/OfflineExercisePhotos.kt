@@ -111,11 +111,16 @@ internal fun WorkoutTechniquePhotos(exercise: String) {
             val fallback = CuratedExercisePhotos.illustrationUrl(exercise, step + 1)
             var useIllustration by remember(exercise, step) { mutableStateOf(false) }
             val displayedUrl = if (useIllustration) fallback else url
+            val localRep = displayedUrl?.substringAfter("/images/flat/", "")?.takeIf { it.isNotEmpty() && displayedUrl.contains("/RepDB/") }?.let { name ->
+                remember(name) { runCatching { context.assets.open("repdb/$name").use { BitmapFactory.decodeStream(it) } }.getOrNull() }
+            }
             Text(if (step == 0) "Pozycja początkowa" else "Pozycja końcowa",
                 style = MaterialTheme.typography.labelLarge)
             if (photo != null) {
                 Image(photo.asImageBitmap(), contentDescription = "$exercise — etap ${step + 1}",
                     modifier = Modifier.fillMaxWidth().heightIn(max = 180.dp), contentScale = ContentScale.Fit)
+            } else if (localRep != null) {
+                Image(localRep.asImageBitmap(), contentDescription = "$exercise — ilustracja RepDB", modifier = Modifier.fillMaxWidth().height(150.dp), contentScale = ContentScale.Fit)
             } else if (displayedUrl != null) {
                 var failed by remember(displayedUrl) { mutableStateOf(false) }
                 coil.compose.AsyncImage(model = coil.request.ImageRequest.Builder(context).data(displayedUrl).diskCachePolicy(coil.request.CachePolicy.ENABLED).memoryCachePolicy(coil.request.CachePolicy.ENABLED).build(), contentDescription = "$exercise — etap ${step + 1}",
