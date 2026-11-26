@@ -324,7 +324,7 @@ fun DashboardScreen(
                     TextButton(onClick = onNavigateToMeasurements) { Text("Pomiary i postępy") }
                 }
             }
-            val mangoTreeStage = remember(habitDays) {
+            val mangoTreeStage = remember(habitDays, today) {
                 com.example.viewmodel.MangoPremium6.treeStage(habitDays.count { it.date <= today.toString() })
             }
             Surface(shape = RoundedCornerShape(16.dp),
@@ -705,15 +705,6 @@ fun DashboardScreen(
                 }
             }
             MangoDayPhaseSettings()
-            MangoGrowthTree(
-                activeDays = habitDays.count { entry ->
-                    runCatching {
-                        val d = java.time.LocalDate.parse(entry.date)
-                        !d.isAfter(today) && !d.isBefore(today.minusDays(29))
-                    }.getOrDefault(false)
-                },
-                modifier = Modifier.fillMaxWidth().padding(8.dp)
-            )
             com.example.ui.components.ReleaseNotesControl(autoShow = true)
             com.example.ui.components.MealUndoCard(viewModel)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
