@@ -111,7 +111,7 @@ internal fun WorkoutTechniquePhotos(exercise: String) {
             val fallback = CuratedExercisePhotos.illustrationUrl(exercise, step + 1)
             var useIllustration by remember(exercise, step) { mutableStateOf(false) }
             val displayedUrl = if (useIllustration) fallback else url
-            val localRep = displayedUrl?.substringAfter("/images/flat/", "")?.takeIf { it.isNotEmpty() && displayedUrl.contains("/RepDB/") }?.let { name ->
+            val localRep = fallback?.substringAfter("/images/flat/", "")?.takeIf { it.isNotEmpty() }?.let { name ->
                 remember(name) { runCatching { context.assets.open("repdb/$name").use { BitmapFactory.decodeStream(it) } }.getOrNull() }
             }
             Text(if (step == 0) "Pozycja początkowa" else "Pozycja końcowa",
