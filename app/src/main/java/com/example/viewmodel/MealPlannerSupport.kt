@@ -286,7 +286,7 @@ object MealPlannerSupport {
                 if (line.contains(';')) line.split(';') else listOf(line)
             }
         } else {
-            trimmed.split(Regex("[,;]"))
+            trimmed.split(Regex(";|,(?!\\d)"))
         }
 
         return rawLines
@@ -299,6 +299,15 @@ object MealPlannerSupport {
         val line = rawLine.trim().removePrefix("-").removePrefix("•").removePrefix("*").trim()
         if (line.isBlank()) {
             return PlannedMealIngredient(name = "", baseQuantity = null, unit = "")
+        }
+
+        // Imported PDF format: "(0.2 x Opakowanie) Rukola", "(10g) Szczypiorek".
+        val prefix = Regex("""^\(\s*(\d+(?:[.,/]\d+)?)\s*(?:[x×]\s*)?([\p{L}.]+)\s*\)\s*(.+)$""", RegexOption.IGNORE_CASE)
+        prefix.matchEntire(line)?.let { match ->
+            val qty = parseQuantityToken(match.groupValues[1])
+            if (qty != null) return PlannedMealIngredient(
+                name = cleanIngredientName(match.groupValues[3]),
+                baseQuantity = qty, unit = match.groupValues[2].lowercase(Locale.ROOT))
         }
 
         // 1. Pattern: "Name — 150 g" or "Name - 150 g" or "Name: 150 g"

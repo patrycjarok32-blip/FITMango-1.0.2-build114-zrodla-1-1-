@@ -2226,7 +2226,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
             if (response.status != 1) emptyList() else listOfNotNull(response.product?.let {
                 IngredientSubstitutionSupport.fromOpenFoodFactsProduct(it, SubstituteOptionMode.OPEN_FOOD_FACTS)
             })
-        } else OpenFoodFactsClient.searchProductsForNutritionRepair(target.name).products.orEmpty().mapNotNull {
+        } else OpenFoodFactsClient.searchProductsForNutritionRepair(MealPlannerSupport.parseSingleIngredientLine(target.name).name).products.orEmpty().mapNotNull {
             IngredientSubstitutionSupport.fromOpenFoodFactsProduct(it, SubstituteOptionMode.OPEN_FOOD_FACTS)
         }
     }

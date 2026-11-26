@@ -29,7 +29,7 @@ object UniversalNutritionRepair {
         if (candidate.caloriesPer100g?.let { it.isFinite() && it in 0f..1000f } != true) return false
         return listOf(candidate.proteinPer100g, candidate.carbsPer100g, candidate.fatPer100g).all { it == null || it.isFinite() && it in 0f..200f }
     }
-    fun identity(name: String): String = ProduceSupport.normalize(name).replace(Regex("[^a-z0-9]+"), " ").trim()
+    fun identity(name: String): String = ProduceSupport.normalize(MealPlannerSupport.parseSingleIngredientLine(name).name).replace(Regex("[^a-z0-9]+"), " ").trim()
     fun sameName(a: String, b: String) = identity(a).isNotBlank() && identity(a) == identity(b)
     fun matches(target: NutritionRepairTarget, candidate: SubstituteCandidate): Boolean =
         candidate.defaultUnit == target.basis && (if (target.barcode.isNotBlank()) candidate.barcode.trim() == target.barcode.trim()
@@ -93,7 +93,14 @@ class UniversalNutritionRepairRunner {
         for (target in targets) {
             currentCoroutineContext().ensureActive()
             state = state.copy(current = target.name); onProgress(state)
-            var selection = UniversalNutritionRepair.select(target, local)
+            val reference = if (target.barcode.isBlank() && target.basis == "g") ImportedIngredientReferences.find(target.name)?.profile else null
+            val referenceCandidate = reference?.let {
+                SubstituteCandidate(target.name, brand = "Tabela referencyjna (szacunek)", caloriesPer100g = it.caloriesPer100g,
+                    proteinPer100g = it.proteinPer100g, carbsPer100g = it.carbsPer100g, fatPer100g = it.fatPer100g,
+                    defaultUnit = "g", source = SubstituteOptionMode.LOCAL_DATABASE)
+            }
+            val available = local + listOfNotNull(referenceCandidate)
+            var selection = UniversalNutritionRepair.select(target, available)
             var reason = selection.reason
             if ((selection.candidate == null || selection.candidate?.let { UniversalNutritionRepair.missing(it) } == true) && online && networkFailures < 3) {
                 if (target.name.length !in 1..180 || target.barcode.isNotBlank() && !target.barcode.matches(Regex("[0-9]{8,14}"))) {
@@ -108,7 +115,7 @@ class UniversalNutritionRepairRunner {
                         Result.failure<List<SubstituteCandidate>>(IllegalStateException("Nie udało się połączyć z bazą. Możesz ponowić pozostałe braki."))
                     }).also { fetched[key] = it }
                     if (result.isSuccess) {
-                        selection = UniversalNutritionRepair.select(target, local + result.getOrThrow())
+                        selection = UniversalNutritionRepair.select(target, available + result.getOrThrow())
                         reason = selection.reason
                     } else reason = result.exceptionOrNull()?.message.orEmpty()
                 }
