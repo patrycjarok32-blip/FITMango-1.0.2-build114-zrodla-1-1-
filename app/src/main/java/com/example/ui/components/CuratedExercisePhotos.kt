@@ -74,15 +74,18 @@ internal object CuratedExercisePhotos {
         "Unoszenie kolan w zwisie" to listOf("Hanging_Leg_Raise/0.jpg", "Hanging_Leg_Raise/1.jpg"),
     )
 
+    private fun key(value: String) = java.text.Normalizer.normalize(value.trim().lowercase(java.util.Locale.ROOT), java.text.Normalizer.Form.NFC).replace(Regex("\\s+"), " ")
+    private val normalizedImages = images.mapKeys { key(it.key) }
+
     fun url(exercise: String, stage: Int): String? {
-        val stills = images[exercise] ?: return null
+        val stills = normalizedImages[key(exercise)] ?: return null
         val index = when(stage) { 0, 1 -> 0; 2, 3 -> 1; else -> return null }
         return BASE + stills[index].split("/").joinToString("/") {
             java.net.URLEncoder.encode(it, "UTF-8").replace("+", "%20")
         }
     }
 
-    fun hasPhotos(exercise: String) = images.containsKey(exercise)
+    fun hasPhotos(exercise: String) = normalizedImages.containsKey(key(exercise))
     fun coveredCount() = StrengthExerciseLibrary.exercises.count { hasPhotos(it.name) }
-    const val CREDIT = "Zdjęcia: free-exercise-db (Unlicense). Ujęcia poglądowe; sprawdź technikę."
+    const val CREDIT = "Źródło: free-exercise-db. Ujęcia poglądowe; sprawdź technikę."
 }

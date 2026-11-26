@@ -7,6 +7,8 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -99,7 +101,7 @@ fun OfflineExercisePhotoStep(exercise: String, step: Int) {
 internal fun WorkoutTechniquePhotos(exercise: String) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var showDetails by remember(exercise) { mutableStateOf(false) }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier = Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         for (step in 0..1) {
             val photo = remember(exercise, step) {
                 OfflineExercisePhotos.load(context, exercise, step)
@@ -113,7 +115,7 @@ internal fun WorkoutTechniquePhotos(exercise: String) {
                     modifier = Modifier.fillMaxWidth().heightIn(max = 180.dp), contentScale = ContentScale.Fit)
             } else if (url != null) {
                 var failed by remember(url) { mutableStateOf(false) }
-                coil.compose.AsyncImage(model = url, contentDescription = "$exercise — etap ${step + 1}",
+                coil.compose.AsyncImage(model = coil.request.ImageRequest.Builder(context).data(url).diskCachePolicy(coil.request.CachePolicy.ENABLED).memoryCachePolicy(coil.request.CachePolicy.ENABLED).build(), contentDescription = "$exercise — etap ${step + 1}",
                     modifier = Modifier.fillMaxWidth().height(150.dp), contentScale = ContentScale.Fit,
                     onError = { failed = true }, onSuccess = { failed = false })
                 if (failed) Text("Zdjęcie niedostępne. Sprawdź połączenie lub dodaj własne.",
