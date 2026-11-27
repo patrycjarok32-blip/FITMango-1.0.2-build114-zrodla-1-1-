@@ -12,6 +12,7 @@ fun MealProductAdditionDialog(
     onDismiss: () -> Unit,
     onSave: (SubstituteCandidate, Float, String, (String?) -> Unit) -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current.applicationContext
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     IngredientReplacementDialog(
@@ -31,7 +32,10 @@ fun MealProductAdditionDialog(
                 onSave(candidate, quantity, unit) { result ->
                     saving = false
                     error = result
-                    if (result == null) onDismiss()
+                    if (result == null) {
+                        android.widget.Toast.makeText(context, "Produkt zapisany w jadłospisie", android.widget.Toast.LENGTH_SHORT).show()
+                        onDismiss()
+                    }
                 }
             }
         }
