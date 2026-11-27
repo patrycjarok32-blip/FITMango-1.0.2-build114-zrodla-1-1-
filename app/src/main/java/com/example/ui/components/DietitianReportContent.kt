@@ -36,7 +36,7 @@ fun DietitianReportContent(report: String) {
         flush(); result
     }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        if (visual.length() > 0) ConsultationDashboard(visual)
+        if (visual.length() > 0) { ConsultationDashboard(visual); ConsultationExtraCharts(visual) }
         blocks.forEach { (title, paragraphs) ->
             var expanded by remember(report, title) { mutableStateOf(title?.startsWith("Dane szczegółowe") != true && title?.startsWith("Wiarygodność") != true) }
             val collapsible = title?.startsWith("Dane szczegółowe") == true || title?.startsWith("Wiarygodność") == true

@@ -2520,8 +2520,8 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                             "kroki_i_sen_dziennie", "samopoczucie_dziennie", "historia_treningow_odczyt",
                             "spalanie_ogolem_health_connect", "ostatni_odczyt_zdrowia").forEach { local.remove(it) }
                     }
-                    combined.toString() to
-                        ProgressEvidence.build(snapshotProfile, snapshotDays, snapshotConfirmations, snapshotEnergy, report, scale, from, until, today).summary
+                    Triple(combined.toString(),
+                        ProgressEvidence.build(snapshotProfile, snapshotDays, snapshotConfirmations, snapshotEnergy, report, scale, from, until, today).summary, ConsultationVisuals.extra(report))
                 }
                 val frozenEvidence = if (range == 7) kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
                     runCatching { AiEvidenceSupport.describe(prompt.first) }.getOrDefault("Nie udało się odtworzyć szczegółów danych tego raportu. Pełne uzasadnienie AI pozostaje dostępne.")
@@ -2538,7 +2538,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                 val generated = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))
                 val heading = if (range == 7) "Raport tygodniowy: ${today.minusDays(7)} – ${today.minusDays(1)}" else "Analiza okresu $range dni"
                 val text = "$heading\nWygenerowano: $generated\n\n$answer\n\n## Dane szczegółowe (obliczenia lokalne)\n${prompt.second}"
-                val visual = com.example.viewmodel.ConsultationVisuals.snapshot(prompt.first)
+                val visual = com.example.viewmodel.ConsultationVisuals.snapshot(prompt.first, prompt.third)
                 val display = text + "\n" + com.example.viewmodel.ConsultationVisuals.MARKER + visual
                 _effectsAiResult.value = display; _weeklyAiAnalysis.value = display
                 if (range == 7) _sportsWeeklyAi.value = WeeklyAiExplanation(today.minusDays(7).toString(), today.minusDays(1).toString(),

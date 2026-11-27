@@ -14,7 +14,7 @@ data class WeightPoint(val date: String, val kg: Double)
 data class EffectsReport(val points: List<WeightPoint>, val trendKgWeek: Double?, val completeDays: Int, val confirmedDays: Int,
     val partialDays: Int, val loggedDays: Int, val periodDays: Int, val meanCalories: Double?, val meanProtein: Double?,
     val maintenance: Double?, val referenceIntake: Double?, val waistChange: Double?, val proposedDelta: Int?, val summary: String,
-    val reasons: String, val weeklyText: String, val strengthText: String, val wellbeingText: String, val calibratedTdee: Double? = null, val calibrationDays: Int = 0, val tdee28: Double? = null, val tdee90: Double? = null, val cycleComparison: String = "")
+    val reasons: String, val weeklyText: String, val strengthText: String, val wellbeingText: String, val calibratedTdee: Double? = null, val calibrationDays: Int = 0, val tdee28: Double? = null, val tdee90: Double? = null, val cycleComparison: String = "", val cycleChart: List<CycleChartPoint> = emptyList())
 
 object EffectsSupport {
     const val KEY = "effects_v1"
@@ -167,7 +167,7 @@ object EffectsSupport {
             return calibrateTdee(merged.values.toList(), food.map { it.calories.toDouble() }, today, window)
         }
         return EffectsReport(points, trend, complete.size, confirmed.size, logged.count { !it.nutritionComplete }, logged.size, periodDays, mean, protein,
-            maintenance, reference, waistChange, delta, state, reason, weeklyText, if (comparisons.isEmpty()) "Potrzebne wyniki tego samego ćwiczenia z co najmniej dwóch dat." else comparisons.joinToString("\n"), wellbeing, calibrated, calibrationFood.size, longer(28), longer(90), CycleProgressSupport.compare(settings.cycleStarts, merged.values.toList(), today))
+            maintenance, reference, waistChange, delta, state, reason, weeklyText, if (comparisons.isEmpty()) "Potrzebne wyniki tego samego ćwiczenia z co najmniej dwóch dat." else comparisons.joinToString("\n"), wellbeing, calibrated, calibrationFood.size, longer(28), longer(90), CycleProgressSupport.compare(settings.cycleStarts, merged.values.toList(), today), ConsultationSeries.cycle(settings.cycleStarts, merged.values.toList(), today))
     }
 }
 
