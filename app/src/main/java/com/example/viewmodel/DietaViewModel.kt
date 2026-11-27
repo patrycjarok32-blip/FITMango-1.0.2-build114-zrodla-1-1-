@@ -1438,29 +1438,39 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
         _isLoadingAiSubstitutes.value = false
     }
 
+    private var productSearchJob: kotlinx.coroutines.Job? = null
+    private var productSearchGeneration = 0L
+
     fun searchOpenFoodFacts(query: String) {
+        val generation = ++productSearchGeneration
+        productSearchJob?.cancel()
         val cleanQuery = query.trim()
+        _offSearchError.value = null
         if (cleanQuery.isBlank()) {
             _offSearchResults.value = emptyList()
-            _offSearchError.value = "Wpisz nazwę produktu do wyszukania w Open Food Facts."
+            _isSearchingOff.value = false
             return
         }
         _isSearchingOff.value = true
-        _offSearchError.value = null
-        viewModelScope.launch {
+        productSearchJob = viewModelScope.launch {
             try {
-                val response = OpenFoodFactsClient.searchProductsWithFallback(cleanQuery)
-                val mapped = response.products.orEmpty()
-                    .mapNotNull { IngredientSubstitutionSupport.fromOpenFoodFactsProduct(it, SubstituteOptionMode.OPEN_FOOD_FACTS) }
-                _offSearchResults.value = mapped
-                if (mapped.isEmpty()) {
-                    _offSearchError.value = "Brak produktów w bazie Open Food Facts dla zapytania: \"$cleanQuery\"."
+                kotlinx.coroutines.delay(300)
+                val mapped = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    OpenFoodFactsClient.searchProductsWithFallback(cleanQuery).products.orEmpty()
+                        .mapNotNull { IngredientSubstitutionSupport.fromOpenFoodFactsProduct(it, SubstituteOptionMode.OPEN_FOOD_FACTS) }
                 }
-            } catch (e: Exception) {
-                _offSearchResults.value = emptyList()
-                _offSearchError.value = "Błąd połączenia z Open Food Facts: ${e.localizedMessage ?: "Spróbuj ponownie."}"
+                if (generation == productSearchGeneration) {
+                    _offSearchResults.value = mapped
+                    if (mapped.isEmpty()) _offSearchError.value = "Brak produktów dla: $cleanQuery"
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+            catch (e: Exception) {
+                if (generation == productSearchGeneration) {
+                    _offSearchResults.value = emptyList()
+                    _offSearchError.value = "Błąd połączenia z Open Food Facts. Spróbuj ponownie."
+                }
             } finally {
-                _isSearchingOff.value = false
+                if (generation == productSearchGeneration) _isSearchingOff.value = false
             }
         }
     }
@@ -2296,7 +2306,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private suspend fun rebuildShoppingListInternal(requestedWeek: String? = null) = shoppingMutex.withLock {
+    private suspend fun rebuildShoppingListInternal(requestedWeek: String? = null) = withContext(kotlinx.coroutines.Dispatchers.Default) { shoppingMutex.withLock {
         val plans = repository.allMealPlans.first()
         val keys = if (requestedWeek != null) listOf(ShoppingWeekSupport.requireListKey(requestedWeek))
             else (listOf(ShoppingWeekSupport.start(java.time.LocalDate.now()).toString()) +
@@ -2304,7 +2314,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                     key.isNotBlank() && runCatching { ShoppingWeekSupport.requireListKey(key) }.isSuccess
                 }).distinct()
         for (key in keys) rebuildShoppingWeek(key, plans)
-    }
+    } }
 
     private suspend fun rebuildShoppingWeek(week: String, plans: List<MealPlanEntity>) {
         val oldItems = repository.allShoppingItems.first().filter { it.weekStart == week }
