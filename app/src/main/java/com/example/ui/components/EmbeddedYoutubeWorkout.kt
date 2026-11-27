@@ -35,12 +35,29 @@ object YoutubeEmbed {
 @Composable
 fun EmbeddedYoutubeWorkout(url: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val audio = remember(context) { context.getSystemService(android.content.Context.AUDIO_SERVICE) as android.media.AudioManager }
+    var resumeMusic by remember(url) { mutableStateOf(false) }
+    DisposableEffect(url) {
+        val wasPlaying = audio.isMusicActive
+        onDispose {
+            if (resumeMusic && wasPlaying && !audio.isMusicActive) {
+                runCatching {
+                    audio.dispatchMediaKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_MEDIA_PLAY))
+                    audio.dispatchMediaKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_UP, android.view.KeyEvent.KEYCODE_MEDIA_PLAY))
+                }
+            }
+        }
+    }
     val videoId = remember(url) { YoutubeEmbed.videoId(url) }
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         if (videoId == null) {
             Text("Nie można odtworzyć tego linku. Sprawdź adres filmu YouTube.")
         } else {
             // The technique button already opens the dialog: do not require a second play action.
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Checkbox(checked = resumeMusic, onCheckedChange = { resumeMusic = it })
+                Text("Spróbuj wznowić poprzednią muzykę po zamknięciu filmu")
+            }
             MangoInAppVideoPlayer(url, Modifier.fillMaxWidth())
             Text("Film jest domyślnie wyciszony. Otwarcie zewnętrznego YouTube może zatrzymać Spotify; po powrocie wznów muzykę w panelu multimediów Androida.",
                 style = MaterialTheme.typography.bodySmall)
