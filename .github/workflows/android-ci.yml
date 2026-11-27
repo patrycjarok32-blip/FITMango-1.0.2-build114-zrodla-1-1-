@@ -40,20 +40,47 @@ jobs:
         run: python3 scripts/fetch_repdb_assets.py
       - name: Cache Gradle
         uses: gradle/actions/setup-gradle@v4
+      - name: Cache Robolectric native runtime
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches/modules-2/files-2.1/org.robolectric/nativeruntime-dist-compat/1.0.18
+          key: robolectric-native-1.0.18-v1
+      - name: Prefetch Robolectric native runtime
+        run: |
+          set -euo pipefail
+          artifact=nativeruntime-dist-compat-1.0.18.jar
+          path=org/robolectric/nativeruntime-dist-compat/1.0.18
+          cache="$HOME/.gradle/caches/modules-2/files-2.1/$path"
+          if find "$cache" -name "$artifact" -type f 2>/dev/null | grep -q .; then exit 0; fi
+          tmp=$(mktemp -d)
+          trap 'rm -rf "$tmp"' EXIT
+          for base in https://repo.maven.apache.org/maven2 https://repo1.maven.org/maven2 https://maven-central.storage-download.googleapis.com/maven2; do
+            if curl -fsSL --connect-timeout 20 --max-time 300 "$base/$path/$artifact" -o "$tmp/$artifact" && curl -fsSL --connect-timeout 20 --max-time 30 "$base/$path/$artifact.sha1" -o "$tmp/checksum"; then
+              expected=$(awk '{print $1}' "$tmp/checksum")
+              actual=$(sha1sum "$tmp/$artifact" | awk '{print $1}')
+              if [ "$expected" = "$actual" ] && unzip -tq "$tmp/$artifact" >/dev/null; then
+                mkdir -p "$cache/$actual"
+                cp "$tmp/$artifact" "$cache/$actual/$artifact"
+                exit 0
+              fi
+            fi
+          done
+          echo "::error::Robolectric runtime unavailable from Maven Central endpoints"
+          exit 1
       - name: Verify Gradle wrapper
         run: chmod +x gradlew
       - name: Compile debug APK and run unit tests
         run: |
           set -o pipefail
           for attempt in 1 2 3; do
-            if ./gradlew :app:assembleDebug :app:testDebugUnitTest --stacktrace --no-daemon 2>&1 | tee "$RUNNER_TEMP/gradle-verify.log"; then
+            if ./gradlew :app:assembleDebug :app:testDebugUnitTest --stacktrace --no-daemon --no-configuration-cache 2>&1 | tee "$RUNNER_TEMP/gradle-verify.log"; then
               exit 0
             fi
             if ! grep -Eq 'Plugin .* was not found|Could not resolve all (files|artifacts)|Could not (GET|HEAD)|Failed to fetch maven artifact' "$RUNNER_TEMP/gradle-verify.log"; then
               exit 1
             fi
             if [ "$attempt" -eq 3 ]; then exit 1; fi
-            sleep $((attempt * 20))
+            sleep $((attempt * 90))
           done
           exit 1
       - name: Verify offline illustrations in APK
