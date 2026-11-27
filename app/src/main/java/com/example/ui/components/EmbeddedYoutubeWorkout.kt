@@ -42,12 +42,12 @@ fun EmbeddedYoutubeWorkout(url: String, modifier: Modifier = Modifier) {
         } else {
             // The technique button already opens the dialog: do not require a second play action.
             MangoInAppVideoPlayer(url, Modifier.fillMaxWidth())
-            Text("Jeśli YouTube zablokuje osadzanie, użyj przycisku poniżej.",
+            Text("Film jest domyślnie wyciszony. Otwarcie zewnętrznego YouTube może zatrzymać Spotify; po powrocie wznów muzykę w panelu multimediów Androida.",
                 style = MaterialTheme.typography.bodySmall)
             TextButton(onClick = {
                 val target = Uri.parse("https://www.youtube.com/watch?v=$videoId")
                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, target)) }
-            }) { Text("▶ Otwórz film w YouTube") }
+            }) { Text("Otwórz zewnętrzny YouTube") }
         }
     }
 }
