@@ -1454,7 +1454,6 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
         _isSearchingOff.value = true
         productSearchJob = viewModelScope.launch {
             try {
-                kotlinx.coroutines.delay(300)
                 val mapped = withContext(kotlinx.coroutines.Dispatchers.IO) {
                     OpenFoodFactsClient.searchProductsWithFallback(cleanQuery).products.orEmpty()
                         .mapNotNull { IngredientSubstitutionSupport.fromOpenFoodFactsProduct(it, SubstituteOptionMode.OPEN_FOOD_FACTS) }
