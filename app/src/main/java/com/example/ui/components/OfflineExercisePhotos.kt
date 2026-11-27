@@ -144,9 +144,15 @@ private fun WorkoutTechniquePhotoContent(exercise: String, mediaExercise: String
                     frame = 1 - frame
                 }
             }
-            if (animate) frames[frame]?.let { bitmap ->
-                Image(bitmap.asImageBitmap(), contentDescription = if (frame == 0) "Pozycja początkowa" else "Pozycja końcowa",
-                    modifier = Modifier.fillMaxWidth().height(180.dp), contentScale = ContentScale.Fit)
+            if (animate) androidx.compose.animation.Crossfade(
+                targetState = frame,
+                animationSpec = androidx.compose.animation.core.tween(durationMillis = 300),
+                label = "offlineTechnique"
+            ) { current ->
+                frames[current]?.let { bitmap ->
+                    Image(bitmap.asImageBitmap(), contentDescription = if (current == 0) "Pozycja początkowa" else "Pozycja końcowa",
+                        modifier = Modifier.fillMaxWidth().height(180.dp), contentScale = ContentScale.Fit)
+                }
             }
         }
         if (!animate) for (step in 0..1) {
