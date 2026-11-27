@@ -233,7 +233,7 @@ fun EffectsScreen(viewModel: DietaViewModel, onBack: () -> Unit, onProfile: () -
                 Text(if (aiBusy) "Przygotowywanie…" else "Wyjaśnij moje efekty")
             }
             if (aiBusy) LinearProgressIndicator(Modifier.fillMaxWidth())
-            AnimatedVisibility(visible = aiText.isNotBlank(), enter = if (motion) fadeIn(tween(280)) else fadeIn(tween(0)), exit = fadeOut(tween(0))) { Text(aiText) }
+            AnimatedVisibility(visible = aiText.isNotBlank(), enter = if (motion) fadeIn(tween(280)) else fadeIn(tween(0)), exit = fadeOut(tween(0))) { com.example.ui.components.DietitianReportContent(aiText) }
         } }
         item {
             val sorted = measurements.filter { it.weightKg.isFinite() && it.weightKg > 0f }

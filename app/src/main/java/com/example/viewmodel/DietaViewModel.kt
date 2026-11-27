@@ -1487,10 +1487,13 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                             listOf(ScannedProductMealSupport.ingredient(product, 100f, product.defaultUnit)))
                     }
                     repository.addScannedProductMeal(recipe, ScannedProductMealSupport.ingredient(product, quantity, unit), day, mealType)
-                    usability.rememberProduct(product, quantity, unit)
-                    rebuildShoppingListInternal()
                 }
                 onResult(null)
+                viewModelScope.launch {
+                    try { usability.rememberProduct(product, quantity, unit); rebuildShoppingListInternal() }
+                    catch (e: kotlinx.coroutines.CancellationException) { throw e }
+                    catch (_: Exception) { _mealUndoMessage.value = "Produkt zapisano. Nie udało się odświeżyć danych pomocniczych." }
+                }
             } catch (e: kotlinx.coroutines.CancellationException) { throw e }
             catch (e: Exception) { onResult(e.message ?: "Nie udało się dodać produktu do posiłku.") }
         }
@@ -1605,7 +1608,7 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
         onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
             try {
-                val saved = undoableMealEdit(meal.id, "Dodano składnik") {
+                val saved = undoableMealEdit(meal.id, "Dodano składnik", onCommitted = { onResult(true, null) }) {
                     require(candidate.name.isNotBlank() && quantity.isFinite() && quantity > 0 && quantity <= 10000)
                     val current = repository.allMealPlans.first().find { it.id == meal.id } ?: error("Posiłek już nie istnieje.")
                     val known = IngredientSubstitutionSupport.lookupKnownIngredientNutrition(candidate.name)
@@ -1620,8 +1623,11 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                         baseQuantityPerServing = quantity / MealPlannerSupport.safeServings(current.servings), unit = unit))
                     refreshEditedMealNutrition(current)
                 }
-                if (saved) usability.rememberProduct(candidate, quantity, unit)
-                onResult(saved, if (saved) null else _mealUndoMessage.value)
+                if (saved) {
+                    try { usability.rememberProduct(candidate, quantity, unit) }
+                    catch (e: kotlinx.coroutines.CancellationException) { throw e }
+                    catch (_: Exception) { _mealUndoMessage.value = "Składnik zapisano. Nie udało się zapamiętać produktu." }
+                } else onResult(false, _mealUndoMessage.value)
             } catch (e: kotlinx.coroutines.CancellationException) { throw e }
             catch (_: Exception) { onResult(false, "Nie udało się dodać składnika. Spróbuj ponownie.") }
         }
