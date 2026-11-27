@@ -5,7 +5,8 @@ import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.ui.Alignment
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -26,14 +27,14 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
     val recordedToday = ActivityRecoverySupport.daySessions(data, today)
     val recordedMinutes = ActivityRecoverySupport.dayMinutes(data, today)
     val active = workouts.firstOrNull { it.ended == 0L }
-    val completed = workouts.count { it.ended > 0L }
+    var showRecorded by rememberSaveable { mutableStateOf(false) }
+    var showMore by rememberSaveable { mutableStateOf(false) }
     MangoCard(Modifier.fillMaxWidth().testTag("sport5_today_dashboard")) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Trening • Dzisiaj", style = MaterialTheme.typography.titleLarge)
             Text(today.format(DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("pl"))))
             Text("Kroki: ${resolvedSteps?.toString() ?: "brak odczytu"} • Sesje: $recordedMinutes min",
                 style = MaterialTheme.typography.titleMedium)
-            MangoGuide(message = if (plans.any { !it.rest } && finishedPlans == plans.count { !it.rest }) "Brawo! Wszystkie zaplanowane sesje wykonane." else if (plans.any { !it.rest }) "Twój plan treningowy na dziś" else "Dzień bez zaplanowanej sesji — odpoczynek też jest ważny.", event = finishedPlans)
             Text("Sesje z planu: $finishedPlans / ${plans.count { !it.rest }}",
                 style = MaterialTheme.typography.bodySmall)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -52,6 +53,9 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
             }
             Text("Liczby w kalendarzu oznaczają zaplanowane jednostki.", style = MaterialTheme.typography.labelSmall)
             if (recordedToday.isNotEmpty()) {
+                TextButton(onClick = { showRecorded = !showRecorded }) { Text(if (showRecorded) "Ukryj aktywności" else "Aktywności z zegarka / dziennika (${recordedToday.size})") }
+            }
+            if (recordedToday.isNotEmpty() && showRecorded) {
                 Card(modifier = Modifier.fillMaxWidth().testTag("sport_recorded_today"),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
                     Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -91,27 +95,25 @@ fun SportTodayDashboard(today: LocalDate, data: SportsData,
                     }
                 }
             }
-            Text(when {
+            if (active != null || plan == null || plan.rest) Text(when {
                 active != null -> "▶ Trening w toku: ${active.title}"
                 plan?.rest == true && recordedToday.isNotEmpty() -> "🌿 Dzień regeneracji w planie • aktywność wykonana"
                 plan?.rest == true -> "🌿 Dzień regeneracji"
-                plan != null -> "🏋️ ${plan.title}"
+                plan != null -> ""
                 else -> "Brak zaplanowanej sesji"
             }, style = MaterialTheme.typography.titleMedium)
-            if (plan != null && !plan.rest && plan.exercises.isNotEmpty()) {
-                Text("${plan.exercises.size} ćwiczeń • ${plan.exercises.sumOf { it.sets }} serii")
-            }
             Button(onClick = onStart, modifier = Modifier.fillMaxWidth().testTag("sport5_start")) {
-                Text(if (active != null) "Wróć do treningu" else "▶ Rozpocznij trening")
+                Text(if (active != null) "Wróć do treningu" else if (plans.any { !it.rest }) "Otwórz trening" else "Wybierz trening")
             }
+            TextButton(onClick = { showMore = !showMore }) { Text(if (showMore) "Mniej opcji" else "Więcej opcji") }
+            if (showMore) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = onPlan, modifier = Modifier.weight(1f)) { Text("Edytuj plan") }
                 OutlinedButton(onClick = onHistory, modifier = Modifier.weight(1f)) { Text("Historia") }
             }
             OutlinedButton(onClick = onAdd, modifier = Modifier.fillMaxWidth().testTag("sport7_add")) { Icon(Icons.Outlined.Add, contentDescription = null); Text("Dodaj jednostkę") }
             TextButton(onClick = onRecovery) { Text("🌿 Samopoczucie i regeneracja") }
-            Text("Wykonane sesje siłowe: $completed • Zapisane serie: ${data.sets.size}",
-                style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
 }
