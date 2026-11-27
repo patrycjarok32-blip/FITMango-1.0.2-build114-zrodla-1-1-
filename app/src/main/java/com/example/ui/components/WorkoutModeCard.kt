@@ -54,60 +54,10 @@ fun WorkoutModeCard(
         else if (rest == 0) restRunning = false
     }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        if (active != null) {
-            val completedCount = active.entries.count { it.done }
-            val totalCount = active.entries.size
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-                shape = RoundedCornerShape(20.dp)) {
-                Column(Modifier.fillMaxWidth().padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("🥭 Teraz trenujesz", style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold)
-                    Text("$completedCount / $totalCount ukończonych serii")
-                    val nextSet = active.entries.firstOrNull { !it.done }
-                    if (nextSet != null) {
-                        Text("Następna: ${nextSet.exercise} • seria ${nextSet.number}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold)
-                    } else if (totalCount > 0) {
-                        Text("Wszystkie serie ukończone — możesz zakończyć trening.",
-                            style = MaterialTheme.typography.bodyMedium)
-                    }
-                    if (nextSet != null) {
-                        val suggestion = remember(nextSet.exercise, workouts) { MangoWorkoutInsights.trainingSuggestion(nextSet.exercise, workouts) }
-                        Text("Mango Trener: $suggestion", style = MaterialTheme.typography.bodySmall)
-                    }
-                    val elapsedMinutes = WorkoutSessionStore.activeDurationMillis(active, clockNow) / 60000L
-                    Text("Czas aktywny (bez pauz): ${elapsedMinutes} min",
-                        style = MaterialTheme.typography.bodySmall)
-                    if (elapsedMinutes > 240) Text(
-                        "Sesja trwa ponad 4 godziny. Sprawdź, czy nie została przypadkowo otwarta.",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall)
-                    LinearProgressIndicator(progress = {
-                        if (totalCount == 0) 0f else completedCount.toFloat() / totalCount
-                    }, modifier = Modifier.fillMaxWidth())
-                    Text(if (completedCount == totalCount && totalCount > 0)
-                        "Brawo! Wszystkie serie ukończone." else "Skup się na następnej serii.",
-                        style = MaterialTheme.typography.bodySmall)
-                }
-            }
+        if (active == null) {
+            MangoGuide(message = "Gotowa na trening?", event = 0, size = 32.dp)
+            Text("Wybierz trening", style = MaterialTheme.typography.titleLarge)
         }
-        if (active != null) {
-            Text("💾 Sesja zapisana automatycznie. Po ponownym uruchomieniu aplikacji możesz ją wznowić.",
-                style = MaterialTheme.typography.bodySmall)
-        }
-        val finishedSets = active?.entries?.count { it.done } ?: 0
-        MangoGuide(
-            message = when {
-                active == null -> "Gotowa na trening?"
-                active.entries.isNotEmpty() && finishedSets == active.entries.size ->
-                    "Brawo! Wszystkie serie ukończone. 🏆"
-                finishedSets > 0 -> "Świetnie! ${finishedSets} serii za Tobą. 🥭"
-                else -> "Trening trwa — skup się na następnej serii."
-            },
-            event = finishedSets, size = 32.dp)
-        Text(if (active == null) "🏋️ Wybierz trening" else "🏋️ Trening w toku", style = MaterialTheme.typography.titleLarge)
         var showExtras by rememberSaveable { mutableStateOf(false) }
         TextButton(onClick = { showExtras = !showExtras }) {
             Text(if (showExtras) "Ukryj dodatkowe opcje" else "Więcej: raport, regeneracja i muzyka")
@@ -306,7 +256,7 @@ fun WorkoutModeCard(
                         Text("Film instruktażowy nie został jeszcze przypisany do tego ćwiczenia.",
                             style = MaterialTheme.typography.bodySmall)
                     }
-                    Text("Ćwiczenie ${index + 1} z ${exercises.size}", style = MaterialTheme.typography.labelLarge)
+                    Text("Ćwiczenie ${exercises.indexOf(selected) + 1} z ${exercises.size}", style = MaterialTheme.typography.labelLarge)
                     TextButton(onClick = { showTechnique = true }) { Text("ⓘ Technika i wskazówki") }
                 }
             }
@@ -424,7 +374,9 @@ fun WorkoutModeCard(
             val advice = selected?.let { WorkoutInsights.coachAdvice(sports, it,
                 active.entries.firstOrNull { e -> e.exercise == it }?.reps ?: 10) }
             if (!allCompleted && previous != null) Text("📈 Poprzedni wynik: " + previous + " kg • sprawdź powtórzenia w dzienniku")
-            if (!allCompleted && advice != null) {
+            var showCoach by rememberSaveable(selected) { mutableStateOf(false) }
+            if (!allCompleted && advice != null) TextButton(onClick = { showCoach = !showCoach }) { Text(if (showCoach) "Ukryj wskazówki" else "Wskazówki trenera") }
+            if (!allCompleted && advice != null && showCoach) {
                 Text("🧠 Trener: " + advice.recommendation)
                 if (advice.weightKg != null) Text("Orientacyjny ciężar: " + advice.weightKg + " kg")
                 if (advice.reasons.isNotEmpty()) Text(advice.reasons.joinToString(" • "),
@@ -490,9 +442,6 @@ fun WorkoutModeCard(
                     enabled = index < exercises.lastIndex) { Text("Dalej →") }
             }
             if (allCompleted) Text("Wszystkie serie zapisane. Możesz zakończyć trening i zobaczyć podsumowanie.")
-            Text("Odczuwalny wysiłek: ${effort}/10")
-            Slider(value = effort.toFloat(), onValueChange = { effort = it.toInt().coerceIn(1, 10) },
-                valueRange = 1f..10f, steps = 8)
             Button(onClick = { if (allCompleted) showFinishConfirmation = true else showExitChoice = true }, enabled = !busy,
                 modifier = Modifier.fillMaxWidth()) { Text("🏁 Zakończ trening") }
             if (showExitChoice) AlertDialog(
@@ -510,7 +459,11 @@ fun WorkoutModeCard(
             if (showFinishConfirmation) AlertDialog(
                 onDismissRequest = { showFinishConfirmation = false },
                 title = { Text("Zakończyć trening?") },
-                text = { Text("Zapisano $done z ${active.entries.size} serii. Niewykonane serie pozostaną pominięte w podsumowaniu.") },
+                text = { Column {
+                    Text("Zapisano $done z ${active.entries.size} serii. Niewykonane serie pozostaną pominięte w podsumowaniu.")
+                    Text("Odczuwalny wysiłek: $effort/10")
+                    Slider(value = effort.toFloat(), onValueChange = { effort = it.toInt().coerceIn(1, 10) }, valueRange = 1f..10f, steps = 8)
+                } },
                 confirmButton = { Button(onClick = {
                     showFinishConfirmation = false
                     onFinish(active.id, effort)
