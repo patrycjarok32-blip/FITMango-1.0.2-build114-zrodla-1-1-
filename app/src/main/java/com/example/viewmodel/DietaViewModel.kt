@@ -2538,7 +2538,9 @@ class DietaViewModel(application: Application) : AndroidViewModel(application) {
                 val generated = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))
                 val heading = if (range == 7) "Raport tygodniowy: ${today.minusDays(7)} – ${today.minusDays(1)}" else "Analiza okresu $range dni"
                 val text = "$heading\nWygenerowano: $generated\n\n$answer\n\n## Dane szczegółowe (obliczenia lokalne)\n${prompt.second}"
-                _effectsAiResult.value = text; _weeklyAiAnalysis.value = text
+                val visual = com.example.viewmodel.ConsultationVisuals.snapshot(prompt.first)
+                val display = text + "\n" + com.example.viewmodel.ConsultationVisuals.MARKER + visual
+                _effectsAiResult.value = display; _weeklyAiAnalysis.value = display
                 if (range == 7) _sportsWeeklyAi.value = WeeklyAiExplanation(today.minusDays(7).toString(), today.minusDays(1).toString(),
                     answer, text, System.currentTimeMillis(), result.isSuccess, frozenEvidence)
             } catch (e: kotlinx.coroutines.CancellationException) { throw e }
