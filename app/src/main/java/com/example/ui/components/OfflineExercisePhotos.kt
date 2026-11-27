@@ -122,7 +122,34 @@ private fun WorkoutTechniquePhotoContent(exercise: String, mediaExercise: String
     val context = androidx.compose.ui.platform.LocalContext.current
     var showDetails by remember(exercise) { mutableStateOf(false) }
     Column(modifier = Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        for (step in 0..1) {
+        val frames = remember(exercise, mediaExercise) {
+            (0..1).map { step ->
+                OfflineExercisePhotos.load(context, exercise, step)
+                    ?: ExercisePhotoStore.load(context, exercise, step + 1)
+                    ?: CuratedExercisePhotos.illustrationUrl(mediaExercise, step + 1)
+                        ?.substringAfter("/images/flat/", "")?.takeIf { it.isNotEmpty() }
+                        ?.let { name -> runCatching { context.assets.open("repdb/$name").use { BitmapFactory.decodeStream(it) } }.getOrNull() }
+            }
+        }
+        var animate by remember(exercise, mediaExercise) { mutableStateOf(false) }
+        var frame by remember(exercise, mediaExercise) { mutableIntStateOf(0) }
+        if (frames.all { it != null }) {
+            TextButton(onClick = { animate = !animate }) {
+                Text(if (animate) "Zatrzymaj pokaz" else "Pokaż ruch offline (bez dźwięku)")
+            }
+            LaunchedEffect(animate, exercise, mediaExercise) {
+                frame = 0
+                while (animate) {
+                    kotlinx.coroutines.delay(900)
+                    frame = 1 - frame
+                }
+            }
+            if (animate) frames[frame]?.let { bitmap ->
+                Image(bitmap.asImageBitmap(), contentDescription = if (frame == 0) "Pozycja początkowa" else "Pozycja końcowa",
+                    modifier = Modifier.fillMaxWidth().height(180.dp), contentScale = ContentScale.Fit)
+            }
+        }
+        if (!animate) for (step in 0..1) {
             val photo = remember(exercise, step) {
                 OfflineExercisePhotos.load(context, exercise, step)
                     ?: ExercisePhotoStore.load(context, exercise, step + 1)
