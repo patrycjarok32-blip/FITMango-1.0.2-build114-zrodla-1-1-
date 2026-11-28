@@ -203,7 +203,7 @@ class BackupService(private val context: Context, private val database: AppDatab
         return missing.size
     }
 
-    suspend fun prepare(uri: Uri, password: String = ""): PreparedBackup = withContext(Dispatchers.IO) {
+    suspend fun prepare(uri: Uri, password: String = "", progress: (String) -> Unit = {}): PreparedBackup = withContext(Dispatchers.IO) {
         val directory = File(context.cacheDir, "backup-preview-${UUID.randomUUID()}").apply { mkdirs() }
         try {
             var total = 0L
@@ -211,6 +211,7 @@ class BackupService(private val context: Context, private val database: AppDatab
             // Stage the archive on disk instead of allocating a 200+ MB ByteArray.
             // For encrypted backups, fully consume the cipher stream so AES-GCM
             // authentication is checked before any restored data is accepted.
+            progress("Otwieranie pliku kopii…")
             val stagedZip = File(directory, "staged-backup.zip")
             context.contentResolver.openInputStream(uri)?.buffered()?.use { source ->
                 val header = ByteArray(4)
@@ -223,6 +224,7 @@ class BackupService(private val context: Context, private val database: AppDatab
                 require(offset == 4) { "Plik kopii jest pusty lub uszkodzony." }
                 val stream: InputStream = if (header.contentEquals(MAGIC)) {
                     require(password.isNotEmpty()) { "Podaj hasło zaszyfrowanej kopii." }
+                    progress("Odszyfrowywanie i sprawdzanie hasła…")
                     val salt = ByteArray(16)
                     val nonce = ByteArray(12)
                     java.io.DataInputStream(source).apply {
@@ -241,6 +243,7 @@ class BackupService(private val context: Context, private val database: AppDatab
                     }
                 }
             } ?: error("Nie można otworzyć kopii.")
+            progress("Rozpakowywanie kopii…")
             val input = stagedZip.inputStream().buffered()
             ZipInputStream(input).use { zip ->
                 while (true) {
@@ -258,10 +261,12 @@ class BackupService(private val context: Context, private val database: AppDatab
             stagedZip.delete()
             val manifest = File(directory, "backup.json")
             require(manifest.isFile) { "Brak danych FITMango w pliku." }
+            progress("Sprawdzanie danych kopii…")
             val archive = adapter.fromJson(manifest.readText()) ?: error("Nieprawidłowe dane kopii.")
             validate(archive)
             val declaredNames = archive.assets.values.map { it.name }
             require(declaredNames.distinct().size == declaredNames.size && names == declaredNames.toSet() + "backup.json") { "Niezgodna lista plików w kopii." }
+            progress("Sprawdzanie integralności zdjęć i dokumentów…")
             archive.assets.values.forEach { asset ->
                 require(ASSET_NAME.matches(asset.name)) { "Nieprawidłowa ścieżka zdjęcia." }
                 val file = File(directory, asset.name)
@@ -271,7 +276,13 @@ class BackupService(private val context: Context, private val database: AppDatab
         } catch (e: OutOfMemoryError) {
             directory.deleteRecursively()
             throw IllegalStateException("Kopia jest zbyt duża dla pamięci telefonu. Dane nie zostały zmienione.", e)
-        } catch (e: Exception) { directory.deleteRecursively(); throw e }
+        } catch (e: Exception) {
+            directory.deleteRecursively()
+            if (generateSequence<Throwable>(e) { it.cause }.any { it is javax.crypto.AEADBadTagException }) {
+                throw IllegalArgumentException("Nieprawidłowe hasło lub uszkodzona kopia.", e)
+            }
+            throw e
+        }
     }
 
     // Call while Health Connect / photo writers are paused by the coordinator.
