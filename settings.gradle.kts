@@ -30,6 +30,13 @@ dependencyResolutionManagement {
   repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
   repositories {
     google()
+    // Route only the large Robolectric native runtime through the Maven Central mirror.
+    exclusiveContent {
+      forRepository {
+        maven { url = uri("https://maven-central.storage-download.googleapis.com/maven2") }
+      }
+      filter { includeModule("org.robolectric", "nativeruntime-dist-compat") }
+    }
     mavenCentral()
   }
 }
