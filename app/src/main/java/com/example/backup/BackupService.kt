@@ -146,7 +146,7 @@ class BackupService(private val context: Context, private val database: AppDatab
     }
 
     // Also used before a restore, so the previous data can be recovered locally.
-    internal suspend fun writeArchive(output: OutputStream, includeKeys: Boolean = false): Int {
+    internal suspend fun writeArchive(output: OutputStream, includeKeys: Boolean = false, downloadRemote: Boolean = true): Int {
         val data = database.backupDao().snapshot()
         val uris = (data.recipes.map { it.imageUrl } + data.documents.map { it.uriString } +
             data.photos.flatMap { listOf(it.frontUri, it.sideUri, it.backUri) })
@@ -154,6 +154,7 @@ class BackupService(private val context: Context, private val database: AppDatab
                 it.startsWith(context.filesDir.absolutePath + "/") ||
                 it.startsWith("https://cdn.pixabay.com/") || it.startsWith("https://pixabay.com/") }
             .distinct()
+            .filter { downloadRemote || !it.startsWith("https://") }
         require(uris.size < 20_000) { "Za dużo zdjęć i dokumentów do jednej kopii." }
         val assets = linkedMapOf<String, BackupAsset>()
         val missing = mutableListOf<String>()
@@ -267,6 +268,9 @@ class BackupService(private val context: Context, private val database: AppDatab
                 require(file.isFile && file.length() == asset.size && digest(file) == asset.sha256) { "Kopia jest uszkodzona. Obecne dane pozostają bez zmian." }
             }
             PreparedBackup(archive, directory)
+        } catch (e: OutOfMemoryError) {
+            directory.deleteRecursively()
+            throw IllegalStateException("Kopia jest zbyt duża dla pamięci telefonu. Dane nie zostały zmienione.", e)
         } catch (e: Exception) { directory.deleteRecursively(); throw e }
     }
 
@@ -277,7 +281,7 @@ class BackupService(private val context: Context, private val database: AppDatab
         val target = File(context.filesDir, "restored-files/${UUID.randomUUID()}")
         var committed = false
         try {
-            previous.outputStream().use { writeArchive(it) }
+            previous.outputStream().use { writeArchive(it, downloadRemote = false) }
             // Preserve the previous recovery file unless the new one is ready.
             if (!previous.renameTo(recoveryFile)) {
                 previous.copyTo(recoveryFile, overwrite = true); previous.delete()
