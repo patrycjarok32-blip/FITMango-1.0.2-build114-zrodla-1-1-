@@ -50,6 +50,7 @@ class SportsControlsUiTest {
                 )
             }
         }
+        compose.onNodeWithText("Aktywności z zegarka / dziennika (1)").performClick()
         compose.onNodeWithTag("sport_recorded_today").assertExists()
         compose.onNodeWithText("1 aktywności • 48 min").assertExists()
         compose.onNodeWithText("Sesje z planu: 0 / 0").assertExists()
