@@ -127,7 +127,7 @@ fun SportsScreen(viewModel: DietaViewModel, onBack: () -> Unit, sports: SportsVi
             Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text("Sport 7.0", style = MaterialTheme.typography.headlineSmall,
+                        Text("Trening 7.1 – Clean & Focus", style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold, color = LeafGreen)
                         Text("Aktywność • siła • regeneracja", style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
