@@ -26,6 +26,8 @@ class BackupCoordinator(
     val busy = _busy.asStateFlow()
     private val _message = MutableStateFlow<String?>(null)
     val message = _message.asStateFlow()
+    private val _stage = MutableStateFlow("")
+    val stage = _stage.asStateFlow()
     private val _preview = MutableStateFlow<PreparedBackup?>(null)
     val preview = _preview.asStateFlow()
     private val _hasRecovery = MutableStateFlow(service.recoveryFile.isFile)
@@ -68,7 +70,7 @@ class BackupCoordinator(
         try { block() }
         catch (e: CancellationException) { throw e }
         catch (e: Exception) { _message.value = "Nie udało się wykonać operacji: ${e.message ?: "spróbuj ponownie"}" }
-        finally { _busy.value = false; _hasRecovery.value = service.recoveryFile.isFile; mutex.unlock() }
+        finally { _stage.value = ""; _busy.value = false; _hasRecovery.value = service.recoveryFile.isFile; mutex.unlock() }
     }
     fun export(uri: Uri, password: String) = operation { _message.value = service.export(uri, password); status.exported() }
     fun saveAutomaticNow() = operation { service.saveAutomatic(); status.savedAutomatic(); _message.value = "Zapisano kopię na telefonie." }
@@ -87,15 +89,18 @@ class BackupCoordinator(
     fun prepare(uri: Uri, password: String = "") = operation {
         val old = _preview.value; _preview.value = null
         withContext(Dispatchers.IO) { old?.dispose() }
+        _stage.value = "Odczyt i odszyfrowywanie pliku…"
         _preview.value = service.prepare(uri, password)
     }
     fun cancelPreview() { if (!_busy.value) { val old = _preview.value; _preview.value = null; scope.launch(Dispatchers.IO) { old?.dispose() } } }
     fun restore() = operation {
         val prepared = _preview.value ?: error("Najpierw wybierz kopię.")
+        _stage.value = "Oczekiwanie na zakończenie synchronizacji…"
         // Lock order matches sync -> database and photos -> database writers.
         com.example.data.PersonalDataGate.mutex.withLock {
             HealthConnectCoordinator.syncMutex.withLock {
                 RecipePhotoQueue.mutex.withLock {
+                    _stage.value = "Zabezpieczanie i przywracanie danych…"
                     _message.value = service.restore(prepared)
                     afterRestore()
                 }
