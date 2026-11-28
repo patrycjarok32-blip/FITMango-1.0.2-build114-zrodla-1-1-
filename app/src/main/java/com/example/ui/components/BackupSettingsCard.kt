@@ -25,6 +25,7 @@ fun BackupSettingsCard(viewModel: DietaViewModel) {
     }
     val backupStatus by backup.status.state.collectAsStateWithLifecycle()
     val busy by backup.busy.collectAsStateWithLifecycle()
+    val stage by backup.stage.collectAsStateWithLifecycle()
     val message by backup.message.collectAsStateWithLifecycle()
     val preview by backup.preview.collectAsStateWithLifecycle()
     val hasRecovery by backup.hasRecovery.collectAsStateWithLifecycle()
@@ -113,7 +114,7 @@ fun BackupSettingsCard(viewModel: DietaViewModel) {
             if (hasRecovery) TextButton(onClick = { saveRecovery.launch("FITMango-przed-przywroceniem.zip") }, enabled = !busy) {
                 Text("Zapisz kopię sprzed przywrócenia")
             }
-            if (busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text("Przetwarzanie kopii…") }
+            if (busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(stage.ifBlank { "Przetwarzanie kopii…" }) }
             message?.let { Text(it, modifier = Modifier.testTag("backup_result")) }
             TextButton(onClick = { showBackupDetails = !showBackupDetails }) {
                 Text(if (showBackupDetails) "▲ Ukryj szczegóły" else "▼ Szczegóły bezpieczeństwa")
