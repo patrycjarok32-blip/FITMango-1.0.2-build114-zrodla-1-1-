@@ -90,7 +90,7 @@ class BackupCoordinator(
         val old = _preview.value; _preview.value = null
         withContext(Dispatchers.IO) { old?.dispose() }
         _stage.value = "Odczyt i odszyfrowywanie pliku…"
-        _preview.value = service.prepare(uri, password)
+        _preview.value = service.prepare(uri, password) { _stage.value = it }
     }
     fun cancelPreview() { if (!_busy.value) { val old = _preview.value; _preview.value = null; scope.launch(Dispatchers.IO) { old?.dispose() } } }
     fun restore() = operation {
